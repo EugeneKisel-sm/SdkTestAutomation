@@ -58,17 +58,17 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Run Tests
-      run: |
-        dotnet test ${{ env.SOLUTION_FILE }} \
-          --configuration ${{ env.CONFIGURATION }} \
-          --verbosity normal \
-          --logger "console;verbosity=detailed" \
-          --results-directory TestResults
+      run: dotnet test ${{ env.SOLUTION_FILE }} \
+        --configuration ${{ env.CONFIGURATION }} \
+        --no-build \
+        --no-restore \
+        --logger "console;verbosity=minimal" \
+        --results-directory TestResults
       env:
         CONDUCTOR_API_URL: "http://localhost:8080/api"
 
     - name: Upload Test Results
-      if: always()
+      if: failure()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
