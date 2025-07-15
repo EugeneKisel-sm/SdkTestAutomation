@@ -12,7 +12,12 @@ concurrency:
 env:
   DOTNET_VERSION: '9.0.100-preview.1.24101.2'
   SOLUTION_FILE: SdkTestAutomation.sln
+  TEST_PROJECT: SdkTestAutomation.Tests/SdkTestAutomation.Tests.csproj
   CONFIGURATION: Release
+
+permissions:
+  contents: read
+  checks: write
 
 jobs:
   deploy-conductor:
@@ -58,12 +63,14 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Run Tests
-      run: dotnet test ${{ env.SOLUTION_FILE }} \
+      run: dotnet test ${{ env.TEST_PROJECT }} \
         --configuration ${{ env.CONFIGURATION }} \
         --no-build \
         --no-restore \
         --logger "console;verbosity=minimal" \
-        --results-directory TestResults
+        --logger "trx;LogFileName=test-results.trx" \
+        --results-directory TestResults \
+        --blame-hang-timeout 5m
       env:
         CONDUCTOR_API_URL: "http://localhost:8080/api"
 

@@ -41,4 +41,18 @@ jobs:
             exit 1
           fi
           
-          echo "SUCCESS: Conductor API is ready and healthy!" 
+          echo
+          echo "SUCCESS: Conductor API is ready and healthy!"
+
+      - name: Display Container Status
+        if: always()
+        run: |
+          echo "Container Status:"
+          docker compose -f conductor/docker/docker-compose.yaml ps
+
+      - name: Cleanup on Failure
+        if: failure()
+        working-directory: conductor
+        run: |
+          echo "Stopping and removing Conductor containers..."
+          docker compose -f docker/docker-compose.yaml down 
