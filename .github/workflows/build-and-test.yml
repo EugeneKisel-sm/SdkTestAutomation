@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  DOTNET_VERSION: '8.0.x'
+  DOTNET_VERSION: '9.0.100-preview.1.24101.2'  # .NET 9 Preview version
   SOLUTION_FILE: SdkTestAutomation.sln
   CONFIGURATION: Release
 
@@ -24,6 +24,7 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        global-json-file: false  # Allow preview versions
 
     - name: Restore Dependencies
       run: dotnet restore ${{ env.SOLUTION_FILE }}
@@ -50,6 +51,7 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        global-json-file: false  # Allow preview versions
 
     - name: Download Build Artifacts
       uses: actions/download-artifact@v4
