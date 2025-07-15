@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DOTNET_VERSION: '9.0.100-preview.1.24101.2'  # .NET 9 Preview version
   SOLUTION_FILE: SdkTestAutomation.sln
