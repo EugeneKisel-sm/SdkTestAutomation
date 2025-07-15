@@ -1,0 +1,32 @@
+# Environment variables
+.env
+*/.env
+**/.env
+
+# .NET build output
+bin/
+obj/
+
+# IDE files
+.idea/
+.vs/
+*.user
+*.suo
+*.userprefs
+*.usertasks
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+*.DotSettings.user
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# macOS
+.DS_Store

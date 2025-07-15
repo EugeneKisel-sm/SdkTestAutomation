@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Core", "SdkTestAutomation.Core\SdkTestAutomation.Core.csproj", "{21A35852-3EB4-4B25-A765-63EF9245CDEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Utils", "SdkTestAutomation.Utils\SdkTestAutomation.Utils.csproj", "{1C928CC3-42FB-49C4-AC20-8555285C2275}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Tests", "SdkTestAutomation.Tests\SdkTestAutomation.Tests.csproj", "{67591AE8-F99A-4B17-AE17-F1F9723F72E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Api", "SdkTestAutomation.Api\SdkTestAutomation.Api.csproj", "{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{21A35852-3EB4-4B25-A765-63EF9245CDEF} = {21A35852-3EB4-4B25-A765-63EF9245CDEF}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{21A35852-3EB4-4B25-A765-63EF9245CDEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21A35852-3EB4-4B25-A765-63EF9245CDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21A35852-3EB4-4B25-A765-63EF9245CDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21A35852-3EB4-4B25-A765-63EF9245CDEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C928CC3-42FB-49C4-AC20-8555285C2275}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C928CC3-42FB-49C4-AC20-8555285C2275}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C928CC3-42FB-49C4-AC20-8555285C2275}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C928CC3-42FB-49C4-AC20-8555285C2275}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67591AE8-F99A-4B17-AE17-F1F9723F72E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67591AE8-F99A-4B17-AE17-F1F9723F72E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67591AE8-F99A-4B17-AE17-F1F9723F72E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67591AE8-F99A-4B17-AE17-F1F9723F72E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
