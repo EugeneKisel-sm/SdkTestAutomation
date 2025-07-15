@@ -1,5 +1,7 @@
 # SdkTestAutomation
 
+[![Build and Test](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml)
+
 A .NET test automation framework for API testing, built with xUnit and RestSharp.
 
 ## Features
