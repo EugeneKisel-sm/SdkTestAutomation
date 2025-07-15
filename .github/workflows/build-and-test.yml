@@ -39,28 +39,30 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build-output
-        path: |
-          **/bin/
-          **/obj/
+        path: .
+        if-no-files-found: error
 
   test:
     needs: [deploy-conductor, build]
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-output
-
     - name: Run Tests
-      run: dotnet test ${{ env.SOLUTION_FILE }} --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal
+      run: |
+        dotnet test ${{ env.SOLUTION_FILE }} \
+          --list-tests \
+          --configuration ${{ env.CONFIGURATION }} \
+          --verbosity normal \
+          --logger "console;verbosity=detailed"
       env:
         CONDUCTOR_API_URL: "http://localhost:8080/api"
