@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DOTNET_VERSION: '9.0.100-preview.1.24101.2'  # .NET 9 Preview version
+  DOTNET_VERSION: '9.0.100-preview.1.24101.2'
   SOLUTION_FILE: SdkTestAutomation.sln
   CONFIGURATION: Release
 
@@ -29,7 +29,7 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore Dependencies
+    - name: Restore NuGet Packages
       run: dotnet restore ${{ env.SOLUTION_FILE }}
 
     - name: Build Solution
@@ -60,9 +60,17 @@ jobs:
     - name: Run Tests
       run: |
         dotnet test ${{ env.SOLUTION_FILE }} \
-          --list-tests \
           --configuration ${{ env.CONFIGURATION }} \
           --verbosity normal \
-          --logger "console;verbosity=detailed"
+          --logger "console;verbosity=detailed" \
+          --results-directory TestResults
       env:
         CONDUCTOR_API_URL: "http://localhost:8080/api"
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: TestResults
+        if-no-files-found: warn

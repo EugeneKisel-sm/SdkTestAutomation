@@ -1,7 +1,7 @@
 name: Deploy Conductor
 
 on:
-  workflow_call:  # This allows other workflows to call this one
+  workflow_call:
 
 env:
   CONDUCTOR_REPO: conductor-oss/conductor
@@ -21,18 +21,24 @@ jobs:
       - name: Start Conductor Services
         working-directory: conductor
         run: |
+          echo "Starting Conductor services..."
           docker compose -f docker/docker-compose.yaml up -d
           
       - name: Wait for Conductor to be ready
         run: |
-          timeout=180  # 3 minutes timeout
-          while ! curl -s http://localhost:8080/health > /dev/null; do
-            if [ $timeout -le 0 ]; then
-              echo "Timeout waiting for Conductor to start"
-              exit 1
-            fi
-            echo "Waiting for Conductor to start... ($timeout seconds remaining)"
+          echo "Starting health check for Conductor API (timeout: 3 minutes)..."
+          timeout=180
+          until curl -s -f http://localhost:8080/health || [ $timeout -le 0 ]; do
+            echo "Health check attempt failed. Retrying in 5 seconds... ($timeout seconds remaining)"
             sleep 5
             timeout=$((timeout-5))
           done
-          echo "Conductor is ready!" 
+          
+          if [ $timeout -le 0 ]; then
+            echo "ERROR: Conductor failed to start within 3 minutes"
+            echo "Displaying Docker logs for troubleshooting:"
+            docker compose -f conductor/docker/docker-compose.yaml logs
+            exit 1
+          fi
+          
+          echo "SUCCESS: Conductor API is ready and healthy!" 
