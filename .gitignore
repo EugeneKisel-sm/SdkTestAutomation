@@ -2,6 +2,8 @@
 .env
 */.env
 **/.env
+!.env.template
+!**/.env.template
 
 # .NET build output
 bin/
