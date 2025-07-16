@@ -1,0 +1,58 @@
+name: Deploy Conductor
+
+on:
+  workflow_call:
+
+env:
+  CONDUCTOR_REPO: conductor-oss/conductor
+  CONDUCTOR_BRANCH: main
+
+jobs:
+  deploy-conductor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Conductor Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CONDUCTOR_REPO }}
+          ref: ${{ env.CONDUCTOR_BRANCH }}
+          path: conductor
+
+      - name: Start Conductor Services
+        working-directory: conductor
+        run: |
+          echo "Starting Conductor services..."
+          docker compose -f docker/docker-compose.yaml up -d
+          
+      - name: Wait for Conductor to be ready
+        run: |
+          echo "Starting health check for Conductor API (timeout: 3 minutes)..."
+          timeout=180
+          until curl -s -f http://localhost:8080/health || [ $timeout -le 0 ]; do
+            echo "Health check attempt failed. Retrying in 5 seconds... ($timeout seconds remaining)"
+            sleep 5
+            timeout=$((timeout-5))
+          done
+          
+          if [ $timeout -le 0 ]; then
+            echo "ERROR: Conductor failed to start within 3 minutes"
+            echo "Displaying Docker logs for troubleshooting:"
+            docker compose -f conductor/docker/docker-compose.yaml logs
+            exit 1
+          fi
+          
+          echo
+          echo "SUCCESS: Conductor API is ready and healthy!"
+
+      - name: Display Container Status
+        if: always()
+        run: |
+          echo "Container Status:"
+          docker compose -f conductor/docker/docker-compose.yaml ps
+
+      - name: Cleanup on Failure
+        if: failure()
+        working-directory: conductor
+        run: |
+          echo "Stopping and removing Conductor containers..."
+          docker compose -f docker/docker-compose.yaml down 
