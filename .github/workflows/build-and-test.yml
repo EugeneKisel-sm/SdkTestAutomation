@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DOTNET_VERSION: '9.0.100-preview.1.24101.2'
+  DOTNET_VERSION: '8.0.x'
   SOLUTION_FILE: SdkTestAutomation.sln
   TEST_PROJECT: SdkTestAutomation.Tests/SdkTestAutomation.Tests.csproj
   CONFIGURATION: Release
