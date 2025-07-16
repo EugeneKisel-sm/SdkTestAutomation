@@ -63,14 +63,15 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Run Tests
-      run: dotnet test ${{ env.TEST_PROJECT }} \
-        --configuration ${{ env.CONFIGURATION }} \
-        --no-build \
-        --no-restore \
-        --logger "console;verbosity=minimal" \
-        --logger "trx;LogFileName=test-results.trx" \
-        --results-directory TestResults \
-        --blame-hang-timeout 5m
+      run: |
+        dotnet test "${{ env.TEST_PROJECT }}" \
+          --configuration "${{ env.CONFIGURATION }}" \
+          --no-build \
+          --no-restore \
+          --logger:"console;verbosity=minimal" \
+          --logger:"trx;LogFileName=test-results.trx" \
+          --results-directory:TestResults \
+          --blame-hang-timeout:5m
       env:
         CONDUCTOR_API_URL: "http://localhost:8080/api"
 
