@@ -3,9 +3,13 @@ name: Deploy Conductor
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 env:
   CONDUCTOR_REPO: conductor-oss/conductor
   CONDUCTOR_BRANCH: main
+  CONDUCTOR_API_URL: http://localhost:8080/api
 
 jobs:
   deploy-conductor:
@@ -25,10 +29,11 @@ jobs:
           docker compose -f docker/docker-compose.yaml up -d
           
       - name: Wait for Conductor to be ready
+        id: health_check
         run: |
           echo "Starting health check for Conductor API (timeout: 3 minutes)..."
           timeout=180
-          until curl -s -f http://localhost:8080/health || [ $timeout -le 0 ]; do
+          until curl -s -f ${{ env.CONDUCTOR_API_URL }}/health || [ $timeout -le 0 ]; do
             echo "Health check attempt failed. Retrying in 5 seconds... ($timeout seconds remaining)"
             sleep 5
             timeout=$((timeout-5))
@@ -43,6 +48,7 @@ jobs:
           
           echo
           echo "SUCCESS: Conductor API is ready and healthy!"
+          curl -s ${{ env.CONDUCTOR_API_URL }}/health
 
       - name: Display Container Status
         if: always()
