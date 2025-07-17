@@ -44,12 +44,13 @@ jobs:
       run: dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.CONFIGURATION }} --no-restore
 
     - name: Run Tests
-      run: dotnet test "SdkTestAutomation.Tests/SdkTestAutomation.Tests.csproj" \
-        --configuration ${{ env.CONFIGURATION }} \
-        --logger:"console;verbosity=detailed" \
-        --logger:"trx;LogFileName=test-results.trx" \
-        --results-directory:TestResults \
-        --blame-hang-timeout:5m
+      run: >
+        dotnet test "SdkTestAutomation.Tests/SdkTestAutomation.Tests.csproj"
+        --configuration "${{ env.CONFIGURATION }}"
+        --logger "console;verbosity=detailed"
+        --logger "trx;LogFileName=test-results.trx"
+        --results-directory TestResults
+        --blame-hang-timeout 5m
 
     - name: Upload Test Results
       if: always()
