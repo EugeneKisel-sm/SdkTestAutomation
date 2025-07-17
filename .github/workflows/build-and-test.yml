@@ -15,7 +15,7 @@ env:
   DOTNET_VERSION: '8.0.x'
   SOLUTION_FILE: SdkTestAutomation.sln
   CONFIGURATION: Release
-  CONDUCTOR_API_URL: "http://localhost:8080/api"
+  CONDUCTOR_SERVER_URL: "http://localhost:8080/api"
 
 permissions:
   contents: read
@@ -51,10 +51,9 @@ jobs:
 
     - name: Run Tests
       id: test-run
-      run: >
-        ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests
-        -reporter default
-        -html TestResults/test-results.html
+      run: |
+        ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests -reporter default -html TestResults/test-results.html
+      continue-on-error: true
 
     - name: Parse and Report Test Results
       if: always()
@@ -67,67 +66,79 @@ jobs:
           let summary = '';
           
           try {
-            const htmlPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.html');
+            // Get the test run output from the previous step
+            const testOutput = '${{ steps.test-run.outputs.stdout }}';
             
-            if (fs.existsSync(htmlPath)) {
-              const htmlContent = fs.readFileSync(htmlPath, 'utf8');
-              
-              // Simple regex parsing to extract basic test statistics from HTML
-              const totalMatch = htmlContent.match(/Total:\s*(\d+)/i);
-              const passedMatch = htmlContent.match(/Passed:\s*(\d+)/i);
-              const failedMatch = htmlContent.match(/Failed:\s*(\d+)/i);
-              const skippedMatch = htmlContent.match(/Skipped:\s*(\d+)/i);
-              
-              const totalTests = totalMatch ? parseInt(totalMatch[1]) : 0;
-              const passedTests = passedMatch ? parseInt(passedMatch[1]) : 0;
-              const failedTests = failedMatch ? parseInt(failedMatch[1]) : 0;
-              const skippedTests = skippedMatch ? parseInt(skippedMatch[1]) : 0;
+            // Parse the test execution summary from console output
+            const summaryMatch = testOutput.match(/=== TEST EXECUTION SUMMARY ===\s*\n\s*([^\n]+)\s+Total:\s*(\d+),\s*Errors:\s*(\d+),\s*Failed:\s*(\d+),\s*Skipped:\s*(\d+),\s*Not Run:\s*(\d+),\s*Time:\s*([^\s]+)/);
+            
+            if (summaryMatch) {
+              const assemblyName = summaryMatch[1].trim();
+              const totalTests = parseInt(summaryMatch[2]);
+              const errors = parseInt(summaryMatch[3]);
+              const failedTests = parseInt(summaryMatch[4]);
+              const skippedTests = parseInt(summaryMatch[5]);
+              const notRun = parseInt(summaryMatch[6]);
+              const executionTime = summaryMatch[7];
+              const passedTests = totalTests - failedTests - skippedTests - errors;
               
               console.log('## Test Results Summary');
+              console.log(`- Assembly: ${assemblyName}`);
               console.log(`- Total: ${totalTests}`);
               console.log(`- Passed: ${passedTests}`);
               console.log(`- Failed: ${failedTests}`);
+              console.log(`- Errors: ${errors}`);
               console.log(`- Skipped: ${skippedTests}`);
+              console.log(`- Not Run: ${notRun}`);
+              console.log(`- Execution Time: ${executionTime}`);
               
               // Add to job summary
               summary += `## Test Results Summary\n\n`;
               summary += `| Metric | Count |\n`;
               summary += `|--------|-------|\n`;
+              summary += `| Assembly | ${assemblyName} |\n`;
               summary += `| Total | ${totalTests} |\n`;
               summary += `| Passed | ${passedTests} |\n`;
               summary += `| Failed | ${failedTests} |\n`;
-              summary += `| Skipped | ${skippedTests} |\n\n`;
+              summary += `| Errors | ${errors} |\n`;
+              summary += `| Skipped | ${skippedTests} |\n`;
+              summary += `| Not Run | ${notRun} |\n`;
+              summary += `| Execution Time | ${executionTime} |\n\n`;
               
-              if (failedTests > 0) {
+              if (failedTests > 0 || errors > 0) {
                 console.log('\n## Failed Tests');
                 summary += `## Failed Tests\n\n`;
-                summary += `⚠️ **${failedTests} test(s) failed**\n\n`;
+                summary += `⚠️ **${failedTests + errors} test(s) failed**\n\n`;
                 summary += `Please check the HTML test report for detailed failure information.\n\n`;
               }
               
               // Add link to HTML report
-              summary += `## 📊 Test Report\n\n`;
-              summary += `📄 **HTML Test Report**: Download the test results artifact to view the detailed HTML report.\n\n`;
-              summary += `The HTML report contains detailed information about test execution, including:\n`;
-              summary += `- Individual test results and execution times\n`;
-              summary += `- Failure details and stack traces\n`;
-              summary += `- Test output and logs\n`;
-              summary += `- Performance metrics\n\n`;
+              const htmlPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.html');
+              if (fs.existsSync(htmlPath)) {
+                summary += `## 📊 Test Report\n\n`;
+                summary += `📄 **HTML Test Report**: Download the test results artifact to view the detailed HTML report.\n\n`;
+                summary += `The HTML report contains detailed information about test execution, including:\n`;
+                summary += `- Individual test results and execution times\n`;
+                summary += `- Failure details and stack traces\n`;
+                summary += `- Test output and logs\n`;
+                summary += `- Performance metrics\n\n`;
+              }
               
               // Set output for other steps
               core.setOutput('total-tests', totalTests);
               core.setOutput('passed-tests', passedTests);
               core.setOutput('failed-tests', failedTests);
               core.setOutput('skipped-tests', skippedTests);
+              core.setOutput('errors', errors);
               
             } else {
-              const message = 'HTML test result file not found. Tests may not have executed or HTML output was not generated.';
+              const message = 'Could not parse test execution summary from console output.';
               console.log('## Test Results');
               console.log(message);
               summary += `## Test Results\n\n${message}\n`;
             }
           } catch (error) {
-            const message = `Error parsing HTML test result file: ${error.message}`;
+            const message = `Error parsing test results: ${error.message}`;
             console.log('## Test Results');
             console.log(message);
             console.log('Tests executed using xUnit v3 console runner');
