@@ -49,7 +49,9 @@ jobs:
     - name: Run Tests
       id: test-run
       run: >
-        dotnet exec "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.dll"
+        dotnet exec --runtimeconfig "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.runtimeconfig.json"
+        "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/xunit.v3.runner.console.dll"
+        "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.dll"
         --format trx --output TestResults/test-results.trx
         --format json --output TestResults/test-results.json
 
@@ -69,7 +71,6 @@ jobs:
         script: |
           const fs = require('fs');
           const path = require('path');
-          const core = require('@actions/core');
           
           let summary = '';
           
