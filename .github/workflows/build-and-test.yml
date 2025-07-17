@@ -76,16 +76,90 @@ jobs:
             if (fs.existsSync(htmlPath)) {
               const htmlContent = fs.readFileSync(htmlPath, 'utf8');
               
-              // Try to extract basic info from HTML content
-              const totalMatch = htmlContent.match(/Total[^>]*>(\d+)</i);
-              const failedMatch = htmlContent.match(/Failed[^>]*>(\d+)</i);
-              const passedMatch = htmlContent.match(/Passed[^>]*>(\d+)</i);
-              const skippedMatch = htmlContent.match(/Skipped[^>]*>(\d+)</i);
+              // Debug: Log a sample of the HTML content to understand its structure
+              console.log('HTML Content Sample (first 1000 chars):');
+              console.log(htmlContent.substring(0, 1000));
               
-              const totalTests = totalMatch ? parseInt(totalMatch[1]) : 0;
-              const failedTests = failedMatch ? parseInt(failedMatch[1]) : 0;
-              const passedTests = passedMatch ? parseInt(passedMatch[1]) : 0;
-              const skippedTests = skippedMatch ? parseInt(skippedMatch[1]) : 0;
+              // Try multiple patterns to extract test statistics from HTML content
+              let totalTests = 0, failedTests = 0, passedTests = 0, skippedTests = 0;
+              
+              // Pattern 1: Look for summary statistics in various formats
+              const patterns = [
+                /Total[^>]*>(\d+)</i,
+                /total[^>]*>(\d+)</i,
+                /Tests[^>]*>(\d+)</i,
+                /tests[^>]*>(\d+)</i,
+                /(\d+)\s*total/i,
+                /total\s*(\d+)/i
+              ];
+              
+              for (const pattern of patterns) {
+                const match = htmlContent.match(pattern);
+                if (match) {
+                  totalTests = parseInt(match[1]);
+                  console.log(`Found total tests: ${totalTests} using pattern: ${pattern}`);
+                  break;
+                }
+              }
+              
+              // Pattern 2: Look for failed tests
+              const failedPatterns = [
+                /Failed[^>]*>(\d+)</i,
+                /failed[^>]*>(\d+)</i,
+                /Failures[^>]*>(\d+)</i,
+                /failures[^>]*>(\d+)</i,
+                /(\d+)\s*failed/i,
+                /failed\s*(\d+)/i
+              ];
+              
+              for (const pattern of failedPatterns) {
+                const match = htmlContent.match(pattern);
+                if (match) {
+                  failedTests = parseInt(match[1]);
+                  console.log(`Found failed tests: ${failedTests} using pattern: ${pattern}`);
+                  break;
+                }
+              }
+              
+              // Pattern 3: Look for passed tests
+              const passedPatterns = [
+                /Passed[^>]*>(\d+)</i,
+                /passed[^>]*>(\d+)</i,
+                /Pass[^>]*>(\d+)</i,
+                /pass[^>]*>(\d+)</i,
+                /(\d+)\s*passed/i,
+                /passed\s*(\d+)/i
+              ];
+              
+              for (const pattern of passedPatterns) {
+                const match = htmlContent.match(pattern);
+                if (match) {
+                  passedTests = parseInt(match[1]);
+                  console.log(`Found passed tests: ${passedTests} using pattern: ${pattern}`);
+                  break;
+                }
+              }
+              
+              // Pattern 4: Look for skipped tests
+              const skippedPatterns = [
+                /Skipped[^>]*>(\d+)</i,
+                /skipped[^>]*>(\d+)</i,
+                /Skip[^>]*>(\d+)</i,
+                /skip[^>]*>(\d+)</i,
+                /(\d+)\s*skipped/i,
+                /skipped\s*(\d+)/i
+              ];
+              
+              for (const pattern of skippedPatterns) {
+                const match = htmlContent.match(pattern);
+                if (match) {
+                  skippedTests = parseInt(match[1]);
+                  console.log(`Found skipped tests: ${skippedTests} using pattern: ${pattern}`);
+                  break;
+                }
+              }
+              
+              // Use the extracted values (they're already declared above)
               
               if (totalTests > 0) {
                 console.log(`- Total: ${totalTests}`);
