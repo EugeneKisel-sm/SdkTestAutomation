@@ -53,7 +53,7 @@ jobs:
       id: test-run
       run: >
         ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests
-        -reporter json
+        -reporter default
         -json TestResults/test-results.json
 
     - name: Parse and Report Test Results
