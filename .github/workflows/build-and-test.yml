@@ -53,7 +53,8 @@ jobs:
       id: test-run
       run: >
         ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests
-        -json TestResults/test-results.json
+        -reporter default
+        -html TestResults/test-results.html
 
     - name: Parse and Report Test Results
       if: always()
@@ -66,38 +67,21 @@ jobs:
           let summary = '';
           
           try {
-            const jsonPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.json');
+            const htmlPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.html');
             
-            if (fs.existsSync(jsonPath)) {
-              const jsonContent = fs.readFileSync(jsonPath, 'utf8');
-              const testResults = JSON.parse(jsonContent);
+            if (fs.existsSync(htmlPath)) {
+              const htmlContent = fs.readFileSync(htmlPath, 'utf8');
               
-              // Extract test statistics
-              let totalTests = 0;
-              let passedTests = 0;
-              let failedTests = 0;
-              let skippedTests = 0;
-              const failedTestNames = [];
+              // Simple regex parsing to extract basic test statistics from HTML
+              const totalMatch = htmlContent.match(/Total:\s*(\d+)/i);
+              const passedMatch = htmlContent.match(/Passed:\s*(\d+)/i);
+              const failedMatch = htmlContent.match(/Failed:\s*(\d+)/i);
+              const skippedMatch = htmlContent.match(/Skipped:\s*(\d+)/i);
               
-              // Parse the JSON structure to count tests
-              if (testResults && Array.isArray(testResults)) {
-                testResults.forEach(result => {
-                  if (result.$type === 'test-finished') {
-                    totalTests++;
-                    if (result.TestsFailed > 0) {
-                      failedTests++;
-                      // Try to get the test name from the test case
-                      if (result.TestDisplayName) {
-                        failedTestNames.push(result.TestDisplayName);
-                      }
-                    } else if (result.TestsSkipped > 0) {
-                      skippedTests++;
-                    } else {
-                      passedTests++;
-                    }
-                  }
-                });
-              }
+              const totalTests = totalMatch ? parseInt(totalMatch[1]) : 0;
+              const passedTests = passedMatch ? parseInt(passedMatch[1]) : 0;
+              const failedTests = failedMatch ? parseInt(failedMatch[1]) : 0;
+              const skippedTests = skippedMatch ? parseInt(skippedMatch[1]) : 0;
               
               console.log('## Test Results Summary');
               console.log(`- Total: ${totalTests}`);
@@ -117,12 +101,18 @@ jobs:
               if (failedTests > 0) {
                 console.log('\n## Failed Tests');
                 summary += `## Failed Tests\n\n`;
-                
-                failedTestNames.forEach(testName => {
-                  console.log(`- ${testName}`);
-                  summary += `### ${testName}\n`;
-                });
+                summary += `⚠️ **${failedTests} test(s) failed**\n\n`;
+                summary += `Please check the HTML test report for detailed failure information.\n\n`;
               }
+              
+              // Add link to HTML report
+              summary += `## 📊 Test Report\n\n`;
+              summary += `📄 **HTML Test Report**: Download the test results artifact to view the detailed HTML report.\n\n`;
+              summary += `The HTML report contains detailed information about test execution, including:\n`;
+              summary += `- Individual test results and execution times\n`;
+              summary += `- Failure details and stack traces\n`;
+              summary += `- Test output and logs\n`;
+              summary += `- Performance metrics\n\n`;
               
               // Set output for other steps
               core.setOutput('total-tests', totalTests);
@@ -131,13 +121,13 @@ jobs:
               core.setOutput('skipped-tests', skippedTests);
               
             } else {
-              const message = 'JSON test result file not found. Tests may not have executed or JSON output was not generated.';
+              const message = 'HTML test result file not found. Tests may not have executed or HTML output was not generated.';
               console.log('## Test Results');
               console.log(message);
               summary += `## Test Results\n\n${message}\n`;
             }
           } catch (error) {
-            const message = `Error parsing JSON test result file: ${error.message}`;
+            const message = `Error parsing HTML test result file: ${error.message}`;
             console.log('## Test Results');
             console.log(message);
             console.log('Tests executed using xUnit v3 console runner');
