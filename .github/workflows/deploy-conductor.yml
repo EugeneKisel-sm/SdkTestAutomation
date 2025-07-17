@@ -9,7 +9,7 @@ permissions:
 env:
   CONDUCTOR_REPO: conductor-oss/conductor
   CONDUCTOR_BRANCH: main
-  CONDUCTOR_API_URL: http://localhost:8080/api
+  CONDUCTOR_API_URL: http://localhost:8080
   DOCKER_COMPOSE_FILE: docker/docker-compose.yaml
 
 jobs:
@@ -60,13 +60,23 @@ jobs:
           
           echo "Waiting for API to be healthy..."
           timeout=200
-          until curl -s ${{ env.CONDUCTOR_API_URL }}/health -o /dev/null -w '%{http_code}' | grep -q "200" || [ $timeout -le 0 ]; do
+          
+          # Try both health endpoints since the location might vary by version
+          until (curl -s ${{ env.CONDUCTOR_API_URL }}/health > /dev/null 2>&1 && echo "Health check succeeded") || \
+                (curl -s ${{ env.CONDUCTOR_API_URL }}/api/health > /dev/null 2>&1 && echo "Health check succeeded") || \
+                [ $timeout -le 0 ]; do
             echo "Health check failed. Retrying in 10s... (${timeout}s remaining)"
             
             if [ $((timeout % 30)) -eq 0 ]; then
+              echo "Current status:"
               docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
-              docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs --tail=20 conductor-server
+              echo "Testing both health endpoints:"
+              echo "1. /health endpoint:"
               curl -v ${{ env.CONDUCTOR_API_URL }}/health || true
+              echo "2. /api/health endpoint:"
+              curl -v ${{ env.CONDUCTOR_API_URL }}/api/health || true
+              echo "Recent server logs:"
+              docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs --tail=20 conductor-server
             fi
             
             sleep 10
@@ -77,7 +87,9 @@ jobs:
             echo "ERROR: Conductor API failed to become healthy"
             docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
             docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs conductor-server
+            echo "Final health check attempts:"
             curl -v ${{ env.CONDUCTOR_API_URL }}/health || true
+            curl -v ${{ env.CONDUCTOR_API_URL }}/api/health || true
             exit 1
           fi
           
