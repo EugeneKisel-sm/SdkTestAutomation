@@ -16,6 +16,7 @@ env:
   SOLUTION_FILE: SdkTestAutomation.sln
   TEST_PROJECT: SdkTestAutomation.Tests/SdkTestAutomation.Tests.csproj
   CONFIGURATION: Release
+  CONDUCTOR_API_URL: "http://localhost:8080/api"
 
 permissions:
   contents: read
@@ -53,32 +54,38 @@ jobs:
     needs: [deploy-conductor, build]
     runs-on: ubuntu-latest
     steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
     - name: Download Build Artifacts
       uses: actions/download-artifact@v4
       with:
         name: build-output
         path: .
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+    - name: Restore File Permissions
+      run: |
+        chmod -R +x .
 
     - name: Run Tests
       run: |
+        # Ensure test directory exists
+        mkdir -p TestResults
+        
+        # Run tests using build artifacts
         dotnet test "${{ env.TEST_PROJECT }}" \
           --configuration "${{ env.CONFIGURATION }}" \
           --no-build \
           --no-restore \
-          --logger:"console;verbosity=minimal" \
+          --logger:"console;verbosity=detailed" \
           --logger:"trx;LogFileName=test-results.trx" \
           --results-directory:TestResults \
           --blame-hang-timeout:5m
-      env:
-        CONDUCTOR_API_URL: "http://localhost:8080/api"
 
     - name: Upload Test Results
-      if: failure()
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
