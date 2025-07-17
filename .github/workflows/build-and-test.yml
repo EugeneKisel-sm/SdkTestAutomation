@@ -50,8 +50,9 @@ jobs:
       id: test-run
       run: >
         ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests
-        --format trx --output TestResults/test-results.trx
-        --format json --output TestResults/test-results.json
+        -reporter json
+        -trx TestResults/test-results.trx
+        -xml TestResults/test-results.xml
 
     - name: Test Results Reporter
       if: always()
@@ -73,57 +74,55 @@ jobs:
           let summary = '';
           
           try {
-            const jsonPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.json');
+            const xmlPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.xml');
             
-            if (fs.existsSync(jsonPath)) {
-              const jsonContent = fs.readFileSync(jsonPath, 'utf8');
-              const testResults = JSON.parse(jsonContent);
+            if (fs.existsSync(xmlPath)) {
+              const xmlContent = fs.readFileSync(xmlPath, 'utf8');
               
-              const total = testResults.total || 0;
-              const passed = testResults.passed || 0;
-              const failed = testResults.failed || 0;
-              const skipped = testResults.skipped || 0;
+              // Simple XML parsing to extract test results
+              const totalTests = (xmlContent.match(/<test/g) || []).length;
+              const passedTests = (xmlContent.match(/<test[^>]*result="Pass"/g) || []).length;
+              const failedTests = (xmlContent.match(/<test[^>]*result="Fail"/g) || []).length;
+              const skippedTests = (xmlContent.match(/<test[^>]*result="Skip"/g) || []).length;
               
               console.log('## Test Results Summary');
-              console.log(`- Total: ${total}`);
-              console.log(`- Passed: ${passed}`);
-              console.log(`- Failed: ${failed}`);
-              console.log(`- Skipped: ${skipped}`);
+              console.log(`- Total: ${totalTests}`);
+              console.log(`- Passed: ${passedTests}`);
+              console.log(`- Failed: ${failedTests}`);
+              console.log(`- Skipped: ${skippedTests}`);
               
               // Add to job summary
               summary += `## Test Results Summary\n\n`;
               summary += `| Metric | Count |\n`;
               summary += `|--------|-------|\n`;
-              summary += `| Total | ${total} |\n`;
-              summary += `| Passed | ${passed} |\n`;
-              summary += `| Failed | ${failed} |\n`;
-              summary += `| Skipped | ${skipped} |\n\n`;
+              summary += `| Total | ${totalTests} |\n`;
+              summary += `| Passed | ${passedTests} |\n`;
+              summary += `| Failed | ${failedTests} |\n`;
+              summary += `| Skipped | ${skippedTests} |\n\n`;
               
-              if (failed > 0 && testResults.tests) {
+              if (failedTests > 0) {
                 console.log('\n## Failed Tests');
                 summary += `## Failed Tests\n\n`;
                 
-                testResults.tests
-                  .filter(test => test.outcome === 'Failed')
-                  .forEach(test => {
-                    const testName = test.testDisplayName || test.testName;
-                    console.log(`- ${testName}`);
-                    summary += `### ${testName}\n`;
-                    
-                    if (test.errorMessage) {
-                      console.log(`  Error: ${test.errorMessage}`);
-                      summary += `**Error:** ${test.errorMessage}\n\n`;
+                const failedMatches = xmlContent.match(/<test[^>]*result="Fail"[^>]*name="([^"]*)"[^>]*>/g);
+                if (failedMatches) {
+                  failedMatches.forEach(match => {
+                    const testNameMatch = match.match(/name="([^"]*)"/);
+                    if (testNameMatch) {
+                      console.log(`- ${testNameMatch[1]}`);
+                      summary += `### ${testNameMatch[1]}\n`;
                     }
                   });
+                }
               }
             } else {
-              const message = 'JSON test result file not found. Tests may not have executed or JSON output was not generated.';
+              const message = 'XML test result file not found. Tests may not have executed or XML output was not generated.';
               console.log('## Test Results');
               console.log(message);
               summary += `## Test Results\n\n${message}\n`;
             }
           } catch (error) {
-            const message = `Error parsing JSON test result file: ${error.message}`;
+            const message = `Error parsing XML test result file: ${error.message}`;
             console.log('## Test Results');
             console.log(message);
             console.log('Tests executed using xUnit v3 console runner');
