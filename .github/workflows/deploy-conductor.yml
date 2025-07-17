@@ -28,6 +28,14 @@ jobs:
           echo "Starting Conductor services..."
           docker compose -f docker/docker-compose.yaml up -d
           
+          # Check if services started successfully
+          if ! docker compose -f docker/docker-compose.yaml ps --services | grep -q "redis\|elasticsearch\|conductor-server"; then
+            echo "ERROR: Failed to start required services"
+            docker compose -f docker/docker-compose.yaml ps
+            docker compose -f docker/docker-compose.yaml logs
+            exit 1
+          fi
+
       - name: Wait for Conductor to be ready
         working-directory: conductor
         run: |
