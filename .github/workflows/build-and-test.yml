@@ -47,10 +47,7 @@ jobs:
       run: ls -la "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/"
 
     - name: Run Tests
-      run: >
-        dotnet exec --runtimeconfig "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.runtimeconfig.json"
-        "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.dll"
-        --verbose
+      run: dotnet exec "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.dll"
 
     - name: Upload Test Results
       if: always()
