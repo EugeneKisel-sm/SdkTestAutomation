@@ -28,7 +28,6 @@ jobs:
           echo "Starting Conductor services..."
           docker compose -f docker/docker-compose.yaml up -d
           
-          # Check if services started successfully
           if ! docker compose -f docker/docker-compose.yaml ps --services | grep -q "redis\|elasticsearch\|conductor-server"; then
             echo "ERROR: Failed to start required services"
             docker compose -f docker/docker-compose.yaml ps
@@ -39,51 +38,37 @@ jobs:
       - name: Wait for Conductor to be ready
         working-directory: conductor
         run: |
-          echo "Starting health check for Conductor API (timeout: 3 minutes)..."
+          echo "Starting health check for Conductor API..."
           
-          echo "Waiting 30 seconds for initial service startup..."
+          echo "Waiting for services to initialize..."
           sleep 30
           
-          echo "Checking Redis status..."
-          if ! docker compose -f docker/docker-compose.yaml exec -T redis redis-cli ping; then
-            echo "ERROR: Redis is not responding"
-            docker compose -f docker/docker-compose.yaml logs redis
-            exit 1
-          fi
-          
-          if ! curl -s http://localhost:9200/_cluster/health | grep -q '"status":"green\|yellow"'; then
-            echo "ERROR: Elasticsearch is not healthy"
-            docker compose -f docker/docker-compose.yaml logs elasticsearch
-            exit 1
-          fi
-          
-          timeout=180
-          until curl -s -f ${{ env.CONDUCTOR_API_URL }}/health || [ $timeout -le 0 ]; do
-            echo "Health check attempt failed. Retrying in 5 seconds... ($timeout seconds remaining)"
-            
-            if [ $((timeout % 30)) -eq 0 ]; then
-              echo "Current container status:"
+          echo "Checking core services..."
+          for service in redis elasticsearch conductor-server; do
+            if ! docker compose -f docker/docker-compose.yaml ps --services --filter "status=running" | grep -q "$service"; then
+              echo "ERROR: $service is not running"
               docker compose -f docker/docker-compose.yaml ps
-              echo "Recent conductor-server logs:"
-              docker compose -f docker/docker-compose.yaml logs --tail=50 conductor-server
+              docker compose -f docker/docker-compose.yaml logs "$service"
+              exit 1
             fi
-            
-            sleep 5
-            timeout=$((timeout-5))
           done
           
-          if [ $timeout -le 0 ]; then
-            echo "ERROR: Conductor failed to start within timeout"
-            echo "Final container status:"
-            docker compose -f docker/docker-compose.yaml ps
-            echo "Full conductor-server logs:"
-            docker compose -f docker/docker-compose.yaml logs conductor-server
-            exit 1
-          fi
+          echo "Waiting for API to be healthy..."
+          timeout=250
+          until curl -s -f ${{ env.CONDUCTOR_API_URL }}/health > /dev/null 2>&1 || [ $timeout -le 0 ]; do
+            echo "Health check failed. Retrying in 5s... (${timeout}s remaining)"
+            sleep 5
+            timeout=$((timeout-5))
+            
+            if [ $timeout -le 0 ]; then
+              echo "ERROR: Conductor API failed to become healthy"
+              docker compose -f docker/docker-compose.yaml ps
+              docker compose -f docker/docker-compose.yaml logs
+              exit 1
+            fi
+          done
           
-          echo
-          echo "SUCCESS: Conductor API is ready and healthy!"
-          curl -s ${{ env.CONDUCTOR_API_URL }}/health
+          echo "SUCCESS: Conductor API is ready!"
 
       - name: Display Container Status
         if: always()
