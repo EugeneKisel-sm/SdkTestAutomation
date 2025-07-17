@@ -38,7 +38,7 @@ jobs:
         working-directory: conductor
         run: |
           echo "Waiting for services to initialize..."
-          sleep 10
+          sleep 30
           
           if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps | grep -q "healthy"; then
             echo "ERROR: Services are not healthy"
