@@ -45,12 +45,10 @@ jobs:
 
     - name: Run Tests
       run: >
-        dotnet test "SdkTestAutomation.Tests/SdkTestAutomation.Tests.csproj"
-        --configuration "${{ env.CONFIGURATION }}"
-        --logger "console;verbosity=detailed"
-        --logger "trx;LogFileName=test-results.trx"
-        --results-directory TestResults
-        --blame-hang-timeout 5m
+        dotnet exec --runtimeconfig "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.runtimeconfig.json"
+        "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/xunit.v3.runner.console.dll"
+        "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.dll"
+        --verbose
 
     - name: Upload Test Results
       if: always()
