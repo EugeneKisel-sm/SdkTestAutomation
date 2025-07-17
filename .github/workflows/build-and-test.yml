@@ -49,7 +49,7 @@ jobs:
     - name: Run Tests
       id: test-run
       run: >
-        dotnet exec "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests.dll"
+        ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests
         --format trx --output TestResults/test-results.trx
         --format json --output TestResults/test-results.json
 
