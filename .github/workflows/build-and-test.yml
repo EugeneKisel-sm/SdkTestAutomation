@@ -46,24 +46,17 @@ jobs:
     - name: Check Test Output Directory
       run: ls -la "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/"
 
+    - name: Create Test Results Directory
+      run: mkdir -p TestResults
+
     - name: Run Tests
       id: test-run
       run: >
         ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests
         -reporter json
-        -trx TestResults/test-results.trx
-        -xml TestResults/test-results.xml
+        -json TestResults/test-results.json
 
-    - name: Test Results Reporter
-      if: always()
-      uses: dorny/test-reporter@v1
-      with:
-        name: Test Results
-        path: TestResults/*.trx
-        reporter: java-junit
-        fail-on-error: false
-
-    - name: Alternative Test Reporter
+    - name: Parse and Report Test Results
       if: always()
       uses: actions/github-script@v7
       with:
@@ -74,16 +67,38 @@ jobs:
           let summary = '';
           
           try {
-            const xmlPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.xml');
+            const jsonPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.json');
             
-            if (fs.existsSync(xmlPath)) {
-              const xmlContent = fs.readFileSync(xmlPath, 'utf8');
+            if (fs.existsSync(jsonPath)) {
+              const jsonContent = fs.readFileSync(jsonPath, 'utf8');
+              const testResults = JSON.parse(jsonContent);
               
-              // Simple XML parsing to extract test results
-              const totalTests = (xmlContent.match(/<test/g) || []).length;
-              const passedTests = (xmlContent.match(/<test[^>]*result="Pass"/g) || []).length;
-              const failedTests = (xmlContent.match(/<test[^>]*result="Fail"/g) || []).length;
-              const skippedTests = (xmlContent.match(/<test[^>]*result="Skip"/g) || []).length;
+              // Extract test statistics
+              let totalTests = 0;
+              let passedTests = 0;
+              let failedTests = 0;
+              let skippedTests = 0;
+              const failedTestNames = [];
+              
+              // Parse the JSON structure to count tests
+              if (testResults && Array.isArray(testResults)) {
+                testResults.forEach(result => {
+                  if (result.$type === 'test-finished') {
+                    totalTests++;
+                    if (result.TestsFailed > 0) {
+                      failedTests++;
+                      // Try to get the test name from the test case
+                      if (result.TestDisplayName) {
+                        failedTestNames.push(result.TestDisplayName);
+                      }
+                    } else if (result.TestsSkipped > 0) {
+                      skippedTests++;
+                    } else {
+                      passedTests++;
+                    }
+                  }
+                });
+              }
               
               console.log('## Test Results Summary');
               console.log(`- Total: ${totalTests}`);
@@ -104,25 +119,26 @@ jobs:
                 console.log('\n## Failed Tests');
                 summary += `## Failed Tests\n\n`;
                 
-                const failedMatches = xmlContent.match(/<test[^>]*result="Fail"[^>]*name="([^"]*)"[^>]*>/g);
-                if (failedMatches) {
-                  failedMatches.forEach(match => {
-                    const testNameMatch = match.match(/name="([^"]*)"/);
-                    if (testNameMatch) {
-                      console.log(`- ${testNameMatch[1]}`);
-                      summary += `### ${testNameMatch[1]}\n`;
-                    }
-                  });
-                }
+                failedTestNames.forEach(testName => {
+                  console.log(`- ${testName}`);
+                  summary += `### ${testName}\n`;
+                });
               }
+              
+              // Set output for other steps
+              core.setOutput('total-tests', totalTests);
+              core.setOutput('passed-tests', passedTests);
+              core.setOutput('failed-tests', failedTests);
+              core.setOutput('skipped-tests', skippedTests);
+              
             } else {
-              const message = 'XML test result file not found. Tests may not have executed or XML output was not generated.';
+              const message = 'JSON test result file not found. Tests may not have executed or JSON output was not generated.';
               console.log('## Test Results');
               console.log(message);
               summary += `## Test Results\n\n${message}\n`;
             }
           } catch (error) {
-            const message = `Error parsing XML test result file: ${error.message}`;
+            const message = `Error parsing JSON test result file: ${error.message}`;
             console.log('## Test Results');
             console.log(message);
             console.log('Tests executed using xUnit v3 console runner');
