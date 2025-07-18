@@ -17,7 +17,6 @@ env:
   CONFIGURATION: Release
   CONDUCTOR_SERVER_URL: "http://localhost:8080/api"
   CONDUCTOR_REPO: conductor-oss/conductor
-  CONDUCTOR_BRANCH: main
   DOCKER_COMPOSE_FILE: docker/docker-compose.yaml
 
 permissions:
@@ -36,17 +35,16 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore NuGet Packages
-      run: dotnet restore ${{ env.SOLUTION_FILE }}
-
     - name: Build Solution
-      run: dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.CONFIGURATION }} --no-restore
+      run: |
+        dotnet restore ${{ env.SOLUTION_FILE }}
+        dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.CONFIGURATION }} --no-restore
 
     - name: Checkout Conductor Repository
       uses: actions/checkout@v4
       with:
         repository: ${{ env.CONDUCTOR_REPO }}
-        ref: ${{ env.CONDUCTOR_BRANCH }}
+        ref: main
         path: conductor
 
     - name: Start Conductor Services
@@ -75,9 +73,7 @@ jobs:
         fi
         
         timeout=200
-        until (curl -s http://localhost:8080/api/health > /dev/null 2>&1) || \
-              [ $timeout -le 0 ]; do
-        
+        until (curl -s http://localhost:8080/api/health > /dev/null 2>&1) || [ $timeout -le 0 ]; do
           if [ $((timeout % 30)) -eq 0 ]; then
             echo "Services status (${timeout}s remaining):"
             docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
@@ -98,9 +94,6 @@ jobs:
         
         echo "SUCCESS: Conductor API is ready!"
 
-    - name: Check Test Output Directory
-      run: ls -la "SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/"
-
     - name: Create Test Results Directory
       run: mkdir -p TestResults
 
@@ -110,7 +103,8 @@ jobs:
         ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests \
           -html TestResults/test-results.html \
           -trx TestResults/test-results.trx \
-          -jUnit TestResults/test-results.xml 2>&1
+          -jUnit TestResults/test-results.xml \
+          -xml TestResults/test-results.xunit.xml 2>&1
       continue-on-error: true
 
     - name: Install pandoc
@@ -169,7 +163,30 @@ jobs:
 
     - name: Add Test Report to Job Summary
       if: always()
-      run: cat TestResults/summary.md >> $GITHUB_STEP_SUMMARY
+      uses: dorny/test-reporter@v1
+      with:
+        name: Test Results (xUnit)
+        path: TestResults/test-results.xunit.xml
+        reporter: dotnet-xunit
+        fail-on-error: false
+
+    - name: Add Test Report Link to Summary
+      if: always()
+      run: |
+        echo "# Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Test reports are available in multiple formats:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "1. Check the test results in the Checks tab above" >> $GITHUB_STEP_SUMMARY
+        echo "2. For a detailed HTML report:" >> $GITHUB_STEP_SUMMARY
+        echo "   - Download the \`test-results\` artifact from the Artifacts section below" >> $GITHUB_STEP_SUMMARY
+        echo "   - Extract and open \`test-results.html\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Available formats:" >> $GITHUB_STEP_SUMMARY
+        echo "- HTML: Rich interactive report" >> $GITHUB_STEP_SUMMARY
+        echo "- TRX: Native .NET test results" >> $GITHUB_STEP_SUMMARY
+        echo "- JUnit: Standard XML format" >> $GITHUB_STEP_SUMMARY
+        echo "- xUnit: xUnit.net v2 XML format" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload Test Results
       if: always()
