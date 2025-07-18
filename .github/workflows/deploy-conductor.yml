@@ -10,7 +10,6 @@ env:
   CONDUCTOR_REPO: conductor-oss/conductor
   CONDUCTOR_BRANCH: main
   DOCKER_COMPOSE_FILE: docker/docker-compose.yaml
-  NETWORK_NAME: docker_internal
 
 jobs:
   deploy-conductor:
@@ -26,19 +25,7 @@ jobs:
       - name: Start Conductor Services
         working-directory: conductor
         run: |
-          # Check current network configuration
-          echo "Current network configuration:"
-          grep -A 5 "^networks:" ${{ env.DOCKER_COMPOSE_FILE }} || true
-          
-          # Get the actual network name from docker-compose config
-          echo "Full docker-compose configuration:"
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} config
-          
           docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
-          
-          # List all networks to find the correct one
-          echo "Available Docker networks:"
-          docker network ls
           
           if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps --services | grep -q "conductor-server"; then
             echo "ERROR: Failed to start conductor-server"
@@ -63,7 +50,7 @@ jobs:
           timeout=200
           until (curl -s http://localhost:8080/api/health > /dev/null 2>&1) || \
                 [ $timeout -le 0 ]; do
-          
+            
             if [ $((timeout % 30)) -eq 0 ]; then
               echo "Services status (${timeout}s remaining):"
               docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
