@@ -97,24 +97,36 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Install turndown
-      run: npm install -g turndown-cli
-
-    - name: Create Test Summary
+    - name: Convert HTML to Markdown
       if: always()
       run: |
-        # Create a summary file
-        echo "# Test Results" > TestResults/summary.md
-        echo "" >> TestResults/summary.md
-        echo "## Detailed Test Report" >> TestResults/summary.md
-        echo "" >> TestResults/summary.md
-        
-        if [ -f "TestResults/test-results.html" ]; then
-          # Convert HTML to Markdown
-          turndown TestResults/test-results.html >> TestResults/summary.md
-        else
-          echo "No test results HTML file found." >> TestResults/summary.md
-        fi
+        # Create a Node.js script for conversion
+        cat > convert.js << 'EOL'
+        const fs = require('fs');
+        const TurndownService = require('turndown');
+
+        const turndownService = new TurndownService({
+          headingStyle: 'atx',
+          codeBlockStyle: 'fenced'
+        });
+
+        const html = fs.readFileSync('TestResults/test-results.html', 'utf8');
+        const markdown = turndownService.turndown(html);
+
+        const summary = [
+          '# Test Results',
+          '',
+          '## Detailed Test Report',
+          '',
+          markdown
+        ].join('\n');
+
+        fs.writeFileSync('TestResults/summary.md', summary);
+        EOL
+
+        # Install turndown and run conversion
+        npm install turndown
+        node convert.js
 
     - name: Publish Test Results (TRX)
       if: always()
