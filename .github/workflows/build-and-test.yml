@@ -107,174 +107,64 @@ jobs:
     - name: Run Tests
       id: test-run
       run: |
-        ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests -reporter default -html TestResults/test-results.html 2>&1
+        ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests \
+          -html TestResults/test-results.html \
+          -trx TestResults/test-results.trx \
+          -jUnit TestResults/test-results.xml 2>&1
       continue-on-error: true
 
-    - name: Parse and Report Test Results
-      if: always()
-      uses: actions/github-script@v7
+    - name: Install Node.js
+      uses: actions/setup-node@v4
       with:
-        script: |
-          const fs = require('fs');
-          const path = require('path');
-          
-          let summary = '';
-          
-          try {
-            // Since we can't easily access the previous step's output, let's provide a basic summary
-            // and rely on the HTML report for detailed information
-            console.log('## Test Results Summary');
-            console.log('Tests have been executed and results are available in the HTML report.');
-            
-            // Check if HTML report exists
-            const htmlPath = path.join(process.env.GITHUB_WORKSPACE, 'TestResults', 'test-results.html');
-            if (fs.existsSync(htmlPath)) {
-              const htmlContent = fs.readFileSync(htmlPath, 'utf8');
-              
-              // Debug: Log a sample of the HTML content to understand its structure
-              console.log('HTML Content Sample (first 1000 chars):');
-              console.log(htmlContent.substring(0, 1000));
-              
-              // Try multiple patterns to extract test statistics from HTML content
-              let totalTests = 0, failedTests = 0, passedTests = 0, skippedTests = 0;
-              
-              // Pattern 1: Look for summary statistics in various formats
-              const patterns = [
-                /Total[^>]*>(\d+)</i,
-                /total[^>]*>(\d+)</i,
-                /Tests[^>]*>(\d+)</i,
-                /tests[^>]*>(\d+)</i,
-                /(\d+)\s*total/i,
-                /total\s*(\d+)/i
-              ];
-              
-              for (const pattern of patterns) {
-                const match = htmlContent.match(pattern);
-                if (match) {
-                  totalTests = parseInt(match[1]);
-                  console.log(`Found total tests: ${totalTests} using pattern: ${pattern}`);
-                  break;
-                }
-              }
-              
-              // Pattern 2: Look for failed tests
-              const failedPatterns = [
-                /Failed[^>]*>(\d+)</i,
-                /failed[^>]*>(\d+)</i,
-                /Failures[^>]*>(\d+)</i,
-                /failures[^>]*>(\d+)</i,
-                /(\d+)\s*failed/i,
-                /failed\s*(\d+)/i
-              ];
-              
-              for (const pattern of failedPatterns) {
-                const match = htmlContent.match(pattern);
-                if (match) {
-                  failedTests = parseInt(match[1]);
-                  console.log(`Found failed tests: ${failedTests} using pattern: ${pattern}`);
-                  break;
-                }
-              }
-              
-              // Pattern 3: Look for passed tests
-              const passedPatterns = [
-                /Passed[^>]*>(\d+)</i,
-                /passed[^>]*>(\d+)</i,
-                /Pass[^>]*>(\d+)</i,
-                /pass[^>]*>(\d+)</i,
-                /(\d+)\s*passed/i,
-                /passed\s*(\d+)/i
-              ];
-              
-              for (const pattern of passedPatterns) {
-                const match = htmlContent.match(pattern);
-                if (match) {
-                  passedTests = parseInt(match[1]);
-                  console.log(`Found passed tests: ${passedTests} using pattern: ${pattern}`);
-                  break;
-                }
-              }
-              
-              // Pattern 4: Look for skipped tests
-              const skippedPatterns = [
-                /Skipped[^>]*>(\d+)</i,
-                /skipped[^>]*>(\d+)</i,
-                /Skip[^>]*>(\d+)</i,
-                /skip[^>]*>(\d+)</i,
-                /(\d+)\s*skipped/i,
-                /skipped\s*(\d+)/i
-              ];
-              
-              for (const pattern of skippedPatterns) {
-                const match = htmlContent.match(pattern);
-                if (match) {
-                  skippedTests = parseInt(match[1]);
-                  console.log(`Found skipped tests: ${skippedTests} using pattern: ${pattern}`);
-                  break;
-                }
-              }
-              
-              // Use the extracted values (they're already declared above)
-              
-              if (totalTests > 0) {
-                console.log(`- Total: ${totalTests}`);
-                console.log(`- Passed: ${passedTests}`);
-                console.log(`- Failed: ${failedTests}`);
-                console.log(`- Skipped: ${skippedTests}`);
-                
-                // Add to job summary
-                summary += `## Test Results Summary\n\n`;
-                summary += `| Metric | Count |\n`;
-                summary += `|--------|-------|\n`;
-                summary += `| Total | ${totalTests} |\n`;
-                summary += `| Passed | ${passedTests} |\n`;
-                summary += `| Failed | ${failedTests} |\n`;
-                summary += `| Skipped | ${skippedTests} |\n\n`;
-                
-                if (failedTests > 0) {
-                  console.log('\n## Failed Tests');
-                  summary += `## Failed Tests\n\n`;
-                  summary += `⚠️ **${failedTests} test(s) failed**\n\n`;
-                  summary += `Please check the HTML test report for detailed failure information.\n\n`;
-                }
-                
-                // Set output for other steps
-                core.setOutput('total-tests', totalTests);
-                core.setOutput('passed-tests', passedTests);
-                core.setOutput('failed-tests', failedTests);
-                core.setOutput('skipped-tests', skippedTests);
-              } else {
-                console.log('Could not extract test statistics from HTML report.');
-                summary += `## Test Results\n\nTests executed successfully. Please check the HTML report for detailed results.\n\n`;
-              }
-            } else {
-              console.log('HTML test report not found.');
-              summary += `## Test Results\n\nTests executed but HTML report was not generated.\n\n`;
-            }
-            
-            // Add link to HTML report
-            if (fs.existsSync(htmlPath)) {
-              summary += `## 📊 Test Report\n\n`;
-              summary += `📄 **HTML Test Report**: Download the test results artifact to view the detailed HTML report.\n\n`;
-              summary += `The HTML report contains detailed information about test execution, including:\n`;
-              summary += `- Individual test results and execution times\n`;
-              summary += `- Failure details and stack traces\n`;
-              summary += `- Test output and logs\n`;
-              summary += `- Performance metrics\n\n`;
-            }
-            
-          } catch (error) {
-            const message = `Error parsing test results: ${error.message}`;
-            console.log('## Test Results');
-            console.log(message);
-            console.log('Tests executed using xUnit v3 console runner');
-            summary += `## Test Results\n\n${message}\n\nTests executed using xUnit v3 console runner.\n`;
-          }
-          
-          // Add to job summary
-          await core.summary
-            .addRaw(summary)
-            .write();
+        node-version: '20'
+
+    - name: Convert HTML Report to Markdown
+      if: always()
+      run: |
+        npm install -g html-to-markdown
+        
+        # Create a summary file
+        echo "# Test Results" > TestResults/summary.md
+        echo "" >> TestResults/summary.md
+        echo "## Detailed Test Report" >> TestResults/summary.md
+        echo "" >> TestResults/summary.md
+        
+        # Convert HTML to Markdown and append to summary
+        if [ -f "TestResults/test-results.html" ]; then
+          # Extract only the test results section (modify based on your HTML structure)
+          sed -n '/<div class="test-results">/,/<\/div>/p' TestResults/test-results.html > TestResults/results-section.html
+          html-to-markdown TestResults/results-section.html >> TestResults/summary.md
+        else
+          echo "No test results HTML file found." >> TestResults/summary.md
+        fi
+        
+        # Add download link
+        echo "" >> TestResults/summary.md
+        echo "## Full Test Report" >> TestResults/summary.md
+        echo "" >> TestResults/summary.md
+        echo "📊 [Download Full HTML Report](../suites/TestResults/test-results.html)" >> TestResults/summary.md
+
+    - name: Publish Test Results (TRX)
+      if: always()
+      uses: dorny/test-reporter@v1
+      with:
+        name: Test Results (TRX)
+        path: TestResults/test-results.trx
+        reporter: dotnet-trx
+        fail-on-error: true
+
+    - name: Publish Test Results (JUnit)
+      if: always()
+      uses: dorny/test-reporter@v1
+      with:
+        name: Test Results (JUnit)
+        path: TestResults/test-results.xml
+        reporter: java-junit
+        fail-on-error: true
+
+    - name: Add Test Report to Job Summary
+      if: always()
+      run: cat TestResults/summary.md >> $GITHUB_STEP_SUMMARY
 
     - name: Upload Test Results
       if: always()
