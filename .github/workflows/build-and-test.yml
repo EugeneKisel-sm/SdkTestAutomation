@@ -13,11 +13,11 @@ concurrency:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  SOLUTION_FILE: SdkTestAutomation.sln
   CONFIGURATION: Release
-  CONDUCTOR_SERVER_URL: "http://localhost:8080/api"
-  CONDUCTOR_REPO: conductor-oss/conductor
-  DOCKER_COMPOSE_FILE: docker/docker-compose.yaml
+  CONDUCTOR_API_URL: "http://localhost:8080/api"
+  CONDUCTOR_COMPOSE_FILE: conductor/docker/docker-compose.yaml
+  CONDUCTOR_TIMEOUT: 200
+  CONDUCTOR_CHECK_INTERVAL: 30
 
 permissions:
   contents: read
@@ -37,35 +37,39 @@ jobs:
 
     - name: Build Solution
       run: |
-        dotnet restore ${{ env.SOLUTION_FILE }}
-        dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.CONFIGURATION }} --no-restore
+        dotnet restore SdkTestAutomation.sln
+        dotnet build SdkTestAutomation.sln --configuration ${{ env.CONFIGURATION }} --no-restore
 
     - name: Checkout Conductor Repository
       uses: actions/checkout@v4
       with:
-        repository: ${{ env.CONDUCTOR_REPO }}
+        repository: conductor-oss/conductor
         ref: main
         path: conductor
 
     - name: Start Conductor Services
-      working-directory: conductor
       run: |
-        docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
+        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} up -d
         
         echo "Waiting for services to initialize..."
-        timeout=200
+        timeout=${{ env.CONDUCTOR_TIMEOUT }}
+        check_interval=${{ env.CONDUCTOR_CHECK_INTERVAL }}
+        
         while [ $timeout -gt 0 ]; do
-          if docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps | grep -q "healthy"; then
-            if curl -s ${{ env.CONDUCTOR_SERVER_URL }}/health > /dev/null 2>&1; then
+          # Check container health
+          if docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps | grep -q "healthy"; then
+            # Check API health
+            if curl -s ${{ env.CONDUCTOR_API_URL }}/health > /dev/null 2>&1; then
               echo "SUCCESS: Conductor API is ready!"
               exit 0
             fi
           fi
           
-          if [ $((timeout % 30)) -eq 0 ]; then
+          # Log status periodically
+          if [ $((timeout % check_interval)) -eq 0 ]; then
             echo "Services status (${timeout}s remaining):"
-            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
-            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs --tail=20 conductor-server
+            docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps
+            docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} logs --tail=20 conductor-server
           fi
           
           echo "Waiting for API... (${timeout}s remaining)"
@@ -74,8 +78,8 @@ jobs:
         done
         
         echo "ERROR: Conductor API failed to become healthy"
-        docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
-        docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs conductor-server
+        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps
+        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} logs conductor-server
         exit 1
 
     - name: Run Tests
@@ -85,9 +89,32 @@ jobs:
         ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests \
           -html TestResults/test-results.html \
           -trx TestResults/test-results.trx \
-          -jUnit TestResults/test-results.xml \
-          -xml TestResults/test-results.xunit.xml 2>&1
+          -jUnit TestResults/test-results.xml 2>&1
       continue-on-error: true
+
+    - name: Install pandoc for reporting
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc
+
+    - name: Create Test Summary
+      if: always()
+      run: |
+        # Create a summary file
+        echo "# Test Results" > TestResults/summary.md
+        echo "" >> TestResults/summary.md
+        echo "## Detailed Test Report" >> TestResults/summary.md
+        echo "" >> TestResults/summary.md
+        
+        if [ -f "TestResults/test-results.html" ]; then
+          # Convert HTML to Markdown
+          pandoc -f html -t gfm TestResults/test-results.html -o TestResults/converted.md
+          
+          # Append the converted content
+          cat TestResults/converted.md >> TestResults/summary.md
+        else
+          echo "No test results HTML file found." >> TestResults/summary.md
+        fi
 
     - name: Publish Test Results (TRX)
       if: always()
@@ -107,25 +134,21 @@ jobs:
         reporter: java-junit
         fail-on-error: false
 
-    - name: Publish Test Results (xUnit)
+    - name: Add Test Report to Job Summary
       if: always()
-      uses: dorny/test-reporter@v1
-      with:
-        name: Test Results (xUnit)
-        path: TestResults/test-results.xunit.xml
-        reporter: dotnet-xunit
-        fail-on-error: false
+      run: cat TestResults/summary.md >> $GITHUB_STEP_SUMMARY
 
     - name: Display Test Report List
       if: always()
       run: |
-        echo "# Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "📊 Test reports available in:" >> $GITHUB_STEP_SUMMARY
-        echo "- HTML: Rich interactive report" >> $GITHUB_STEP_SUMMARY
-        echo "- TRX: Native .NET test results" >> $GITHUB_STEP_SUMMARY
-        echo "- JUnit: Standard XML format" >> $GITHUB_STEP_SUMMARY
-        echo "- xUnit: xUnit.net v2 XML format" >> $GITHUB_STEP_SUMMARY
+        {
+          echo ""
+          echo "## Available Test Reports"
+          echo "📊 Test reports available in:"
+          echo "- HTML: Rich interactive report"
+          echo "- TRX: Native .NET test results"
+          echo "- JUnit: Standard XML format"
+        } >> $GITHUB_STEP_SUMMARY
 
     - name: Upload Test Results
       if: always()
@@ -137,5 +160,4 @@ jobs:
 
     - name: Cleanup Conductor
       if: always()
-      working-directory: conductor
-      run: docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} down
+      run: docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} down
