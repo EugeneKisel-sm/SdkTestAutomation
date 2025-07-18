@@ -50,6 +50,15 @@ jobs:
     - name: Create Test Results Directory
       run: mkdir -p TestResults
 
+    - name: Verify Conductor API
+      run: |
+        echo "Verifying Conductor API at ${{ env.CONDUCTOR_SERVER_URL }}"
+        curl -v ${{ env.CONDUCTOR_SERVER_URL }}/health
+        if [ $? -ne 0 ]; then
+          echo "ERROR: Cannot connect to Conductor API"
+          exit 1
+        fi
+
     - name: Run Tests
       id: test-run
       run: |

@@ -29,9 +29,30 @@ jobs:
           ref: ${{ env.CONDUCTOR_BRANCH }}
           path: conductor
 
+      - name: Install Docker Compose
+        run: |
+          if ! command -v docker compose &> /dev/null; then
+            echo "Installing Docker Compose..."
+            mkdir -p ~/.docker/cli-plugins/
+            curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+            chmod +x ~/.docker/cli-plugins/docker-compose
+            
+            if ! command -v docker compose &> /dev/null; then
+              echo "ERROR: Failed to install Docker Compose"
+              exit 1
+            fi
+          fi
+          
+          echo "Docker Compose version:"
+          docker compose version
+
       - name: Start Conductor Services
         working-directory: conductor
         run: |
+          # Ensure no stale containers
+          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} down --volumes --remove-orphans
+          
+          # Start services
           docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
           
           if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps --services | grep -q "conductor-server"; then
@@ -74,9 +95,16 @@ jobs:
             exit 1
           fi
           
+          # Verify API is responding correctly
+          if ! curl -s ${{ env.CONDUCTOR_API_URL }}/health | grep -q "UP"; then
+            echo "ERROR: Conductor API health check failed"
+            curl -v ${{ env.CONDUCTOR_API_URL }}/health
+            exit 1
+          fi
+          
           echo "SUCCESS: Conductor API is ready at ${{ env.CONDUCTOR_API_URL }}!"
 
       - name: Cleanup on Failure
         if: failure()
         working-directory: conductor
-        run: docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} down 
+        run: docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} down --volumes 
