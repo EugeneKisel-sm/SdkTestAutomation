@@ -16,7 +16,7 @@ env:
   SOLUTION_FILE: SdkTestAutomation.sln
   CONFIGURATION: Release
   CONDUCTOR_SERVER_URL: "http://conductor-server:8080/api"
-  NETWORK_NAME: conductor-test-network
+  NETWORK_NAME: conductor_internal
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/dotnet/sdk:8.0
-      options: --network conductor-test-network
+      options: --network conductor_internal
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
