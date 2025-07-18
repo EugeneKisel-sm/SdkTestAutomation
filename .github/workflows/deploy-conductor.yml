@@ -10,7 +10,7 @@ env:
   CONDUCTOR_REPO: conductor-oss/conductor
   CONDUCTOR_BRANCH: main
   DOCKER_COMPOSE_FILE: docker/docker-compose.yaml
-  NETWORK_NAME: conductor_internal
+  NETWORK_NAME: docker_internal
 
 jobs:
   deploy-conductor:
@@ -30,7 +30,15 @@ jobs:
           echo "Current network configuration:"
           grep -A 5 "^networks:" ${{ env.DOCKER_COMPOSE_FILE }} || true
           
+          # Get the actual network name from docker-compose config
+          echo "Full docker-compose configuration:"
+          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} config
+          
           docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
+          
+          # List all networks to find the correct one
+          echo "Available Docker networks:"
+          docker network ls
           
           if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps --services | grep -q "conductor-server"; then
             echo "ERROR: Failed to start conductor-server"

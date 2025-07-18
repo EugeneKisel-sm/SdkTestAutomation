@@ -16,7 +16,7 @@ env:
   SOLUTION_FILE: SdkTestAutomation.sln
   CONFIGURATION: Release
   CONDUCTOR_SERVER_URL: "http://conductor-server:8080/api"
-  NETWORK_NAME: conductor_internal
+  NETWORK_NAME: docker_internal
 
 permissions:
   contents: read
@@ -29,9 +29,6 @@ jobs:
   test:
     needs: [deploy-conductor]
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/dotnet/sdk:8.0
-      options: --network conductor_internal
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -53,10 +50,31 @@ jobs:
     - name: Create Test Results Directory
       run: mkdir -p TestResults
 
-    - name: Run Tests
-      id: test-run
+    - name: Inspect Docker Networks
       run: |
-        ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests -reporter default -html TestResults/test-results.html 2>&1
+        echo "Available Docker networks:"
+        docker network ls
+        
+        # Find the Conductor network
+        CONDUCTOR_NETWORK=$(docker network ls --filter name=conductor --format "{{.Name}}" | head -n 1)
+        if [ -n "$CONDUCTOR_NETWORK" ]; then
+          echo "Found Conductor network: $CONDUCTOR_NETWORK"
+          echo "Network details:"
+          docker network inspect $CONDUCTOR_NETWORK
+        else
+          echo "ERROR: Could not find Conductor network"
+          exit 1
+        fi
+
+    - name: Run Tests in Container
+      run: |
+        CONDUCTOR_NETWORK=$(docker network ls --filter name=conductor --format "{{.Name}}" | head -n 1)
+        docker run --rm \
+          --network $CONDUCTOR_NETWORK \
+          -v ${{ github.workspace }}:/app \
+          -w /app \
+          mcr.microsoft.com/dotnet/sdk:8.0 \
+          ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests -reporter default -html TestResults/test-results.html 2>&1
       continue-on-error: true
 
     - name: Parse and Report Test Results
