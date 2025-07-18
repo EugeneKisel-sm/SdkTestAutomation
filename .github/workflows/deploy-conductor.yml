@@ -28,8 +28,16 @@ jobs:
       - name: Install Docker Compose
         run: |
           apt-get update
-          apt-get install -y docker.io docker-compose-plugin
+          apt-get install -y docker.io curl
           systemctl start docker
+          
+          # Install Docker Compose v2
+          mkdir -p ~/.docker/cli-plugins/
+          curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+          chmod +x ~/.docker/cli-plugins/docker-compose
+          
+          # Verify installation
+          docker compose version
 
       - name: Start Conductor Services
         working-directory: conductor
