@@ -14,7 +14,7 @@ concurrency:
 env:
   DOTNET_VERSION: '8.0.x'
   CONFIGURATION: Release
-  CONDUCTOR_API_URL: "http://localhost:8080/api"
+  CONDUCTOR_SERVER_URL: "http://localhost:8080/api"
   CONDUCTOR_COMPOSE_FILE: conductor/docker/docker-compose.yaml
   CONDUCTOR_TIMEOUT: 200
   CONDUCTOR_CHECK_INTERVAL: 30
@@ -59,7 +59,7 @@ jobs:
           # Check container health
           if docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps | grep -q "healthy"; then
             # Check API health
-            if curl -s ${{ env.CONDUCTOR_API_URL }}/health > /dev/null 2>&1; then
+            if curl -s ${{ env.CONDUCTOR_SERVER_URL }}/health > /dev/null 2>&1; then
               echo "SUCCESS: Conductor API is ready!"
               exit 0
             fi
@@ -97,8 +97,8 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Install html-to-markdown
-      run: npm install -g @tehshrike/html-to-markdown
+    - name: Install turndown
+      run: npm install -g turndown-cli
 
     - name: Create Test Summary
       if: always()
@@ -110,12 +110,8 @@ jobs:
         echo "" >> TestResults/summary.md
         
         if [ -f "TestResults/test-results.html" ]; then
-          # Extract test results section (adjust selectors if needed)
-          html-to-markdown TestResults/test-results.html \
-            --selectors "div.test-results, div.test-summary, div.test-details" \
-            --tables \
-            --bullets \
-            >> TestResults/summary.md
+          # Convert HTML to Markdown
+          turndown TestResults/test-results.html >> TestResults/summary.md
         else
           echo "No test results HTML file found." >> TestResults/summary.md
         fi
