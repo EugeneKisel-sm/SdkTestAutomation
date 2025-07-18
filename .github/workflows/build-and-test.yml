@@ -104,19 +104,54 @@ jobs:
         cat > convert.js << 'EOL'
         const fs = require('fs');
         const TurndownService = require('turndown');
+        const jsdom = require('jsdom');
+        const { JSDOM } = jsdom;
 
+        // Read and parse HTML
+        const html = fs.readFileSync('TestResults/test-results.html', 'utf8');
+        const dom = new JSDOM(html);
+        const document = dom.window.document;
+
+        // Remove style, script tags and their contents
+        document.querySelectorAll('style, script').forEach(el => el.remove());
+
+        // Get only the test results content
+        const testResults = document.querySelector('body').innerHTML
+          .replace(/^\s*xUnit\.net Test Results/, '') // Remove header text
+          .trim();
+
+        // Convert to Markdown
         const turndownService = new TurndownService({
           headingStyle: 'atx',
-          codeBlockStyle: 'fenced'
+          codeBlockStyle: 'fenced',
+          bulletListMarker: '-',
+          hr: '---'
         });
 
-        const html = fs.readFileSync('TestResults/test-results.html', 'utf8');
-        const markdown = turndownService.turndown(html);
+        // Custom rules for test results
+        turndownService.addRule('testResults', {
+          filter: ['div', 'span'],
+          replacement: function (content, node) {
+            // Handle success/failure/skipped classes
+            if (node.classList.contains('success')) return '✅ ' + content;
+            if (node.classList.contains('failure')) return '❌ ' + content;
+            if (node.classList.contains('skipped')) return '⚠️ ' + content;
+            // Add separator after each test
+            if (node.classList.contains('row') || node.classList.contains('altrow')) {
+              return content + '\n\n---\n';
+            }
+            return content;
+          }
+        });
+
+        const markdown = turndownService.turndown(testResults);
 
         const summary = [
           '# Test Results',
           '',
           '## Detailed Test Report',
+          '',
+          '---',
           '',
           markdown
         ].join('\n');
@@ -124,8 +159,8 @@ jobs:
         fs.writeFileSync('TestResults/summary.md', summary);
         EOL
 
-        # Install turndown and run conversion
-        npm install turndown
+        # Install dependencies and run conversion
+        npm install turndown jsdom
         node convert.js
 
     - name: Publish Test Results (TRX)
