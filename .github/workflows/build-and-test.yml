@@ -52,28 +52,16 @@ jobs:
       run: |
         docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
         
-        if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps --services | grep -q "conductor-server"; then
-          echo "ERROR: Failed to start conductor-server"
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs
-          exit 1
-        fi
-
-    - name: Wait for Conductor to be ready
-      working-directory: conductor
-      run: |
         echo "Waiting for services to initialize..."
-        sleep 30
-        
-        if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps | grep -q "healthy"; then
-          echo "ERROR: Services are not healthy"
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs
-          exit 1
-        fi
-        
         timeout=200
-        until (curl -s http://localhost:8080/api/health > /dev/null 2>&1) || [ $timeout -le 0 ]; do
+        while [ $timeout -gt 0 ]; do
+          if docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps | grep -q "healthy"; then
+            if curl -s ${{ env.CONDUCTOR_SERVER_URL }}/health > /dev/null 2>&1; then
+              echo "SUCCESS: Conductor API is ready!"
+              exit 0
+            fi
+          fi
+          
           if [ $((timeout % 30)) -eq 0 ]; then
             echo "Services status (${timeout}s remaining):"
             docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
@@ -85,63 +73,21 @@ jobs:
           timeout=$((timeout-10))
         done
         
-        if [ $timeout -le 0 ]; then
-          echo "ERROR: Conductor API failed to become healthy"
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs conductor-server
-          exit 1
-        fi
-        
-        echo "SUCCESS: Conductor API is ready!"
-
-    - name: Create Test Results Directory
-      run: mkdir -p TestResults
+        echo "ERROR: Conductor API failed to become healthy"
+        docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
+        docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs conductor-server
+        exit 1
 
     - name: Run Tests
       id: test-run
       run: |
+        mkdir -p TestResults
         ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests \
           -html TestResults/test-results.html \
           -trx TestResults/test-results.trx \
           -jUnit TestResults/test-results.xml \
           -xml TestResults/test-results.xunit.xml 2>&1
       continue-on-error: true
-
-    - name: Install pandoc
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y pandoc
-
-    - name: Create Test Summary
-      if: always()
-      run: |
-        # Create a summary file
-        echo "# Test Results" > TestResults/summary.md
-        echo "" >> TestResults/summary.md
-        echo "## Detailed Test Report" >> TestResults/summary.md
-        echo "" >> TestResults/summary.md
-        
-        if [ -f "TestResults/test-results.html" ]; then
-          # Convert HTML to Markdown
-          pandoc -f html -t gfm TestResults/test-results.html -o TestResults/converted.md
-          
-          # Append the converted content
-          cat TestResults/converted.md >> TestResults/summary.md
-        else
-          echo "No test results HTML file found." >> TestResults/summary.md
-        fi
-        
-        # Add download link
-        echo "" >> TestResults/summary.md
-        echo "## Full Test Report" >> TestResults/summary.md
-        echo "" >> TestResults/summary.md
-        echo "📊 The full HTML report is available in the workflow artifacts. Download the \`test-results\` artifact and open \`test-results.html\`." >> TestResults/summary.md
-        echo "" >> TestResults/summary.md
-        echo "To download:" >> TestResults/summary.md
-        echo "1. Go to the [Actions tab](../../actions)" >> TestResults/summary.md
-        echo "2. Click on this workflow run" >> TestResults/summary.md
-        echo "3. Scroll down to Artifacts" >> TestResults/summary.md
-        echo "4. Download the \`test-results\` artifact" >> TestResults/summary.md
 
     - name: Publish Test Results (TRX)
       if: always()
@@ -161,7 +107,7 @@ jobs:
         reporter: java-junit
         fail-on-error: false
 
-    - name: Add Test Report to Job Summary
+    - name: Publish Test Results (xUnit)
       if: always()
       uses: dorny/test-reporter@v1
       with:
@@ -170,19 +116,12 @@ jobs:
         reporter: dotnet-xunit
         fail-on-error: false
 
-    - name: Add Test Report Link to Summary
+    - name: Display Test Report List
       if: always()
       run: |
         echo "# Test Results" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "📊 Test reports are available in multiple formats:" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "1. Check the test results in the Checks tab above" >> $GITHUB_STEP_SUMMARY
-        echo "2. For a detailed HTML report:" >> $GITHUB_STEP_SUMMARY
-        echo "   - Download the \`test-results\` artifact from the Artifacts section below" >> $GITHUB_STEP_SUMMARY
-        echo "   - Extract and open \`test-results.html\`" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Available formats:" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Test reports available in:" >> $GITHUB_STEP_SUMMARY
         echo "- HTML: Rich interactive report" >> $GITHUB_STEP_SUMMARY
         echo "- TRX: Native .NET test results" >> $GITHUB_STEP_SUMMARY
         echo "- JUnit: Standard XML format" >> $GITHUB_STEP_SUMMARY
