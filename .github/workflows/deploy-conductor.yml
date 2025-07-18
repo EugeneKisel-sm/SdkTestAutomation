@@ -2,6 +2,10 @@ name: Deploy Conductor
 
 on:
   workflow_call:
+    outputs:
+      conductor_url:
+        description: "The URL of the deployed Conductor API"
+        value: ${{ jobs.deploy-conductor.outputs.conductor_url }}
 
 permissions:
   contents: read
@@ -10,13 +14,13 @@ env:
   CONDUCTOR_REPO: conductor-oss/conductor
   CONDUCTOR_BRANCH: main
   DOCKER_COMPOSE_FILE: docker/docker-compose.yaml
+  CONDUCTOR_API_URL: "http://localhost:8080/api"
 
 jobs:
   deploy-conductor:
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/dotnet/sdk:8.0
-      options: --user root
+    outputs:
+      conductor_url: ${{ env.CONDUCTOR_API_URL }}
     steps:
       - name: Checkout Conductor Repository
         uses: actions/checkout@v4
@@ -24,20 +28,6 @@ jobs:
           repository: ${{ env.CONDUCTOR_REPO }}
           ref: ${{ env.CONDUCTOR_BRANCH }}
           path: conductor
-
-      - name: Install Docker Compose
-        run: |
-          apt-get update
-          apt-get install -y docker.io curl
-          systemctl start docker
-          
-          # Install Docker Compose v2
-          mkdir -p ~/.docker/cli-plugins/
-          curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
-          chmod +x ~/.docker/cli-plugins/docker-compose
-          
-          # Verify installation
-          docker compose version
 
       - name: Start Conductor Services
         working-directory: conductor
@@ -65,9 +55,7 @@ jobs:
           fi
           
           timeout=200
-          until (curl -s http://localhost:8080/api/health > /dev/null 2>&1) || \
-                [ $timeout -le 0 ]; do
-            
+          until (curl -s ${{ env.CONDUCTOR_API_URL }}/health > /dev/null 2>&1) || [ $timeout -le 0 ]; do
             if [ $((timeout % 30)) -eq 0 ]; then
               echo "Services status (${timeout}s remaining):"
               docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
@@ -86,7 +74,7 @@ jobs:
             exit 1
           fi
           
-          echo "SUCCESS: Conductor API is ready!"
+          echo "SUCCESS: Conductor API is ready at ${{ env.CONDUCTOR_API_URL }}!"
 
       - name: Cleanup on Failure
         if: failure()

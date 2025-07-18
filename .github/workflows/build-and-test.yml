@@ -15,7 +15,6 @@ env:
   DOTNET_VERSION: '8.0.x'
   SOLUTION_FILE: SdkTestAutomation.sln
   CONFIGURATION: Release
-  CONDUCTOR_SERVER_URL: "http://localhost:8080/api"
 
 permissions:
   contents: read
@@ -28,6 +27,8 @@ jobs:
   test:
     needs: [deploy-conductor]
     runs-on: ubuntu-latest
+    env:
+      CONDUCTOR_SERVER_URL: ${{ needs.deploy-conductor.outputs.conductor_url }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
