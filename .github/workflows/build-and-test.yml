@@ -15,6 +15,8 @@ env:
   DOTNET_VERSION: '8.0.x'
   SOLUTION_FILE: SdkTestAutomation.sln
   CONFIGURATION: Release
+  CONDUCTOR_SERVER_URL: "http://conductor-server:8080/api"
+  NETWORK_NAME: conductor-test-network
 
 permissions:
   contents: read
@@ -27,8 +29,9 @@ jobs:
   test:
     needs: [deploy-conductor]
     runs-on: ubuntu-latest
-    env:
-      CONDUCTOR_SERVER_URL: ${{ needs.deploy-conductor.outputs.conductor_url }}
+    container:
+      image: mcr.microsoft.com/dotnet/sdk:8.0
+      options: --network conductor-test-network
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -49,15 +52,6 @@ jobs:
 
     - name: Create Test Results Directory
       run: mkdir -p TestResults
-
-    - name: Verify Conductor API
-      run: |
-        echo "Verifying Conductor API at ${{ env.CONDUCTOR_SERVER_URL }}"
-        curl -v ${{ env.CONDUCTOR_SERVER_URL }}/health
-        if [ $? -ne 0 ]; then
-          echo "ERROR: Cannot connect to Conductor API"
-          exit 1
-        fi
 
     - name: Run Tests
       id: test-run

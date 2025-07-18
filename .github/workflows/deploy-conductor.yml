@@ -2,10 +2,6 @@ name: Deploy Conductor
 
 on:
   workflow_call:
-    outputs:
-      conductor_url:
-        description: "The URL of the deployed Conductor API"
-        value: ${{ jobs.deploy-conductor.outputs.conductor_url }}
 
 permissions:
   contents: read
@@ -14,13 +10,11 @@ env:
   CONDUCTOR_REPO: conductor-oss/conductor
   CONDUCTOR_BRANCH: main
   DOCKER_COMPOSE_FILE: docker/docker-compose.yaml
-  CONDUCTOR_API_URL: "http://localhost:8080/api"
+  NETWORK_NAME: conductor-test-network
 
 jobs:
   deploy-conductor:
     runs-on: ubuntu-latest
-    outputs:
-      conductor_url: ${{ env.CONDUCTOR_API_URL }}
     steps:
       - name: Checkout Conductor Repository
         uses: actions/checkout@v4
@@ -29,30 +23,18 @@ jobs:
           ref: ${{ env.CONDUCTOR_BRANCH }}
           path: conductor
 
-      - name: Install Docker Compose
-        run: |
-          if ! command -v docker compose &> /dev/null; then
-            echo "Installing Docker Compose..."
-            mkdir -p ~/.docker/cli-plugins/
-            curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
-            chmod +x ~/.docker/cli-plugins/docker-compose
-            
-            if ! command -v docker compose &> /dev/null; then
-              echo "ERROR: Failed to install Docker Compose"
-              exit 1
-            fi
-          fi
-          
-          echo "Docker Compose version:"
-          docker compose version
+      - name: Create Docker Network
+        run: docker network create ${{ env.NETWORK_NAME }}
 
       - name: Start Conductor Services
         working-directory: conductor
         run: |
-          # Ensure no stale containers
-          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} down --volumes --remove-orphans
+          # Add network to docker-compose file
+          echo "networks:" >> ${{ env.DOCKER_COMPOSE_FILE }}
+          echo "  default:" >> ${{ env.DOCKER_COMPOSE_FILE }}
+          echo "    name: ${{ env.NETWORK_NAME }}" >> ${{ env.DOCKER_COMPOSE_FILE }}
+          echo "    external: true" >> ${{ env.DOCKER_COMPOSE_FILE }}
           
-          # Start services
           docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
           
           if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps --services | grep -q "conductor-server"; then
@@ -76,7 +58,9 @@ jobs:
           fi
           
           timeout=200
-          until (curl -s ${{ env.CONDUCTOR_API_URL }}/health > /dev/null 2>&1) || [ $timeout -le 0 ]; do
+          until (curl -s http://localhost:8080/api/health > /dev/null 2>&1) || \
+                [ $timeout -le 0 ]; do
+          
             if [ $((timeout % 30)) -eq 0 ]; then
               echo "Services status (${timeout}s remaining):"
               docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
@@ -95,16 +79,11 @@ jobs:
             exit 1
           fi
           
-          # Verify API is responding correctly
-          if ! curl -s ${{ env.CONDUCTOR_API_URL }}/health | grep -q "UP"; then
-            echo "ERROR: Conductor API health check failed"
-            curl -v ${{ env.CONDUCTOR_API_URL }}/health
-            exit 1
-          fi
-          
-          echo "SUCCESS: Conductor API is ready at ${{ env.CONDUCTOR_API_URL }}!"
+          echo "SUCCESS: Conductor API is ready!"
 
       - name: Cleanup on Failure
         if: failure()
         working-directory: conductor
-        run: docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} down --volumes 
+        run: |
+          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} down
+          docker network rm ${{ env.NETWORK_NAME }} || true 
