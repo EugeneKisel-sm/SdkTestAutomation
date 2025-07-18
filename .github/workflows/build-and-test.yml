@@ -92,10 +92,13 @@ jobs:
           -jUnit TestResults/test-results.xml 2>&1
       continue-on-error: true
 
-    - name: Install pandoc for reporting
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y pandoc
+    - name: Setup Node.js for reporting
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install html-to-markdown
+      run: npm install -g @tehshrike/html-to-markdown
 
     - name: Create Test Summary
       if: always()
@@ -107,11 +110,12 @@ jobs:
         echo "" >> TestResults/summary.md
         
         if [ -f "TestResults/test-results.html" ]; then
-          # Convert HTML to Markdown
-          pandoc -f html -t gfm TestResults/test-results.html -o TestResults/converted.md
-          
-          # Append the converted content
-          cat TestResults/converted.md >> TestResults/summary.md
+          # Extract test results section (adjust selectors if needed)
+          html-to-markdown TestResults/test-results.html \
+            --selectors "div.test-results, div.test-summary, div.test-details" \
+            --tables \
+            --bullets \
+            >> TestResults/summary.md
         else
           echo "No test results HTML file found." >> TestResults/summary.md
         fi
