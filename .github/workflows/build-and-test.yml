@@ -141,7 +141,13 @@ jobs:
         echo "" >> TestResults/summary.md
         echo "## Full Test Report" >> TestResults/summary.md
         echo "" >> TestResults/summary.md
-        echo "📊 [Download Full HTML Report](../suites/TestResults/test-results.html)" >> TestResults/summary.md
+        echo "📊 The full HTML report is available in the workflow artifacts. Download the \`test-results\` artifact and open \`test-results.html\`." >> TestResults/summary.md
+        echo "" >> TestResults/summary.md
+        echo "To download:" >> TestResults/summary.md
+        echo "1. Go to the [Actions tab](../../actions)" >> TestResults/summary.md
+        echo "2. Click on this workflow run" >> TestResults/summary.md
+        echo "3. Scroll down to Artifacts" >> TestResults/summary.md
+        echo "4. Download the \`test-results\` artifact" >> TestResults/summary.md
 
     - name: Publish Test Results (TRX)
       if: always()
