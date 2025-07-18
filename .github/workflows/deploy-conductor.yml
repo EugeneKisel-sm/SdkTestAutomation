@@ -29,11 +29,26 @@ jobs:
       - name: Start Conductor Services
         working-directory: conductor
         run: |
-          # Add network to docker-compose file
-          echo "networks:" >> ${{ env.DOCKER_COMPOSE_FILE }}
-          echo "  default:" >> ${{ env.DOCKER_COMPOSE_FILE }}
-          echo "    name: ${{ env.NETWORK_NAME }}" >> ${{ env.DOCKER_COMPOSE_FILE }}
-          echo "    external: true" >> ${{ env.DOCKER_COMPOSE_FILE }}
+          # Check current network configuration
+          echo "Current network configuration:"
+          grep -A 5 "^networks:" ${{ env.DOCKER_COMPOSE_FILE }} || true
+          
+          # Update network configuration
+          if grep -q "^networks:" ${{ env.DOCKER_COMPOSE_FILE }}; then
+            # Replace existing network configuration
+            sed -i '/^networks:/,/^[^ ]/c\networks:\n  default:\n    name: conductor-test-network\n    external: true\n' ${{ env.DOCKER_COMPOSE_FILE }}
+          else
+            # Add new network configuration
+            cat >> ${{ env.DOCKER_COMPOSE_FILE }} << EOL
+          networks:
+            default:
+              name: conductor-test-network
+              external: true
+          EOL
+          fi
+          
+          echo "Updated network configuration:"
+          grep -A 5 "^networks:" ${{ env.DOCKER_COMPOSE_FILE }}
           
           docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
           
