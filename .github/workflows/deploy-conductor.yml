@@ -3,9 +3,13 @@ name: Deploy Conductor
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 env:
   CONDUCTOR_REPO: conductor-oss/conductor
   CONDUCTOR_BRANCH: main
+  DOCKER_COMPOSE_FILE: docker/docker-compose.yaml
 
 jobs:
   deploy-conductor:
@@ -21,38 +25,53 @@ jobs:
       - name: Start Conductor Services
         working-directory: conductor
         run: |
-          echo "Starting Conductor services..."
-          docker compose -f docker/docker-compose.yaml up -d
+          docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
           
+          if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps --services | grep -q "conductor-server"; then
+            echo "ERROR: Failed to start conductor-server"
+            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
+            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs
+            exit 1
+          fi
+
       - name: Wait for Conductor to be ready
+        working-directory: conductor
         run: |
-          echo "Starting health check for Conductor API (timeout: 3 minutes)..."
-          timeout=180
-          until curl -s -f http://localhost:8080/health || [ $timeout -le 0 ]; do
-            echo "Health check attempt failed. Retrying in 5 seconds... ($timeout seconds remaining)"
-            sleep 5
-            timeout=$((timeout-5))
-          done
+          echo "Waiting for services to initialize..."
+          sleep 30
           
-          if [ $timeout -le 0 ]; then
-            echo "ERROR: Conductor failed to start within 3 minutes"
-            echo "Displaying Docker logs for troubleshooting:"
-            docker compose -f conductor/docker/docker-compose.yaml logs
+          if ! docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps | grep -q "healthy"; then
+            echo "ERROR: Services are not healthy"
+            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
+            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs
             exit 1
           fi
           
-          echo
-          echo "SUCCESS: Conductor API is ready and healthy!"
-
-      - name: Display Container Status
-        if: always()
-        run: |
-          echo "Container Status:"
-          docker compose -f conductor/docker/docker-compose.yaml ps
+          timeout=200
+          until (curl -s http://localhost:8080/api/health > /dev/null 2>&1) || \
+                [ $timeout -le 0 ]; do
+            
+            if [ $((timeout % 30)) -eq 0 ]; then
+              echo "Services status (${timeout}s remaining):"
+              docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
+              docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs --tail=20 conductor-server
+            fi
+            
+            echo "Waiting for API... (${timeout}s remaining)"
+            sleep 10
+            timeout=$((timeout-10))
+          done
+          
+          if [ $timeout -le 0 ]; then
+            echo "ERROR: Conductor API failed to become healthy"
+            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} ps
+            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} logs conductor-server
+            exit 1
+          fi
+          
+          echo "SUCCESS: Conductor API is ready!"
 
       - name: Cleanup on Failure
         if: failure()
         working-directory: conductor
-        run: |
-          echo "Stopping and removing Conductor containers..."
-          docker compose -f docker/docker-compose.yaml down 
+        run: docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} down 
