@@ -16,4 +16,4 @@ public class WorkflowResourceApi : HttpClient
     {
         return SendGetRequest<GetWorkflowResponse>(ApiUrl.WorkflowResource.WorkflowUrl + $"/{workflowId}", request);
     }
-} 
+}

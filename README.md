@@ -129,7 +129,6 @@ git clone https://github.com/conductor-oss/python-sdk
 cd python-sdk
 pip install -e .
 ```
-
 ## Getting Started
 
 ### Prerequisites
@@ -170,6 +169,13 @@ SDK_TYPE=CSharp dotnet test --filter "Category=SdkComparison"
 ### Base Test Classes
 
 #### Standard API Tests
+
+All test classes should inherit from `BaseTest` which provides:
+- Automatic test logging
+- Test context management
+- API client initialization
+
+Example:
 ```csharp
 public class MyTests : BaseTest
 {
@@ -197,7 +203,6 @@ public class MySdkTests : BaseSdkTest
     }
 }
 ```
-
 ### Request Models
 
 Create request models by inheriting from `HttpRequest` and using attributes:
@@ -280,7 +285,6 @@ To add support for a new SDK:
 4. Update `SdkClientFactory` to support the new SDK type
 5. Add the new project to the solution file
 6. Update documentation
-
 ## License
 
 This project is licensed under the terms provided in the LICENSE file.

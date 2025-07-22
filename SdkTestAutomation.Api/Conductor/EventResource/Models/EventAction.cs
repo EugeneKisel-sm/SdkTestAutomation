@@ -9,4 +9,4 @@ public class EventAction
     public TerminateWorkflow TerminateWorkflow { get; set; }
     public UpdateWorkflow UpdateWorkflow { get; set; }
     public bool ExpandInlineJson { get; set; }
-} 
+}

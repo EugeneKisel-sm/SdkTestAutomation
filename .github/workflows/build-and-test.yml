@@ -1,0 +1,198 @@
+name: Build and Test
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  CONFIGURATION: Release
+  CONDUCTOR_SERVER_URL: "http://localhost:8080/api"
+  CONDUCTOR_COMPOSE_FILE: conductor/docker/docker-compose.yaml
+  CONDUCTOR_TIMEOUT: 200
+  CONDUCTOR_CHECK_INTERVAL: 30
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Build Solution
+      run: |
+        dotnet restore SdkTestAutomation.sln
+        dotnet build SdkTestAutomation.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+
+    - name: Checkout Conductor Repository
+      uses: actions/checkout@v4
+      with:
+        repository: conductor-oss/conductor
+        ref: main
+        path: conductor
+
+    - name: Start Conductor Services
+      run: |
+        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} up -d
+        
+        echo "Waiting for services to initialize..."
+        timeout=${{ env.CONDUCTOR_TIMEOUT }}
+        check_interval=${{ env.CONDUCTOR_CHECK_INTERVAL }}
+        
+        while [ $timeout -gt 0 ]; do
+          # Check container health
+          if docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps | grep -q "healthy"; then
+            # Check API health
+            if curl -s ${{ env.CONDUCTOR_SERVER_URL }}/health > /dev/null 2>&1; then
+              echo "SUCCESS: Conductor API is ready!"
+              exit 0
+            fi
+          fi
+          
+          # Log status periodically
+          if [ $((timeout % check_interval)) -eq 0 ]; then
+            echo "Services status (${timeout}s remaining):"
+            docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps
+            docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} logs --tail=20 conductor-server
+          fi
+          
+          echo "Waiting for API... (${timeout}s remaining)"
+          sleep 10
+          timeout=$((timeout-10))
+        done
+        
+        echo "ERROR: Conductor API failed to become healthy"
+        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps
+        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} logs conductor-server
+        exit 1
+
+    - name: Run Tests
+      id: test-run
+      run: |
+        mkdir -p TestResults
+        ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests \
+          -html TestResults/test-results.html \
+          -trx TestResults/test-results.trx \
+          -jUnit TestResults/test-results.xml 2>&1
+      continue-on-error: true
+
+    - name: Setup Node.js for reporting
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Convert HTML to Markdown
+      if: always()
+      run: |
+        # Create a Node.js script for conversion
+        cat > convert.js << 'EOL'
+        const fs = require('fs');
+        const TurndownService = require('turndown');
+        const jsdom = require('jsdom');
+        const { JSDOM } = jsdom;
+
+        // Read and parse HTML
+        const html = fs.readFileSync('TestResults/test-results.html', 'utf8');
+        const dom = new JSDOM(html);
+        const document = dom.window.document;
+
+        // Remove style, script tags and their contents
+        document.querySelectorAll('style, script').forEach(el => el.remove());
+
+        // Get only the test results content
+        const testResults = document.querySelector('body').innerHTML
+          .replace(/^\s*xUnit\.net Test Results/, '') // Remove header text
+          .trim();
+
+        // Convert to Markdown
+        const turndownService = new TurndownService({
+          headingStyle: 'atx',
+          codeBlockStyle: 'fenced',
+          bulletListMarker: '-',
+          hr: '---'
+        });
+
+        // Custom rules for test results
+        turndownService.addRule('testResults', {
+          filter: ['div', 'span'],
+          replacement: function (content, node) {
+            // Handle success/failure/skipped classes
+            if (node.classList.contains('success')) return '✅ ' + content;
+            if (node.classList.contains('failure')) return '❌ ' + content;
+            if (node.classList.contains('skipped')) return '⚠️ ' + content;
+            // Add separator after each test
+            if (node.classList.contains('row') || node.classList.contains('altrow')) {
+              return content + '\n\n---\n';
+            }
+            return content;
+          }
+        });
+
+        const markdown = turndownService.turndown(testResults);
+
+        const summary = [
+          '# Test Results',
+          '',
+          '## Detailed Test Report',
+          '',
+          '---',
+          '',
+          markdown
+        ].join('\n');
+
+        fs.writeFileSync('TestResults/summary.md', summary);
+        EOL
+
+        # Install dependencies and run conversion
+        npm install turndown jsdom
+        node convert.js
+
+    - name: Publish Test Results (TRX)
+      if: always()
+      uses: dorny/test-reporter@v1
+      with:
+        name: Test Results (TRX)
+        path: TestResults/test-results.trx
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Add Test Report to Job Summary
+      if: always()
+      run: cat TestResults/summary.md >> $GITHUB_STEP_SUMMARY
+
+    - name: Display Test Report List
+      if: always()
+      run: |
+        {
+          echo ""
+          echo "## Available Test Reports"
+          echo "📊 Test reports available in:"
+          echo "- HTML: Rich interactive report"
+          echo "- TRX: Native .NET test results"
+          echo "- JUnit: Standard XML format"
+        } >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: TestResults
+        if-no-files-found: warn
+
+    - name: Cleanup Conductor
+      if: always()
+      run: docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} down

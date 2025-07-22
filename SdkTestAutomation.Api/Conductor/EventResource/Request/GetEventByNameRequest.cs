@@ -9,4 +9,4 @@ public class GetEventByNameRequest : BaseRequest
     
     [UrlParameter]
     public bool? ActiveOnly { get; set; }
-} 
+}
