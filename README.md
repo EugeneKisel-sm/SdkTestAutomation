@@ -3,165 +3,306 @@
 [![Build and Test](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml)
 [![Build](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build.yml)
 
-A .NET test automation framework for API testing, built with xUnit and RestSharp.
+A .NET test automation framework for validating multiple Conductor SDKs (C#, Java, Python) through in-process adapters. Built with xUnit v3, RestSharp, and a language-agnostic architecture.
 
-## 🚀 CI/CD Status
+## 🎯 Key Features
 
-### Workflows
-- **Build and Test**: Runs on pull requests and manual triggers
-  - Builds the solution
-  - Deploys Conductor server in Docker
-  - Executes all tests
-  - Generates comprehensive test reports (HTML, TRX, JUnit)
-  - Publishes test results to GitHub Checks
+- **Multi-SDK Support**: Test C#, Java, and Python Conductor SDKs with a single test codebase
+- **In-Process Adapters**: Direct SDK integration without CLI overhead
+- **Direct Executable**: Tests run as standalone executable, not through `dotnet test`
+- **Type Safety**: Strong typing with C# interfaces and compile-time validation
+- **Environment Configuration**: .env file support for flexible configuration
+- **Response Validation**: Deep structural comparison of SDK responses with direct API calls
+- **Extensible Architecture**: Easy to add new SDKs by implementing shared interfaces
 
-- **Build**: Runs on every push
-  - Quick build validation
-  - Ensures code compiles correctly
+## 🏗️ Architecture
 
-### Test Results
-Test results are automatically generated and available in multiple formats:
-- **HTML Report**: Rich interactive report with detailed test information
-- **TRX Report**: Native .NET test results format
-- **JUnit XML**: Standard XML format for CI/CD integration
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    .NET Test Framework                      │
+│                     (xUnit v3 + RestSharp)                 │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 SDK Adapter Interface                      │
+│              (IEventResourceAdapter, etc.)                │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│   C# SDK    │ │  Java SDK   │ │ Python SDK  │
+│   Adapter   │ │   Adapter   │ │   Adapter   │
+│ (Direct)    │ │(JCOBridge)  │ │(pythonnet)  │
+└─────────────┘ └─────────────┘ └─────────────┘
+```
 
-All reports are uploaded as artifacts and can be downloaded from the workflow run page.
+## 📁 Project Structure
 
-## Features
+```
+SdkTestAutomation/
+├── SdkTestAutomation.Common/           # Shared interfaces & models
+│   ├── Models/                         # Request/response models
+│   ├── Interfaces/                     # SDK adapter interfaces
+│   └── Helpers/                        # Factory & utilities
+├── SdkTestAutomation.CSharp/           # C# SDK adapter
+├── SdkTestAutomation.Java/             # Java SDK adapter (MASES.JCOBridge)
+├── SdkTestAutomation.Python/           # Python SDK adapter (pythonnet)
+├── SdkTestAutomation.Tests/            # Test implementations
+├── SdkTestAutomation.Api/              # Direct API client
+├── SdkTestAutomation.Core/             # Core HTTP functionality
+└── SdkTestAutomation.Utils/            # Utilities & logging
+```
 
-- Built on .NET 8.0
-- xUnit test framework integration
-- Flexible HTTP request handling with support for multiple content types
-- Comprehensive logging system
-- Environment configuration management
-- Attribute-based request parameter decoration
-- Support for JSON, Form URL Encoded, and other content types
-- Automated CI/CD with comprehensive test reporting
-
-## Project Structure
-
-- **SdkTestAutomation.Core**: Core functionality for HTTP requests, attribute handling, and request resolvers
-- **SdkTestAutomation.Api**: API-specific implementations and request/response models
-- **SdkTestAutomation.Utils**: Utility classes, logging, and configuration management
-- **SdkTestAutomation.Tests**: Test implementations and test base classes
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
 - .NET 8.0 SDK
-- IDE (Visual Studio, Rider, or VS Code)
-- Docker (for running Conductor server locally)
+- Java 17+ (for Java SDK testing)
+- Python 3.9+ (for Python SDK testing)
+- Docker (for Conductor server)
 
 ### Configuration
 
-1. Clone the repository
-2. Rename `.env.template` to `.env` in the `SdkTestAutomation.Tests` directory
-3. Update the `.env` file with your configuration:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/evgeniykisel/SdkTestAutomation.git
+   cd SdkTestAutomation
+   ```
 
-```env
-CONDUCTOR_SERVER_URL=your_api_url
-CONDUCTOR_AUTH_KEY=your_auth_key
-CONDUCTOR_AUTH_SECRET=your_auth_secret
-```
+2. **Create environment configuration**
+   ```bash
+   # Create .env file in SdkTestAutomation.Tests/
+   cat > SdkTestAutomation.Tests/.env << EOF
+   CONDUCTOR_SERVER_URL=http://localhost:8080/api
+   TEST_SDK=csharp
+   JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+   PYTHON_HOME=/usr/local/bin/python3
+   ENABLE_LOGGING=true
+   LOG_LEVEL=Info
+   EOF
+   ```
+
+3. **Build the solution**
+   ```bash
+   dotnet build
+   ```
 
 ### Running Tests
 
+#### **Direct Execution (Recommended)**
 ```bash
-dotnet test
+# Build the solution first
+dotnet build
+
+# Test with C# SDK
+TEST_SDK=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+
+# Test with Java SDK
+TEST_SDK=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+
+# Test with Python SDK
+TEST_SDK=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+
+# Test with specific test filter
+TEST_SDK=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests --filter "SdkIntegrationTests"
+
+# Test with all SDKs (run multiple times with different TEST_SDK values)
+TEST_SDK=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+TEST_SDK=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+TEST_SDK=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 ```
 
-## Writing Tests
+#### **IDE Integration**
+Set the `TEST_SDK` environment variable in your IDE (Rider/VS Code) and run the test executable directly.
+
+## 📝 Writing Tests
 
 ### Base Test Class
 
-All test classes should inherit from `BaseTest` which provides:
-- Automatic test logging
-- Test context management
-- API client initialization
+All SDK integration tests inherit from `BaseTest`:
 
-Example:
 ```csharp
-public class MyTests : BaseTest
+public class SdkIntegrationTests : BaseTest
 {
     [Fact]
-    public void MyTest()
+    public async Task SdkIntegration_AddEvent_ValidatesAgainstApi()
     {
-        // Your test implementation
+        // Arrange
+        var request = new AddEventRequest
+        {
+            Name = $"test_event_{Guid.NewGuid():N}",
+            Event = "test_event",
+            Actions = new List<EventAction>(),
+            Active = true
+        };
+
+        // Act - Call SDK via adapter
+        var eventAdapter = await GetEventResourceAdapterAsync();
+        var sdkResponse = await eventAdapter.AddEventAsync(request);
+
+        // Assert
+        Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
+        Assert.Equal(200, sdkResponse.StatusCode);
+        
+        LogAdapterInfo();
     }
 }
 ```
 
-### Request Models
+### SDK Selection
 
-Create request models by inheriting from `HttpRequest` and using attributes:
+The framework automatically selects the SDK based on the `TEST_SDK` environment variable:
 
-```csharp
-public class MyRequest : HttpRequest
-{
-    [UrlParameter]
-    public string QueryParam { get; set; }
+- `TEST_SDK=csharp` - Uses C# SDK adapter
+- `TEST_SDK=java` - Uses Java SDK adapter (requires MASES.JCOBridge)
+- `TEST_SDK=python` - Uses Python SDK adapter (requires pythonnet)
 
-    [Header(Name = "Custom-Header")]
-    public string HeaderValue { get; set; }
+## 🔧 SDK Adapters
 
-    [Body]
-    public string RequestBody { get; set; }
-}
+### C# SDK Adapter
+- **Direct Integration**: Uses `conductor-csharp` NuGet package
+- **No Dependencies**: Pure .NET implementation
+- **Full Type Safety**: Native C# objects and methods
+
+### Java SDK Adapter
+- **MASES.JCOBridge**: Modern .NET ⇄ JVM bridge
+- **Dynamic Invocation**: Runtime Java object creation
+- **JVM Management**: Automatic JVM lifecycle handling
+
+### Python SDK Adapter
+- **pythonnet**: .NET ⇄ Python bridge
+- **Future Implementation**: Placeholder for Python SDK integration
+
+## 🌍 Environment Configuration
+
+The framework uses a `.env` file for configuration:
+
+```env
+# Conductor server
+CONDUCTOR_SERVER_URL=http://localhost:8080/api
+
+# SDK selection
+TEST_SDK=csharp
+
+# Java configuration
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+JAVA_CLASSPATH=/path/to/conductor-java/lib/*
+
+# Python configuration
+PYTHON_HOME=/usr/local/bin/python3
+PYTHONPATH=/path/to/conductor-python
+
+# Logging
+ENABLE_LOGGING=true
+LOG_LEVEL=Info
 ```
 
-### Available Attributes
+## 🔍 Response Validation
 
-- `[UrlParameter]`: Add query parameters to the URL
-- `[Header]`: Add HTTP headers
-- `[Body]`: Specify request body content
-- All attributes support custom naming via the `Name` property
+The framework automatically validates SDK responses against direct API calls:
 
-### Supported Content Types
+```csharp
+// SDK response is automatically compared with API response
+var isValid = await ValidateSdkResponseAsync(sdkResponse, apiResponse);
+Assert.True(isValid, "SDK response does not match API response");
+```
 
-- JSON (`ContentType.Json`)
-- Form URL Encoded (`ContentType.FormUrlEncoded`)
-- None (`ContentType.None`)
+## 🚀 CI/CD Integration
 
-## Logging
+### GitHub Actions
 
-The framework includes a built-in logging system that automatically captures:
-- Request details (URL, headers, body)
-- Response information (status code, body)
-- Test execution timestamps
-- Custom log messages
+The framework includes comprehensive CI/CD workflows:
 
-## Test Reports
+- **Build and Test**: Full multi-SDK testing using direct executable execution
+- **Build**: Quick compilation validation
+- **Test Reports**: HTML, TRX, and JUnit formats
 
-### Viewing Test Results
+### Local Development
 
-1. **GitHub Actions**: Go to the Actions tab and click on a workflow run
-2. **Test Results Tab**: View TRX and JUnit results directly in GitHub
-3. **Artifacts**: Download the `test-results` artifact for all report formats
-4. **Job Summary**: View a formatted test summary in the workflow job summary
+```bash
+# Build the solution
+dotnet build
 
-### Report Formats
+# Run tests with specific SDK
+TEST_SDK=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+TEST_SDK=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+TEST_SDK=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+```
 
-- **HTML**: Interactive report with expandable test details
-- **TRX**: Native .NET format, viewable in Visual Studio
-- **JUnit**: Standard XML format for CI/CD tools
+## 🔧 Troubleshooting
 
-## Contributing
+### Common Issues
+
+1. **Java SDK Not Working**
+   - Ensure `JAVA_HOME` is set correctly
+   - Verify Java 17+ is installed
+   - Check MASES.JCOBridge installation
+
+2. **Python SDK Not Working**
+   - Ensure `PYTHON_HOME` is set correctly
+   - Verify Python 3.9+ is installed
+   - Check pythonnet installation
+
+3. **Environment Variables Not Loading**
+   - Verify `.env` file exists in `SdkTestAutomation.Tests/`
+   - Check file format (no spaces around `=`)
+   - Ensure file is not ignored by `.gitignore`
+
+### Debugging
+
+Enable detailed logging by setting:
+```env
+ENABLE_LOGGING=true
+LOG_LEVEL=Debug
+```
+
+## 🔄 Extending the Framework
+
+### Adding a New SDK
+
+1. **Create Adapter Project**
+   ```bash
+   dotnet new classlib -n SdkTestAutomation.NewSdk
+   ```
+
+2. **Implement Interfaces**
+   ```csharp
+   public class ConductorNewSdkEventResourceAdapter : IEventResourceAdapter
+   {
+       // Implement interface methods
+   }
+   ```
+
+3. **Update Factory**
+   ```csharp
+   // Add to AdapterFactory.CreateEventResourceAdapterAsync
+   "newsdk" => new ConductorNewSdkEventResourceAdapter(),
+   ```
+
+4. **Add Project Reference**
+   ```xml
+   <ProjectReference Include="..\SdkTestAutomation.NewSdk\SdkTestAutomation.NewSdk.csproj" />
+   ```
+
+## 📄 License
+
+This project is licensed under the terms provided in the LICENSE file.
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+3. Implement your changes
+4. Add tests for new functionality
+5. Ensure all SDK tests pass
+6. Submit a pull request
 
-### Development Workflow
+### Development Guidelines
 
-1. Make your changes
-2. Ensure all tests pass locally
-3. Push your changes (triggers build workflow)
-4. Create a PR (triggers full build and test workflow)
-5. Check test results in the PR checks
-
-## License
-
-This project is licensed under the terms provided in the LICENSE file.
+- **Test All SDKs**: Ensure changes work with C#, Java, and Python
+- **Maintain Compatibility**: Don't break existing adapter interfaces
+- **Add Documentation**: Update README for new features
+- **Follow Patterns**: Use existing adapter implementations as templates

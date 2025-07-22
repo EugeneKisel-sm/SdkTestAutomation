@@ -1,0 +1,118 @@
+using System.Text.Json;
+using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Utils.Logging;
+
+namespace SdkTestAutomation.Common.Helpers;
+
+/// <summary>
+/// Helper for comparing SDK responses with direct API responses
+/// </summary>
+public class ResponseComparer
+{
+    private readonly ILogger _logger;
+    
+    public ResponseComparer(ILogger logger)
+    {
+        _logger = logger;
+    }
+    
+    /// <summary>
+    /// Compare SDK response with API response for structural equality
+    /// </summary>
+    public Task<bool> CompareAsync<T>(SdkResponse<T> sdkResponse, RestSharp.RestResponse<T> apiResponse)
+    {
+        _logger.Log("Comparing SDK and API responses...");
+        
+        // Compare status codes and success flags
+        var apiSuccess = apiResponse.StatusCode == System.Net.HttpStatusCode.OK;
+        if (sdkResponse.StatusCode != (int)apiResponse.StatusCode || sdkResponse.Success != apiSuccess)
+        {
+            _logger.Log($"Status mismatch: SDK={sdkResponse.StatusCode}({sdkResponse.Success}), API={(int)apiResponse.StatusCode}({apiSuccess})");
+            return Task.FromResult(false);
+        }
+        
+        // If both failed, consider them equal
+        if (!sdkResponse.Success && !apiSuccess)
+        {
+            _logger.Log("Both SDK and API failed - considering equal");
+            return Task.FromResult(true);
+        }
+        
+        // Compare content if both succeeded
+        if (sdkResponse.Success && apiSuccess)
+        {
+            try
+            {
+                var sdkJson = JsonSerializer.Deserialize<JsonElement>(sdkResponse.Content);
+                var apiJson = JsonSerializer.Deserialize<JsonElement>(apiResponse.Content ?? "{}");
+                
+                var isEqual = JsonElementEquals(sdkJson, apiJson);
+                _logger.Log($"Content comparison result: {isEqual}");
+                return Task.FromResult(isEqual);
+            }
+            catch (Exception ex)
+            {
+                _logger.Log($"Error during JSON comparison: {ex.Message}");
+                return Task.FromResult(false);
+            }
+        }
+        
+        return Task.FromResult(false);
+    }
+    
+    /// <summary>
+    /// Compare two JsonElement objects for structural equality
+    /// </summary>
+    private bool JsonElementEquals(JsonElement element1, JsonElement element2)
+    {
+        if (element1.ValueKind != element2.ValueKind) return false;
+        
+        return element1.ValueKind switch
+        {
+            JsonValueKind.Object => CompareObject(element1, element2),
+            JsonValueKind.Array => CompareArray(element1, element2),
+            JsonValueKind.String => element1.GetString() == element2.GetString(),
+            JsonValueKind.Number => element1.GetDecimal() == element2.GetDecimal(),
+            JsonValueKind.True or JsonValueKind.False => element1.GetBoolean() == element2.GetBoolean(),
+            JsonValueKind.Null => true,
+            _ => false
+        };
+    }
+    
+    /// <summary>
+    /// Compare JSON objects
+    /// </summary>
+    private bool CompareObject(JsonElement obj1, JsonElement obj2)
+    {
+        var properties1 = obj1.EnumerateObject().ToDictionary(p => p.Name, p => p.Value);
+        var properties2 = obj2.EnumerateObject().ToDictionary(p => p.Name, p => p.Value);
+        
+        if (properties1.Count != properties2.Count) return false;
+        
+        foreach (var kvp in properties1)
+        {
+            if (!properties2.TryGetValue(kvp.Key, out var value2)) return false;
+            if (!JsonElementEquals(kvp.Value, value2)) return false;
+        }
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// Compare JSON arrays
+    /// </summary>
+    private bool CompareArray(JsonElement arr1, JsonElement arr2)
+    {
+        var elements1 = arr1.EnumerateArray().ToList();
+        var elements2 = arr2.EnumerateArray().ToList();
+        
+        if (elements1.Count != elements2.Count) return false;
+        
+        for (int i = 0; i < elements1.Count; i++)
+        {
+            if (!JsonElementEquals(elements1[i], elements2[i])) return false;
+        }
+        
+        return true;
+    }
+} 

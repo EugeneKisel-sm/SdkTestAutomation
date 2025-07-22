@@ -1,14 +1,42 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Core", "SdkTestAutomation.Core\SdkTestAutomation.Core.csproj", "{21A35852-3EB4-4B25-A765-63EF9245CDEF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Utils", "SdkTestAutomation.Utils\SdkTestAutomation.Utils.csproj", "{1C928CC3-42FB-49C4-AC20-8555285C2275}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Tests", "SdkTestAutomation.Tests\SdkTestAutomation.Tests.csproj", "{67591AE8-F99A-4B17-AE17-F1F9723F72E9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1C928CC3-42FB-49C4-AC20-8555285C2275} = {1C928CC3-42FB-49C4-AC20-8555285C2275}
+		{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C} = {E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}
+		{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D} = {8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Api", "SdkTestAutomation.Api\SdkTestAutomation.Api.csproj", "{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{21A35852-3EB4-4B25-A765-63EF9245CDEF} = {21A35852-3EB4-4B25-A765-63EF9245CDEF}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Common", "SdkTestAutomation.Common\SdkTestAutomation.Common.csproj", "{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1C928CC3-42FB-49C4-AC20-8555285C2275} = {1C928CC3-42FB-49C4-AC20-8555285C2275}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.CSharp", "SdkTestAutomation.CSharp\SdkTestAutomation.CSharp.csproj", "{9B3C5D6E-7F8A-9B0C-1D2E-3F4A5B6C7D8E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D} = {8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Java", "SdkTestAutomation.Java\SdkTestAutomation.Java.csproj", "{0C4D5E6F-8A9B-0C1D-2E3F-4A5B6C7D8E9F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D} = {8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Python", "SdkTestAutomation.Python\SdkTestAutomation.Python.csproj", "{00000000-0000-0000-0000-000000000000}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D} = {8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}
 	EndProjectSection
 EndProject
 Global
@@ -33,5 +61,19 @@ Global
 		{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9B76CE9-FB46-4FFC-90D6-5C8D226B710C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A2B4C5D-6E7F-8A9B-0C1D-2E3F4A5B6C7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B3C5D6E-7F8A-9B0C-1D2E-3F4A5B6C7D8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B3C5D6E-7F8A-9B0C-1D2E-3F4A5B6C7D8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B3C5D6E-7F8A-9B0C-1D2E-3F4A5B6C7D8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B3C5D6E-7F8A-9B0C-1D2E-3F4A5B6C7D8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C4D5E6F-8A9B-0C1D-2E3F-4A5B6C7D8E9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C4D5E6F-8A9B-0C1D-2E3F-4A5B6C7D8E9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C4D5E6F-8A9B-0C1D-2E3F-4A5B6C7D8E9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C4D5E6F-8A9B-0C1D-2E3F-4A5B6C7D8E9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00000000-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00000000-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal

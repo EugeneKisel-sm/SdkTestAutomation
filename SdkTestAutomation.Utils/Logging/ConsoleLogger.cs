@@ -16,7 +16,14 @@ public class ConsoleLogger : ILogger
     
     public void Log(string message)
     {
-        TestContext.TestOutputHelper.WriteLine(message);
+        if (TestContext?.TestOutputHelper != null)
+        {
+            TestContext.TestOutputHelper.WriteLine(message);
+        }
+        else
+        {
+            Console.WriteLine(message);
+        }
         AllLogs.Add(new TestLog(message));
         Output += "\n" + message;
     }
