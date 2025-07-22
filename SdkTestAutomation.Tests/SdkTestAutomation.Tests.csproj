@@ -6,6 +6,7 @@
         <Nullable>disable</Nullable>
         <IsPackable>false</IsPackable>
         <OutputType>Exe</OutputType>
+        <NoWarn>CS1998</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

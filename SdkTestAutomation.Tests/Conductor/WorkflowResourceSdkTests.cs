@@ -9,14 +9,14 @@ public class WorkflowResourceSdkTests : BaseSdkTest
 {
     [Fact]
     [Trait("Category", "SdkComparison")]
-    public Task GetWorkflow_CompareSdkWithRestApi_ShouldMatch()
+    public async Task GetWorkflow_CompareSdkWithRestApi_ShouldMatch()
     {
         var workflowId = "test-workflow-id";
         var request = new GetWorkflowRequest();
         
         var sdkCommand = $"workflow get --id \"{workflowId}\"";
         
-        return ValidateSdkResponseAsync(
+        await ValidateSdkResponseAsync(
             sdkCommand: sdkCommand,
             sdkArgs: "",
             restApiCall: async () => WorkflowResourceApi.GetWorkflow(request, workflowId),
@@ -25,14 +25,14 @@ public class WorkflowResourceSdkTests : BaseSdkTest
     
     [Fact]
     [Trait("Category", "SdkComparison")]
-    public Task GetWorkflowWithComplexId_CompareSdkWithRestApi_ShouldMatch()
+    public async Task GetWorkflowWithComplexId_CompareSdkWithRestApi_ShouldMatch()
     {
         var workflowId = $"complex-workflow-{Guid.NewGuid():N}";
         var request = new GetWorkflowRequest();
         
         var sdkCommand = $"workflow get --id \"{workflowId}\"";
         
-        return ValidateSdkResponseAsync(
+        await ValidateSdkResponseAsync(
             sdkCommand: sdkCommand,
             sdkArgs: "",
             restApiCall: async () => WorkflowResourceApi.GetWorkflow(request, workflowId),

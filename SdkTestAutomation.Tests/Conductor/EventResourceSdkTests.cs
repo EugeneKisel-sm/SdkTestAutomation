@@ -10,11 +10,11 @@ public class EventResourceSdkTests : BaseSdkTest
 {
     [Fact]
     [Trait("Category", "SdkComparison")]
-    public Task GetEvent_CompareSdkWithRestApi_ShouldMatch()
+    public async Task GetEvent_CompareSdkWithRestApi_ShouldMatch()
     {
         var request = new GetEventRequest();
         
-        return ValidateSdkResponseAsync(
+        await ValidateSdkResponseAsync(
             sdkCommand: "event list",
             sdkArgs: "",
             restApiCall: async () => EventResourceApi.GetEvent(request),
@@ -23,7 +23,7 @@ public class EventResourceSdkTests : BaseSdkTest
     
     [Fact]
     [Trait("Category", "SdkComparison")]
-    public Task AddEvent_CompareSdkWithRestApi_ShouldMatch()
+    public async Task AddEvent_CompareSdkWithRestApi_ShouldMatch()
     {
         var eventName = $"test_event_sdk_{Guid.NewGuid():N}";
         
@@ -50,7 +50,7 @@ public class EventResourceSdkTests : BaseSdkTest
             _ => throw new ArgumentException($"Unsupported SDK type: {CurrentSdkType}")
         };
         
-        return ValidateSdkResponseAsync(
+        await ValidateSdkResponseAsync(
             sdkCommand: sdkCommand,
             sdkArgs: "",
             restApiCall: async () => EventResourceApi.AddEvent(request),
@@ -59,7 +59,7 @@ public class EventResourceSdkTests : BaseSdkTest
     
     [Fact]
     [Trait("Category", "SdkComparison")]
-    public Task AddEventWithComplexActions_CompareSdkWithRestApi_ShouldMatch()
+    public async Task AddEventWithComplexActions_CompareSdkWithRestApi_ShouldMatch()
     {
         var eventName = $"test_event_complex_{Guid.NewGuid():N}";
         
@@ -95,7 +95,7 @@ public class EventResourceSdkTests : BaseSdkTest
             _ => throw new ArgumentException($"Unsupported SDK type: {CurrentSdkType}")
         };
         
-        return ValidateSdkResponseAsync(
+        await ValidateSdkResponseAsync(
             sdkCommand: sdkCommand,
             sdkArgs: "",
             restApiCall: async () => EventResourceApi.AddEvent(request),
@@ -104,7 +104,7 @@ public class EventResourceSdkTests : BaseSdkTest
     
     [Fact]
     [Trait("Category", "SdkComparison")]
-    public Task GetEventByName_CompareSdkWithRestApi_ShouldMatch()
+    public async Task GetEventByName_CompareSdkWithRestApi_ShouldMatch()
     {
         // First create an event
         var eventName = $"test_event_get_{Guid.NewGuid():N}";
@@ -130,7 +130,7 @@ public class EventResourceSdkTests : BaseSdkTest
             _ => throw new ArgumentException($"Unsupported SDK type: {CurrentSdkType}")
         };
         
-        return ValidateSdkResponseAsync(
+        await ValidateSdkResponseAsync(
             sdkCommand: sdkCommand,
             sdkArgs: "",
             restApiCall: async () => EventResourceApi.GetEvent(getRequest, eventName),
@@ -139,7 +139,7 @@ public class EventResourceSdkTests : BaseSdkTest
     
     [Fact]
     [Trait("Category", "SdkComparison")]
-    public Task DeleteEvent_CompareSdkWithRestApi_ShouldMatch()
+    public async Task DeleteEvent_CompareSdkWithRestApi_ShouldMatch()
     {
         // First create an event
         var eventName = $"test_event_delete_{Guid.NewGuid():N}";
@@ -159,7 +159,7 @@ public class EventResourceSdkTests : BaseSdkTest
         
         var sdkCommand = $"event delete --name \"{eventName}\"";
         
-        return ValidateSdkResponseAsync(
+        await ValidateSdkResponseAsync(
             sdkCommand: sdkCommand,
             sdkArgs: "",
             restApiCall: async () => EventResourceApi.DeleteEvent(deleteRequest, eventName),
@@ -168,7 +168,7 @@ public class EventResourceSdkTests : BaseSdkTest
     
     [Fact]
     [Trait("Category", "SdkComparison")]
-    public Task UpdateEvent_CompareSdkWithRestApi_ShouldMatch()
+    public async Task UpdateEvent_CompareSdkWithRestApi_ShouldMatch()
     {
         // First create an event
         var eventName = $"test_event_update_{Guid.NewGuid():N}";
@@ -200,7 +200,7 @@ public class EventResourceSdkTests : BaseSdkTest
             _ => throw new ArgumentException($"Unsupported SDK type: {CurrentSdkType}")
         };
         
-        return ValidateSdkResponseAsync(
+        await ValidateSdkResponseAsync(
             sdkCommand: sdkCommand,
             sdkArgs: "",
             restApiCall: async () => EventResourceApi.UpdateEvent(updateRequest),
