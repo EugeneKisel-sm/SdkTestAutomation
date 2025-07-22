@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: conductor-sdk-wrapper
+Version: 1.0.0
+Summary: CLI wrapper for Conductor Python SDK
+Author: SdkTestAutomation
+Requires-Python: >=3.9
+Requires-Dist: conductor-python>=1.0.0
+Requires-Dist: click>=8.0.0
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

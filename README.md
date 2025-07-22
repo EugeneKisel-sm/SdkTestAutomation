@@ -68,7 +68,7 @@ CONDUCTOR_AUTH_SECRET=your_auth_secret
 ### Running Tests
 
 ```bash
-dotnet test
+./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 ```
 
 ## Writing Tests
