@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SdkTestAutomation.Common\SdkTestAutomation.Common.csproj" />
+        <ProjectReference Include="..\SdkTestAutomation.Api\SdkTestAutomation.Api.csproj" />
+    </ItemGroup>
+
+</Project> 

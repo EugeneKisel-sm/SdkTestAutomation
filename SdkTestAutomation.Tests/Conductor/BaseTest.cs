@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using SdkTestAutomation.Api.Conductor.EventResource;
+using SdkTestAutomation.Api.Conductor.WorkflowResource;
 using SdkTestAutomation.Utils.Logging;
 using Xunit;
 using Xunit.Sdk;
@@ -13,6 +14,8 @@ public abstract class BaseTest : IDisposable
     private ITestCase TestCase { get;}
     private static ConcurrentDictionary<string, int> Iterations { get; set; } = new ConcurrentDictionary<string, int>();
     protected EventResourceApi EventResourceApi { get; }
+    protected WorkflowResourceApi WorkflowResourceApi { get; }
+    protected ILogger Logger => _logger;
     
     protected BaseTest()
     {
@@ -31,6 +34,7 @@ public abstract class BaseTest : IDisposable
         _logger.Log($"Test '{TestCase.TestCaseDisplayName}' execution started.");
         
         EventResourceApi = new EventResourceApi(_logger);
+        WorkflowResourceApi = new WorkflowResourceApi(_logger);
     }
 
     public virtual void Dispose()

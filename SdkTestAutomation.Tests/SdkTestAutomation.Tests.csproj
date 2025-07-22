@@ -22,6 +22,10 @@
     <ItemGroup>
       <ProjectReference Include="..\SdkTestAutomation.Utils\SdkTestAutomation.Utils.csproj" />
       <ProjectReference Include="..\SdkTestAutomation.Api\SdkTestAutomation.Api.csproj" />
+      <ProjectReference Include="..\SdkTestAutomation.Common\SdkTestAutomation.Common.csproj" />
+      <ProjectReference Include="..\SdkTestAutomation.CSharp\SdkTestAutomation.CSharp.csproj" />
+      <ProjectReference Include="..\SdkTestAutomation.Java\SdkTestAutomation.Java.csproj" />
+      <ProjectReference Include="..\SdkTestAutomation.Python\SdkTestAutomation.Python.csproj" />
     </ItemGroup>
 
     <ItemGroup>

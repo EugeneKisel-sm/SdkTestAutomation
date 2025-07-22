@@ -6,11 +6,35 @@ using HttpClient = SdkTestAutomation.Core.HttpClient;
 
 namespace SdkTestAutomation.Api.Conductor.EventResource
 {
-    public class EventResourceApi(ILogger logger) : HttpClient(logger)
+    public class EventResourceApi : HttpClient
     {
-        public RestResponse<GetEventResponse> GetEvent(GetEventRequest request)
+        public EventResourceApi(ILogger logger) : base(logger)
         {
-            return SendGetRequest<GetEventResponse>(ApiUrl.EventResource.EventUrl, request);
+        }
+
+        public RestResponse<List<GetEventResponse>> GetEvent(GetEventRequest request)
+        {
+            return SendGetRequest<List<GetEventResponse>>(ApiUrl.EventResource.EventUrl, request);
+        }
+        
+        public RestResponse<List<GetEventResponse>> GetEvent(GetEventByNameRequest request, string eventName)
+        {
+            return SendGetRequest<List<GetEventResponse>>(ApiUrl.EventResource.EventUrl + $"/{eventName}", request);
+        }
+        
+        public RestResponse<GetEventResponse> AddEvent(AddEventRequest request)
+        {
+            return SendPostRequest<GetEventResponse>(ApiUrl.EventResource.EventUrl, request);
+        }
+        
+        public RestResponse<GetEventResponse> UpdateEvent(AddEventRequest request)
+        {
+            return SendPutRequest<GetEventResponse>(ApiUrl.EventResource.EventUrl, request);
+        }
+        
+        public RestResponse<object> DeleteEvent(DeleteEventRequest request, string eventName)
+        {
+            return SendDeleteRequest<object>(ApiUrl.EventResource.EventUrl + $"/{eventName}", request);
         }
     }
 }
