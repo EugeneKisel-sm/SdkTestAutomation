@@ -47,35 +47,7 @@ public static class SdkResponseBuilder
     }
     
     /// <summary>
-    /// Create a response with a single event
-    /// </summary>
-    public static SdkResponse<GetEventResponse> CreateSingleEventResponse(
-        EventInfo eventInfo, 
-        string requestId)
-    {
-        var data = new GetEventResponse
-        {
-            Events = new List<EventInfo> { eventInfo }
-        };
-        
-        return CreateSuccessResponse(data, requestId);
-    }
-    
-    /// <summary>
-    /// Create an empty response
-    /// </summary>
-    public static SdkResponse<GetEventResponse> CreateEmptyResponse(string requestId)
-    {
-        var data = new GetEventResponse
-        {
-            Events = new List<EventInfo>()
-        };
-        
-        return CreateSuccessResponse(data, requestId);
-    }
-    
-    /// <summary>
-    /// Create a response from request data
+    /// Create a response from request data (for add/update operations)
     /// </summary>
     public static SdkResponse<GetEventResponse> CreateFromRequest(
         AddEventRequest request)
@@ -88,7 +60,12 @@ public static class SdkResponseBuilder
             Actions = request.Actions
         };
         
-        return CreateSingleEventResponse(eventInfo, request.RequestId);
+        var data = new GetEventResponse
+        {
+            Events = new List<EventInfo> { eventInfo }
+        };
+        
+        return CreateSuccessResponse(data, request.RequestId);
     }
     
     /// <summary>
@@ -105,6 +82,24 @@ public static class SdkResponseBuilder
             Actions = request.Actions
         };
         
-        return CreateSingleEventResponse(eventInfo, request.RequestId);
+        var data = new GetEventResponse
+        {
+            Events = new List<EventInfo> { eventInfo }
+        };
+        
+        return CreateSuccessResponse(data, request.RequestId);
+    }
+    
+    /// <summary>
+    /// Create an empty response
+    /// </summary>
+    public static SdkResponse<GetEventResponse> CreateEmptyResponse(string requestId)
+    {
+        var data = new GetEventResponse
+        {
+            Events = new List<EventInfo>()
+        };
+        
+        return CreateSuccessResponse(data, requestId);
     }
 } 

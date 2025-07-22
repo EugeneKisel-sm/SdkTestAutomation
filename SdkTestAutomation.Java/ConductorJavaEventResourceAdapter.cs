@@ -59,58 +59,18 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
     
     public override async Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
     {
-        try
+        return await ExecuteEventOperation("Adding event", request.Name, request.RequestId, async () =>
         {
-            ValidateInitialization();
-            LogOperation("Adding event", request.Name);
-            
-            // Create Java EventHandler
-            var eventHandler = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler");
-            eventHandler.setName(request.Name);
-            eventHandler.setEvent(request.Event);
-            eventHandler.setActive(request.Active);
-            
-            // Set actions if any
-            if (request.Actions?.Any() == true)
-            {
-                var actions = new List<dynamic>();
-                foreach (var action in request.Actions)
-                {
-                    var javaAction = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler$Action");
-                    javaAction.setAction(action.Action);
-                    
-                    if (action.StartWorkflow != null)
-                    {
-                        var startWorkflow = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.workflow.StartWorkflowRequest");
-                        startWorkflow.setName(action.StartWorkflow.Name);
-                        startWorkflow.setVersion(action.StartWorkflow.Version);
-                        startWorkflow.setInput(JsonSerializer.Serialize(action.StartWorkflow.Input));
-                        javaAction.setStartWorkflow(startWorkflow);
-                    }
-                    
-                    actions.Add(javaAction);
-                }
-                eventHandler.setActions(actions);
-            }
-            
+            var eventHandler = JavaEventHandlerBuilder.CreateEventHandler(_javaEngine!, request);
             await Task.Run(() => _eventClient!.registerEventHandler(eventHandler));
-            
             return SdkResponseBuilder.CreateFromRequest(request);
-        }
-        catch (Exception ex)
-        {
-            LogError("adding event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, request.RequestId);
-        }
+        });
     }
     
     public override async Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
     {
-        try
+        return await ExecuteEventOperation("Getting all events", null, request.RequestId, async () =>
         {
-            ValidateInitialization();
-            LogOperation("Getting all events");
-            
             var events = await Task.Run(() => _eventClient!.getEventHandlers("", false));
             
             var data = new GetEventResponse
@@ -119,21 +79,13 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             };
             
             return SdkResponseBuilder.CreateSuccessResponse(data, request.RequestId);
-        }
-        catch (Exception ex)
-        {
-            LogError("getting events", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, request.RequestId);
-        }
+        });
     }
     
     public override async Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
     {
-        try
+        return await ExecuteEventOperation("Getting events by name", request.Event, request.RequestId, async () =>
         {
-            ValidateInitialization();
-            LogOperation("Getting events by name", request.Event);
-            
             var events = await Task.Run(() => _eventClient!.getEventHandlers(request.Event, request.ActiveOnly ?? false));
             
             var data = new GetEventResponse
@@ -142,76 +94,48 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             };
             
             return SdkResponseBuilder.CreateSuccessResponse(data, request.RequestId);
-        }
-        catch (Exception ex)
-        {
-            LogError("getting events by name", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, request.RequestId);
-        }
+        });
     }
     
     public override async Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
     {
-        try
+        return await ExecuteEventOperation("Updating event", request.Name, request.RequestId, async () =>
         {
-            ValidateInitialization();
-            LogOperation("Updating event", request.Name);
-            
-            // Create Java EventHandler
-            var eventHandler = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler");
-            eventHandler.setName(request.Name);
-            eventHandler.setEvent(request.Event);
-            eventHandler.setActive(request.Active);
-            
-            // Set actions if any
-            if (request.Actions?.Any() == true)
-            {
-                var actions = new List<dynamic>();
-                foreach (var action in request.Actions)
-                {
-                    var javaAction = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler$Action");
-                    javaAction.setAction(action.Action);
-                    
-                    if (action.StartWorkflow != null)
-                    {
-                        var startWorkflow = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.workflow.StartWorkflowRequest");
-                        startWorkflow.setName(action.StartWorkflow.Name);
-                        startWorkflow.setVersion(action.StartWorkflow.Version);
-                        startWorkflow.setInput(JsonSerializer.Serialize(action.StartWorkflow.Input));
-                        javaAction.setStartWorkflow(startWorkflow);
-                    }
-                    
-                    actions.Add(javaAction);
-                }
-                eventHandler.setActions(actions);
-            }
-            
+            var eventHandler = JavaEventHandlerBuilder.CreateEventHandler(_javaEngine!, request);
             await Task.Run(() => _eventClient!.updateEventHandler(eventHandler));
-            
             return SdkResponseBuilder.CreateFromRequest(request);
-        }
-        catch (Exception ex)
-        {
-            LogError("updating event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, request.RequestId);
-        }
+        });
     }
     
     public override async Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
     {
+        return await ExecuteEventOperation("Deleting event", request.Name, request.RequestId, async () =>
+        {
+            await Task.Run(() => _eventClient!.unregisterEventHandler(request.Name));
+            return SdkResponseBuilder.CreateEmptyResponse(request.RequestId);
+        });
+    }
+    
+    /// <summary>
+    /// Execute event operation with common error handling
+    /// </summary>
+    private async Task<SdkResponse<GetEventResponse>> ExecuteEventOperation(
+        string operation, 
+        string? details, 
+        string requestId, 
+        Func<Task<SdkResponse<GetEventResponse>>> operationFunc)
+    {
         try
         {
             ValidateInitialization();
-            LogOperation("Deleting event", request.Name);
+            LogOperation(operation, details);
             
-            await Task.Run(() => _eventClient!.unregisterEventHandler(request.Name));
-            
-            return SdkResponseBuilder.CreateEmptyResponse(request.RequestId);
+            return await operationFunc();
         }
         catch (Exception ex)
         {
-            LogError("deleting event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, request.RequestId);
+            LogError(operation.ToLower(), ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message, requestId);
         }
     }
     

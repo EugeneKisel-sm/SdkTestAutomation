@@ -18,11 +18,12 @@ public static class AdapterFactory
     {
         _logger.Log($"Creating event resource adapter for SDK type: {sdkType}");
         
+        // Use reflection to create adapters to avoid circular dependencies
         IEventResourceAdapter adapter = sdkType.ToLowerInvariant() switch
         {
-            "csharp" => new ConductorCSharpEventResourceAdapter(),
-            "java" => new ConductorJavaEventResourceAdapter(),
-            "python" => new ConductorPythonEventResourceAdapter(),
+            "csharp" => CreateAdapterInstance<IEventResourceAdapter>("SdkTestAutomation.CSharp.ConductorCSharpEventResourceAdapter, SdkTestAutomation.CSharp"),
+            "java" => CreateAdapterInstance<IEventResourceAdapter>("SdkTestAutomation.Java.ConductorJavaEventResourceAdapter, SdkTestAutomation.Java"),
+            "python" => CreateAdapterInstance<IEventResourceAdapter>("SdkTestAutomation.Python.ConductorPythonEventResourceAdapter, SdkTestAutomation.Python"),
             _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
         };
         
@@ -45,11 +46,12 @@ public static class AdapterFactory
     {
         _logger.Log($"Creating workflow resource adapter for SDK type: {sdkType}");
         
+        // Use reflection to create adapters to avoid circular dependencies
         IWorkflowResourceAdapter adapter = sdkType.ToLowerInvariant() switch
         {
-            "csharp" => new ConductorCSharpWorkflowResourceAdapter(),
-            "java" => new ConductorJavaWorkflowResourceAdapter(),
-            "python" => new ConductorPythonWorkflowResourceAdapter(),
+            "csharp" => CreateAdapterInstance<IWorkflowResourceAdapter>("SdkTestAutomation.CSharp.ConductorCSharpWorkflowResourceAdapter, SdkTestAutomation.CSharp"),
+            "java" => CreateAdapterInstance<IWorkflowResourceAdapter>("SdkTestAutomation.Java.ConductorJavaWorkflowResourceAdapter, SdkTestAutomation.Java"),
+            "python" => CreateAdapterInstance<IWorkflowResourceAdapter>("SdkTestAutomation.Python.ConductorPythonWorkflowResourceAdapter, SdkTestAutomation.Python"),
             _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
         };
         
@@ -63,6 +65,45 @@ public static class AdapterFactory
         
         _logger.Log($"Successfully created {sdkType} workflow resource adapter");
         return adapter;
+    }
+    
+    /// <summary>
+    /// Create an adapter instance using reflection
+    /// </summary>
+    private static T CreateAdapterInstance<T>(string typeName) where T : class
+    {
+        var type = FindType(typeName);
+        if (type == null)
+        {
+            throw new InvalidOperationException($"Could not find type: {typeName}");
+        }
+        
+        var instance = Activator.CreateInstance(type);
+        if (instance is not T adapter)
+        {
+            throw new InvalidOperationException($"Type {typeName} does not implement {typeof(T).Name}");
+        }
+        
+        return adapter;
+    }
+    
+    /// <summary>
+    /// Find type by searching through all loaded assemblies
+    /// </summary>
+    private static Type? FindType(string typeName)
+    {
+        // First try the simple approach
+        var type = Type.GetType(typeName);
+        if (type != null) return type;
+        
+        // Search through all loaded assemblies
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            type = assembly.GetType(typeName);
+            if (type != null) return type;
+        }
+        
+        return null;
     }
     
     /// <summary>
@@ -81,107 +122,4 @@ public static class AdapterFactory
             LogLevel = EnvironmentConfig.GetEnvironmentVariable("LOG_LEVEL", "Info")
         };
     }
-}
-
-// Placeholder adapter classes - these will be implemented in their respective projects
-public class ConductorCSharpEventResourceAdapter : IEventResourceAdapter
-{
-    public string SdkType => "csharp";
-    
-    public Task<bool> InitializeAsync(AdapterConfiguration config) => Task.FromResult(true);
-    public Task<bool> IsHealthyAsync() => Task.FromResult(true);
-    public AdapterInfo GetAdapterInfo() => new() { SdkType = SdkType, IsInitialized = true };
-    public void Dispose() { }
-    
-    public Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-}
-
-public class ConductorJavaEventResourceAdapter : IEventResourceAdapter
-{
-    public string SdkType => "java";
-    
-    public Task<bool> InitializeAsync(AdapterConfiguration config) => Task.FromResult(true);
-    public Task<bool> IsHealthyAsync() => Task.FromResult(true);
-    public AdapterInfo GetAdapterInfo() => new() { SdkType = SdkType, IsInitialized = true };
-    public void Dispose() { }
-    
-    public Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-}
-
-public class ConductorPythonEventResourceAdapter : IEventResourceAdapter
-{
-    public string SdkType => "python";
-    
-    public Task<bool> InitializeAsync(AdapterConfiguration config) => Task.FromResult(true);
-    public Task<bool> IsHealthyAsync() => Task.FromResult(true);
-    public AdapterInfo GetAdapterInfo() => new() { SdkType = SdkType, IsInitialized = true };
-    public void Dispose() { }
-    
-    public Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-    public Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request) => 
-        Task.FromResult(new SdkResponse<GetEventResponse> { Success = false, ErrorMessage = "Not implemented" });
-}
-
-public class ConductorCSharpWorkflowResourceAdapter : IWorkflowResourceAdapter
-{
-    public string SdkType => "csharp";
-    
-    public Task<bool> InitializeAsync(AdapterConfiguration config) => Task.FromResult(true);
-    public Task<bool> IsHealthyAsync() => Task.FromResult(true);
-    public AdapterInfo GetAdapterInfo() => new() { SdkType = SdkType, IsInitialized = true };
-    public void Dispose() { }
-    
-    public Task<SdkResponse<GetWorkflowResponse>> GetWorkflowAsync(GetWorkflowRequest request) => 
-        Task.FromResult(new SdkResponse<GetWorkflowResponse> { Success = false, ErrorMessage = "Not implemented" });
-}
-
-public class ConductorJavaWorkflowResourceAdapter : IWorkflowResourceAdapter
-{
-    public string SdkType => "java";
-    
-    public Task<bool> InitializeAsync(AdapterConfiguration config) => Task.FromResult(true);
-    public Task<bool> IsHealthyAsync() => Task.FromResult(true);
-    public AdapterInfo GetAdapterInfo() => new() { SdkType = SdkType, IsInitialized = true };
-    public void Dispose() { }
-    
-    public Task<SdkResponse<GetWorkflowResponse>> GetWorkflowAsync(GetWorkflowRequest request) => 
-        Task.FromResult(new SdkResponse<GetWorkflowResponse> { Success = false, ErrorMessage = "Not implemented" });
-}
-
-public class ConductorPythonWorkflowResourceAdapter : IWorkflowResourceAdapter
-{
-    public string SdkType => "python";
-    
-    public Task<bool> InitializeAsync(AdapterConfiguration config) => Task.FromResult(true);
-    public Task<bool> IsHealthyAsync() => Task.FromResult(true);
-    public AdapterInfo GetAdapterInfo() => new() { SdkType = SdkType, IsInitialized = true };
-    public void Dispose() { }
-    
-    public Task<SdkResponse<GetWorkflowResponse>> GetWorkflowAsync(GetWorkflowRequest request) => 
-        Task.FromResult(new SdkResponse<GetWorkflowResponse> { Success = false, ErrorMessage = "Not implemented" });
 } 

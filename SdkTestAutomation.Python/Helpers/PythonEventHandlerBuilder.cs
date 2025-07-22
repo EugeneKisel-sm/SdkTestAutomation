@@ -14,20 +14,7 @@ public static class PythonEventHandlerBuilder
     /// </summary>
     public static dynamic CreateEventHandler(AddEventRequest request)
     {
-        dynamic eventHandlerModule = Py.Import("conductor.common.metadata.events.event_handler");
-        dynamic EventHandler = eventHandlerModule.GetAttr("EventHandler");
-        dynamic eventHandler = EventHandler.Invoke();
-        
-        eventHandler.name = request.Name;
-        eventHandler.event_name = request.Event;
-        eventHandler.active = request.Active;
-        
-        if (request.Actions?.Any() == true)
-        {
-            eventHandler.actions = CreateActions(request.Actions);
-        }
-        
-        return eventHandler;
+        return CreateEventHandlerInternal(request.Name, request.Event, request.Active, request.Actions);
     }
     
     /// <summary>
@@ -35,17 +22,25 @@ public static class PythonEventHandlerBuilder
     /// </summary>
     public static dynamic CreateEventHandler(UpdateEventRequest request)
     {
+        return CreateEventHandlerInternal(request.Name, request.Event, request.Active, request.Actions);
+    }
+    
+    /// <summary>
+    /// Internal method to create EventHandler with common logic
+    /// </summary>
+    private static dynamic CreateEventHandlerInternal(string name, string eventName, bool active, List<EventAction> actions)
+    {
         dynamic eventHandlerModule = Py.Import("conductor.common.metadata.events.event_handler");
         dynamic EventHandler = eventHandlerModule.GetAttr("EventHandler");
         dynamic eventHandler = EventHandler.Invoke();
         
-        eventHandler.name = request.Name;
-        eventHandler.event_name = request.Event;
-        eventHandler.active = request.Active;
+        eventHandler.name = name;
+        eventHandler.event_name = eventName;
+        eventHandler.active = active;
         
-        if (request.Actions?.Any() == true)
+        if (actions?.Any() == true)
         {
-            eventHandler.actions = CreateActions(request.Actions);
+            eventHandler.actions = CreateActions(actions);
         }
         
         return eventHandler;

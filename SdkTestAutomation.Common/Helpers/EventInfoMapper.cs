@@ -13,38 +13,12 @@ public static class EventInfoMapper
     /// </summary>
     public static EventInfo MapFromCSharp(dynamic eventHandler)
     {
-        var actions = new List<EventAction>();
-        
-        // Handle actions manually to avoid lambda with dynamic
-        if (eventHandler.Actions != null)
-        {
-            foreach (var a in eventHandler.Actions)
-            {
-                var action = new EventAction
-                {
-                    Action = a.Action?.ToString() ?? ""
-                };
-                
-                if (a.StartWorkflow != null)
-                {
-                    action.StartWorkflow = new StartWorkflow
-                    {
-                        Name = a.StartWorkflow.Name?.ToString() ?? "",
-                        Version = a.StartWorkflow.Version ?? 1,
-                        Input = a.StartWorkflow.Input as Dictionary<string, object> ?? new Dictionary<string, object>()
-                    };
-                }
-                
-                actions.Add(action);
-            }
-        }
-        
         return new EventInfo
         {
             Name = eventHandler.Name?.ToString() ?? "",
             Event = eventHandler.Event?.ToString() ?? "",
             Active = eventHandler.Active ?? false,
-            Actions = actions,
+            Actions = MapActionsFromCSharp(eventHandler.Actions),
             Condition = eventHandler.Condition?.ToString(),
             EvaluatorType = eventHandler.EvaluatorType?.ToString()
         };
@@ -55,44 +29,15 @@ public static class EventInfoMapper
     /// </summary>
     public static EventInfo MapFromJava(dynamic javaEvent)
     {
-        var eventInfo = new EventInfo
+        return new EventInfo
         {
             Name = javaEvent.getName()?.ToString() ?? "",
             Event = javaEvent.getEvent()?.ToString() ?? "",
             Active = javaEvent.isActive() ?? false,
+            Actions = MapActionsFromJava(javaEvent.getActions()),
             Condition = javaEvent.getCondition()?.ToString(),
-            EvaluatorType = javaEvent.getEvaluatorType()?.ToString(),
-            Actions = new List<EventAction>()
+            EvaluatorType = javaEvent.getEvaluatorType()?.ToString()
         };
-        
-        // Map actions if present
-        var javaActions = javaEvent.getActions();
-        if (javaActions != null)
-        {
-            var actionList = javaActions as IEnumerable<dynamic> ?? new List<dynamic>();
-            foreach (var javaAction in actionList)
-            {
-                var action = new EventAction
-                {
-                    Action = javaAction.getAction()?.ToString() ?? ""
-                };
-                
-                var startWorkflow = javaAction.getStartWorkflow();
-                if (startWorkflow != null)
-                {
-                    action.StartWorkflow = new StartWorkflow
-                    {
-                        Name = startWorkflow.getName()?.ToString() ?? "",
-                        Version = startWorkflow.getVersion() ?? 1,
-                        Input = JsonSerializer.Deserialize<Dictionary<string, object>>(startWorkflow.getInput()?.ToString() ?? "{}") ?? new Dictionary<string, object>()
-                    };
-                }
-                
-                eventInfo.Actions.Add(action);
-            }
-        }
-        
-        return eventInfo;
     }
     
     /// <summary>
@@ -100,44 +45,15 @@ public static class EventInfoMapper
     /// </summary>
     public static EventInfo MapFromPython(dynamic pythonEvent)
     {
-        var eventInfo = new EventInfo
+        return new EventInfo
         {
             Name = pythonEvent.name?.ToString() ?? "",
             Event = pythonEvent.event_name?.ToString() ?? "",
             Active = pythonEvent.active ?? false,
+            Actions = MapActionsFromPython(pythonEvent.actions),
             Condition = pythonEvent.condition?.ToString(),
-            EvaluatorType = pythonEvent.evaluator_type?.ToString(),
-            Actions = new List<EventAction>()
+            EvaluatorType = pythonEvent.evaluator_type?.ToString()
         };
-        
-        // Map actions if present
-        var pythonActions = pythonEvent.actions;
-        if (pythonActions != null)
-        {
-            var actionList = pythonActions as IEnumerable<dynamic> ?? new List<dynamic>();
-            foreach (var pythonAction in actionList)
-            {
-                var action = new EventAction
-                {
-                    Action = pythonAction.action?.ToString() ?? ""
-                };
-                
-                var startWorkflow = pythonAction.start_workflow;
-                if (startWorkflow != null)
-                {
-                    action.StartWorkflow = new StartWorkflow
-                    {
-                        Name = startWorkflow.name?.ToString() ?? "",
-                        Version = startWorkflow.version ?? 1,
-                        Input = JsonSerializer.Deserialize<Dictionary<string, object>>(startWorkflow.input?.ToString() ?? "{}") ?? new Dictionary<string, object>()
-                    };
-                }
-                
-                eventInfo.Actions.Add(action);
-            }
-        }
-        
-        return eventInfo;
     }
     
     /// <summary>
@@ -149,9 +65,7 @@ public static class EventInfoMapper
         
         try
         {
-            // Handle both List and array types
             var eventList = events as IEnumerable<dynamic> ?? new List<dynamic>();
-            
             foreach (var eventHandler in eventList)
             {
                 result.Add(MapFromCSharp(eventHandler));
@@ -159,7 +73,6 @@ public static class EventInfoMapper
         }
         catch (Exception ex)
         {
-            // Log error but don't fail the entire operation
             Console.WriteLine($"Error mapping C# event handlers: {ex.Message}");
         }
         
@@ -175,9 +88,7 @@ public static class EventInfoMapper
         
         try
         {
-            // Handle both List and array types
             var eventList = events as IEnumerable<dynamic> ?? new List<dynamic>();
-            
             foreach (var eventHandler in eventList)
             {
                 result.Add(MapFromJava(eventHandler));
@@ -185,7 +96,6 @@ public static class EventInfoMapper
         }
         catch (Exception ex)
         {
-            // Log error but don't fail the entire operation
             Console.WriteLine($"Error mapping Java event handlers: {ex.Message}");
         }
         
@@ -201,9 +111,7 @@ public static class EventInfoMapper
         
         try
         {
-            // Handle both List and array types
             var eventList = events as IEnumerable<dynamic> ?? new List<dynamic>();
-            
             foreach (var eventHandler in eventList)
             {
                 result.Add(MapFromPython(eventHandler));
@@ -211,8 +119,107 @@ public static class EventInfoMapper
         }
         catch (Exception ex)
         {
-            // Log error but don't fail the entire operation
             Console.WriteLine($"Error mapping Python event handlers: {ex.Message}");
+        }
+        
+        return result;
+    }
+    
+    /// <summary>
+    /// Map C# actions to EventAction list
+    /// </summary>
+    private static List<EventAction> MapActionsFromCSharp(dynamic? actions)
+    {
+        var result = new List<EventAction>();
+        
+        if (actions == null) return result;
+        
+        foreach (var a in actions)
+        {
+            var action = new EventAction
+            {
+                Action = a.Action?.ToString() ?? ""
+            };
+            
+            if (a.StartWorkflow != null)
+            {
+                action.StartWorkflow = new StartWorkflow
+                {
+                    Name = a.StartWorkflow.Name?.ToString() ?? "",
+                    Version = a.StartWorkflow.Version ?? 1,
+                    Input = a.StartWorkflow.Input as Dictionary<string, object> ?? new Dictionary<string, object>()
+                };
+            }
+            
+            result.Add(action);
+        }
+        
+        return result;
+    }
+    
+    /// <summary>
+    /// Map Java actions to EventAction list
+    /// </summary>
+    private static List<EventAction> MapActionsFromJava(dynamic? javaActions)
+    {
+        var result = new List<EventAction>();
+        
+        if (javaActions == null) return result;
+        
+        var actionList = javaActions as IEnumerable<dynamic> ?? new List<dynamic>();
+        foreach (var javaAction in actionList)
+        {
+            var action = new EventAction
+            {
+                Action = javaAction.getAction()?.ToString() ?? ""
+            };
+            
+            var startWorkflow = javaAction.getStartWorkflow();
+            if (startWorkflow != null)
+            {
+                action.StartWorkflow = new StartWorkflow
+                {
+                    Name = startWorkflow.getName()?.ToString() ?? "",
+                    Version = startWorkflow.getVersion() ?? 1,
+                    Input = JsonSerializer.Deserialize<Dictionary<string, object>>(startWorkflow.getInput()?.ToString() ?? "{}") ?? new Dictionary<string, object>()
+                };
+            }
+            
+            result.Add(action);
+        }
+        
+        return result;
+    }
+    
+    /// <summary>
+    /// Map Python actions to EventAction list
+    /// </summary>
+    private static List<EventAction> MapActionsFromPython(dynamic? pythonActions)
+    {
+        var result = new List<EventAction>();
+        
+        if (pythonActions == null) return result;
+        
+        var actionList = pythonActions as IEnumerable<dynamic> ?? new List<dynamic>();
+        foreach (var pythonAction in actionList)
+        {
+            var action = new EventAction
+            {
+                Action = pythonAction.action?.ToString() ?? ""
+            };
+            
+            var startWorkflow = pythonAction.start_workflow;
+            if (startWorkflow != null)
+            {
+                action.StartWorkflow = new StartWorkflow
+                {
+                    Name = startWorkflow.name?.ToString() ?? "",
+                    Version = startWorkflow.version ?? 1,
+                    Input = JsonSerializer.Deserialize<Dictionary<string, object>>(startWorkflow.input?.ToString() ?? "{}") ?? new Dictionary<string, object>()
+                };
+            }
+            
+            result.Add(action);
         }
         
         return result;

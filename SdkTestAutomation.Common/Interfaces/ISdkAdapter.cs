@@ -26,16 +26,4 @@ public interface ISdkAdapter : IDisposable
     /// Get adapter information
     /// </summary>
     AdapterInfo GetAdapterInfo();
-}
-
-/// <summary>
-/// Information about an SDK adapter
-/// </summary>
-public class AdapterInfo
-{
-    public string SdkType { get; set; } = string.Empty;
-    public string Version { get; set; } = string.Empty;
-    public bool IsInitialized { get; set; }
-    public DateTime InitializedAt { get; set; }
-    public string? ErrorMessage { get; set; }
 } 
