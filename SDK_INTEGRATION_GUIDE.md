@@ -1,10 +1,10 @@
 # SDK Integration Guide
 
-This guide explains how the .NET test harness can call each SDK wrapper and parse the JSON output for validation.
+This guide explains how the .NET test harness validates multiple Conductor SDKs (C#, Java, Python) through CLI wrappers and compares their responses with direct REST API calls.
 
 ## Overview
 
-The SdkTestAutomation framework provides a unified way to test multiple Conductor SDKs (C#, Java, Python) through CLI wrappers. Each test runs against one chosen SDK per execution, and the framework validates that SDK responses match direct API responses.
+The SdkTestAutomation framework provides a unified way to test multiple Conductor SDKs through CLI wrappers. Each test runs against one chosen SDK per execution, and the framework validates that SDK responses match direct API responses for structural equality.
 
 ## Architecture
 
@@ -46,22 +46,14 @@ SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tes
 
 ### 2. CLI Wrapper Communication
 
-The .NET test harness communicates with SDK wrappers via JSON over standard I/O:
+The .NET test harness communicates with SDK wrappers via command-line arguments and JSON over standard I/O:
 
-**Input to CLI Wrapper:**
-```json
-{
-  "operation": "add-event",
-  "parameters": {
-    "name": "test_event",
-    "event": "test_event", 
-    "active": true
-  },
-  "resource": "event"
-}
+**Command-line arguments:**
+```bash
+--operation add-event --parameters '{"name":"test_event","event":"test_event","active":true}' --resource event
 ```
 
-**Output from CLI Wrapper:**
+**JSON Output from CLI Wrapper:**
 ```json
 {
   "statusCode": 200,
@@ -94,7 +86,7 @@ Assert.True(isValid, "SDK response does not match API response");
 
 **Location:** `SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/`
 
-**Command:** `dotnet run --project SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp`
+**Build:** `dotnet build SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/SdkTestAutomation.CSharp.csproj`
 
 **Dependencies:** 
 - `conductor-csharp` NuGet package
@@ -113,14 +105,12 @@ dotnet run --project SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp -- \
 
 **Location:** `SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/`
 
-**Command:** `java -jar SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar`
+**Build:** `mvn clean package`
 
 **Dependencies:**
 - `conductor-client` Maven dependency
 - `picocli` for CLI parsing
 - `jackson-databind` for JSON serialization
-
-**Build:** `mvn clean package`
 
 **Example Usage:**
 ```bash
@@ -134,14 +124,12 @@ java -jar SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrappe
 
 **Location:** `SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/`
 
-**Command:** `python SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/sdk_wrapper/main.py`
+**Install:** `pip install -e .`
 
 **Dependencies:**
 - `conductor-python` PyPI package
 - `argparse` for CLI parsing (built-in)
 - `json` for JSON serialization (built-in)
-
-**Install:** `pip install -e .`
 
 **Example Usage:**
 ```bash
@@ -260,7 +248,7 @@ SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tes
 1. **Conductor Server:** Running at `http://localhost:8080`
 2. **C# SDK:** .NET 8.0 runtime
 3. **Java SDK:** Java 17+ and Maven
-4. **Python SDK:** Python 3.8+ and pip
+4. **Python SDK:** Python 3.9+ and pip
 
 ## Adding a New SDK
 
@@ -276,14 +264,18 @@ To add support for a new SDK (e.g., Go):
 
 2. **Update SdkCommandExecutor:**
    ```csharp
-   private string GetWrapperPath(string sdkType) => sdkType.ToLowerInvariant() switch
+   private (string fileName, string arguments) GetProcessInfo(string command)
    {
-       "csharp" => "dotnet run --project SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp",
-       "java" => "java -jar SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar",
-       "python" => "python SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/sdk_wrapper/main.py",
-       "go" => "go run SdkTestAutomation.CliWrappers/SdkTestAutomation.Go/main.go",
-       _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
-   };
+       var projectRoot = GetProjectRoot();
+       return _sdkType switch
+       {
+           "csharp" => (Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/bin/Debug/net8.0/SdkTestAutomation.CSharp"), command),
+           "java" => ("java", $"-jar \"{Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar")}\" {command}"),
+           "python" => (Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/venv/bin/python"), $"{Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/sdk_wrapper/main.py")} {command}"),
+           "go" => ("go", $"run {Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.Go/main.go")} {command}"),
+           _ => throw new ArgumentException($"Unsupported SDK type: {_sdkType}")
+       };
+   }
    ```
 
 3. **Update Test Runner Script:**
@@ -301,14 +293,22 @@ To add support for a new SDK (e.g., Go):
 1. **SDK Wrapper Not Found:**
    - Ensure the wrapper is built/installed
    - Check the wrapper path in `SdkCommandExecutor`
+   - Verify the executable exists at the expected location
 
 2. **JSON Parsing Errors:**
    - Verify the wrapper outputs valid JSON
    - Check the `SdkResponse` structure matches
+   - Ensure no extra output is mixed with JSON response
 
 3. **Response Mismatch:**
    - Compare SDK and API response structures
    - Check for differences in data serialization
+   - Verify field names and data types match
+
+4. **Process Execution Errors:**
+   - Check if the SDK runtime is available (Java, Python, .NET)
+   - Verify environment variables are set correctly
+   - Ensure Conductor server is running and accessible
 
 ### Debug Mode
 
@@ -318,4 +318,40 @@ Enable detailed logging by setting the log level:
 LOG_LEVEL=Debug SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 ```
 
-This will show the exact commands being executed and responses received. 
+This will show:
+- Exact commands being executed
+- Raw output from CLI wrappers
+- JSON parsing details
+- Response comparison results
+
+### Environment Variables
+
+Required environment variables:
+
+```bash
+# Conductor server URL
+export CONDUCTOR_SERVER_URL=http://localhost:8080/api
+
+# SDK type to test (csharp, java, python)
+export SDK_TYPE=csharp
+
+# Optional: Log level for debugging
+export LOG_LEVEL=Debug
+```
+
+## Architecture Benefits
+
+1. **Language Independence**: .NET tests can validate any language SDK
+2. **Extensibility**: Adding new SDKs requires only a new CLI wrapper
+3. **Consistency**: All SDKs are tested with the same test cases
+4. **Isolation**: SDK issues don't affect the test framework
+5. **Maintainability**: Single test codebase for all SDKs
+6. **CI/CD Friendly**: Easy to integrate into automated pipelines
+
+## Best Practices
+
+1. **Always validate responses**: Use `ValidateSdkResponseAsync` to ensure SDK correctness
+2. **Handle errors gracefully**: Check `sdkResponse.Success` before validation
+3. **Use unique test data**: Generate unique names/IDs to avoid conflicts
+4. **Test all SDKs**: Run tests against all supported SDKs before committing
+5. **Keep wrappers simple**: CLI wrappers should only handle SDK communication, not business logic 
