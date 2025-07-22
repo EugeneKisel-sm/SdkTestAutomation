@@ -4,7 +4,7 @@ using SdkTestAutomation.Common.Models;
 namespace SdkTestAutomation.Common.Helpers;
 
 /// <summary>
-/// Shared helper class for mapping event handlers from different SDKs to common EventInfo model
+/// Simplified helper for mapping event handlers from different SDKs to common EventInfo model
 /// </summary>
 public static class EventInfoMapper
 {
@@ -15,12 +15,12 @@ public static class EventInfoMapper
     {
         return new EventInfo
         {
-            Name = eventHandler.Name?.ToString() ?? "",
-            Event = eventHandler.Event?.ToString() ?? "",
-            Active = eventHandler.Active ?? false,
+            Name = GetPropertyValue(eventHandler, "Name"),
+            Event = GetPropertyValue(eventHandler, "Event"),
+            Active = GetPropertyValue(eventHandler, "Active") ?? false,
             Actions = MapActionsFromCSharp(eventHandler.Actions),
-            Condition = eventHandler.Condition?.ToString(),
-            EvaluatorType = eventHandler.EvaluatorType?.ToString()
+            Condition = GetPropertyValue(eventHandler, "Condition"),
+            EvaluatorType = GetPropertyValue(eventHandler, "EvaluatorType")
         };
     }
     
@@ -31,12 +31,12 @@ public static class EventInfoMapper
     {
         return new EventInfo
         {
-            Name = javaEvent.getName()?.ToString() ?? "",
-            Event = javaEvent.getEvent()?.ToString() ?? "",
-            Active = javaEvent.isActive() ?? false,
+            Name = GetMethodValue(javaEvent, "getName"),
+            Event = GetMethodValue(javaEvent, "getEvent"),
+            Active = GetMethodValue(javaEvent, "isActive") ?? false,
             Actions = MapActionsFromJava(javaEvent.getActions()),
-            Condition = javaEvent.getCondition()?.ToString(),
-            EvaluatorType = javaEvent.getEvaluatorType()?.ToString()
+            Condition = GetMethodValue(javaEvent, "getCondition"),
+            EvaluatorType = GetMethodValue(javaEvent, "getEvaluatorType")
         };
     }
     
@@ -47,12 +47,12 @@ public static class EventInfoMapper
     {
         return new EventInfo
         {
-            Name = pythonEvent.name?.ToString() ?? "",
-            Event = pythonEvent.event_name?.ToString() ?? "",
-            Active = pythonEvent.active ?? false,
+            Name = GetPropertyValue(pythonEvent, "name"),
+            Event = GetPropertyValue(pythonEvent, "event_name"),
+            Active = GetPropertyValue(pythonEvent, "active") ?? false,
             Actions = MapActionsFromPython(pythonEvent.actions),
-            Condition = pythonEvent.condition?.ToString(),
-            EvaluatorType = pythonEvent.evaluator_type?.ToString()
+            Condition = GetPropertyValue(pythonEvent, "condition"),
+            EvaluatorType = GetPropertyValue(pythonEvent, "evaluator_type")
         };
     }
     
@@ -138,15 +138,15 @@ public static class EventInfoMapper
         {
             var action = new EventAction
             {
-                Action = a.Action?.ToString() ?? ""
+                Action = GetPropertyValue(a, "Action")
             };
             
             if (a.StartWorkflow != null)
             {
                 action.StartWorkflow = new StartWorkflow
                 {
-                    Name = a.StartWorkflow.Name?.ToString() ?? "",
-                    Version = a.StartWorkflow.Version ?? 1,
+                    Name = GetPropertyValue(a.StartWorkflow, "Name"),
+                    Version = GetPropertyValue(a.StartWorkflow, "Version") ?? 1,
                     Input = a.StartWorkflow.Input as Dictionary<string, object> ?? new Dictionary<string, object>()
                 };
             }
@@ -171,7 +171,7 @@ public static class EventInfoMapper
         {
             var action = new EventAction
             {
-                Action = javaAction.getAction()?.ToString() ?? ""
+                Action = GetMethodValue(javaAction, "getAction")
             };
             
             var startWorkflow = javaAction.getStartWorkflow();
@@ -179,9 +179,9 @@ public static class EventInfoMapper
             {
                 action.StartWorkflow = new StartWorkflow
                 {
-                    Name = startWorkflow.getName()?.ToString() ?? "",
-                    Version = startWorkflow.getVersion() ?? 1,
-                    Input = JsonSerializer.Deserialize<Dictionary<string, object>>(startWorkflow.getInput()?.ToString() ?? "{}") ?? new Dictionary<string, object>()
+                    Name = GetMethodValue(startWorkflow, "getName"),
+                    Version = GetMethodValue(startWorkflow, "getVersion") ?? 1,
+                    Input = JsonSerializer.Deserialize<Dictionary<string, object>>(GetMethodValue(startWorkflow, "getInput") ?? "{}") ?? new Dictionary<string, object>()
                 };
             }
             
@@ -205,7 +205,7 @@ public static class EventInfoMapper
         {
             var action = new EventAction
             {
-                Action = pythonAction.action?.ToString() ?? ""
+                Action = GetPropertyValue(pythonAction, "action")
             };
             
             var startWorkflow = pythonAction.start_workflow;
@@ -213,9 +213,9 @@ public static class EventInfoMapper
             {
                 action.StartWorkflow = new StartWorkflow
                 {
-                    Name = startWorkflow.name?.ToString() ?? "",
-                    Version = startWorkflow.version ?? 1,
-                    Input = JsonSerializer.Deserialize<Dictionary<string, object>>(startWorkflow.input?.ToString() ?? "{}") ?? new Dictionary<string, object>()
+                    Name = GetPropertyValue(startWorkflow, "name"),
+                    Version = GetPropertyValue(startWorkflow, "version") ?? 1,
+                    Input = JsonSerializer.Deserialize<Dictionary<string, object>>(GetPropertyValue(startWorkflow, "input") ?? "{}") ?? new Dictionary<string, object>()
                 };
             }
             
@@ -223,5 +223,47 @@ public static class EventInfoMapper
         }
         
         return result;
+    }
+    
+    /// <summary>
+    /// Safely get property value from dynamic object
+    /// </summary>
+    private static string? GetPropertyValue(dynamic obj, string propertyName)
+    {
+        try
+        {
+            var property = obj.GetType().GetProperty(propertyName);
+            if (property != null)
+            {
+                var value = property.GetValue(obj);
+                return value?.ToString();
+            }
+        }
+        catch
+        {
+            // Property doesn't exist or is not accessible
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// Safely get method value from dynamic object
+    /// </summary>
+    private static string? GetMethodValue(dynamic obj, string methodName)
+    {
+        try
+        {
+            var method = obj.GetType().GetMethod(methodName);
+            if (method != null)
+            {
+                var value = method.Invoke(obj, null);
+                return value?.ToString();
+            }
+        }
+        catch
+        {
+            // Method doesn't exist or is not accessible
+        }
+        return null;
     }
 } 

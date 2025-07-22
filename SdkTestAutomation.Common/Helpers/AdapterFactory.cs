@@ -5,7 +5,7 @@ using SdkTestAutomation.Utils.Logging;
 namespace SdkTestAutomation.Common.Helpers;
 
 /// <summary>
-/// Factory for creating SDK adapters
+/// Simplified factory for creating SDK adapters
 /// </summary>
 public static class AdapterFactory
 {

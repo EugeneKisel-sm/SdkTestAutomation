@@ -4,26 +4,16 @@ using SdkTestAutomation.Common.Models;
 namespace SdkTestAutomation.Common.Helpers;
 
 /// <summary>
-/// Shared helper class for building SdkResponse objects across all SDKs
+/// Simplified helper for building SdkResponse objects
 /// </summary>
 public static class SdkResponseBuilder
 {
     /// <summary>
-    /// Create a successful response
+    /// Create a successful response with data
     /// </summary>
-    public static SdkResponse<GetEventResponse> CreateSuccessResponse(
-        GetEventResponse data, 
-        string requestId)
+    public static SdkResponse<GetEventResponse> CreateSuccessResponse(GetEventResponse data)
     {
-        var response = new SdkResponse<GetEventResponse>
-        {
-            Success = true,
-            StatusCode = 200,
-            RequestId = requestId,
-            Timestamp = DateTime.UtcNow,
-            Data = data
-        };
-        
+        var response = SdkResponse<GetEventResponse>.CreateSuccess(data);
         response.Content = JsonSerializer.Serialize(data);
         return response;
     }
@@ -31,26 +21,15 @@ public static class SdkResponseBuilder
     /// <summary>
     /// Create an error response
     /// </summary>
-    public static SdkResponse<GetEventResponse> CreateErrorResponse(
-        string errorMessage, 
-        string requestId, 
-        int statusCode = 500)
+    public static SdkResponse<GetEventResponse> CreateErrorResponse(string errorMessage, int statusCode = 500)
     {
-        return new SdkResponse<GetEventResponse>
-        {
-            Success = false,
-            StatusCode = statusCode,
-            ErrorMessage = errorMessage,
-            RequestId = requestId,
-            Timestamp = DateTime.UtcNow
-        };
+        return SdkResponse<GetEventResponse>.CreateError(errorMessage, statusCode);
     }
     
     /// <summary>
     /// Create a response from request data (for add/update operations)
     /// </summary>
-    public static SdkResponse<GetEventResponse> CreateFromRequest(
-        AddEventRequest request)
+    public static SdkResponse<GetEventResponse> CreateFromRequest(AddEventRequest request)
     {
         var eventInfo = new EventInfo
         {
@@ -65,14 +44,13 @@ public static class SdkResponseBuilder
             Events = new List<EventInfo> { eventInfo }
         };
         
-        return CreateSuccessResponse(data, request.RequestId);
+        return CreateSuccessResponse(data);
     }
     
     /// <summary>
     /// Create a response from update request data
     /// </summary>
-    public static SdkResponse<GetEventResponse> CreateFromRequest(
-        UpdateEventRequest request)
+    public static SdkResponse<GetEventResponse> CreateFromRequest(UpdateEventRequest request)
     {
         var eventInfo = new EventInfo
         {
@@ -87,19 +65,19 @@ public static class SdkResponseBuilder
             Events = new List<EventInfo> { eventInfo }
         };
         
-        return CreateSuccessResponse(data, request.RequestId);
+        return CreateSuccessResponse(data);
     }
     
     /// <summary>
     /// Create an empty response
     /// </summary>
-    public static SdkResponse<GetEventResponse> CreateEmptyResponse(string requestId)
+    public static SdkResponse<GetEventResponse> CreateEmptyResponse()
     {
         var data = new GetEventResponse
         {
             Events = new List<EventInfo>()
         };
         
-        return CreateSuccessResponse(data, requestId);
+        return CreateSuccessResponse(data);
     }
 } 

@@ -59,8 +59,11 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
     
     public override async Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
     {
-        return await ExecuteEventOperation("Adding event", request.Name, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Adding event", request.Name);
+            
             await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
             {
                 var eventClient = _pythonEngine!.GetEventClient();
@@ -68,13 +71,21 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
                 eventClient.register_event_handler(eventHandler);
             }));
             return SdkResponseBuilder.CreateFromRequest(request);
-        });
+        }
+        catch (Exception ex)
+        {
+            LogError("adding event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
+        }
     }
     
     public override async Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
     {
-        return await ExecuteEventOperation("Getting all events", null, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Getting all events");
+            
             var events = await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
             {
                 var eventClient = _pythonEngine!.GetEventClient();
@@ -86,14 +97,22 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
                 Events = EventInfoMapper.MapPythonCollection(events)
             };
             
-            return SdkResponseBuilder.CreateSuccessResponse(data, request.RequestId);
-        });
+            return SdkResponseBuilder.CreateSuccessResponse(data);
+        }
+        catch (Exception ex)
+        {
+            LogError("getting events", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
+        }
     }
     
     public override async Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
     {
-        return await ExecuteEventOperation("Getting event by name", request.Event, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Getting event by name", request.Event);
+            
             var events = await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
             {
                 var eventClient = _pythonEngine!.GetEventClient();
@@ -105,14 +124,22 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
                 Events = EventInfoMapper.MapPythonCollection(events)
             };
             
-            return SdkResponseBuilder.CreateSuccessResponse(data, request.RequestId);
-        });
+            return SdkResponseBuilder.CreateSuccessResponse(data);
+        }
+        catch (Exception ex)
+        {
+            LogError("getting events by name", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
+        }
     }
     
     public override async Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
     {
-        return await ExecuteEventOperation("Updating event", request.Name, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Updating event", request.Name);
+            
             await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
             {
                 var eventClient = _pythonEngine!.GetEventClient();
@@ -120,42 +147,32 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
                 eventClient.update_event_handler(eventHandler);
             }));
             return SdkResponseBuilder.CreateFromRequest(request);
-        });
+        }
+        catch (Exception ex)
+        {
+            LogError("updating event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
+        }
     }
     
     public override async Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
     {
-        return await ExecuteEventOperation("Deleting event", request.Name, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Deleting event", request.Name);
+            
             await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
             {
                 var eventClient = _pythonEngine!.GetEventClient();
                 eventClient.unregister_event_handler(request.Name);
             }));
-            return SdkResponseBuilder.CreateEmptyResponse(request.RequestId);
-        });
-    }
-    
-    /// <summary>
-    /// Execute event operation with common error handling
-    /// </summary>
-    private async Task<SdkResponse<GetEventResponse>> ExecuteEventOperation(
-        string operation, 
-        string? details, 
-        string requestId, 
-        Func<Task<SdkResponse<GetEventResponse>>> operationFunc)
-    {
-        try
-        {
-            ValidateInitialization();
-            LogOperation(operation, details);
-            
-            return await operationFunc();
+            return SdkResponseBuilder.CreateEmptyResponse();
         }
         catch (Exception ex)
         {
-            LogError(operation.ToLower(), ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, requestId);
+            LogError("deleting event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
         }
     }
     

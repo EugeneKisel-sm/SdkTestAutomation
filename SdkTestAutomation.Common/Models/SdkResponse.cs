@@ -3,13 +3,10 @@ using Newtonsoft.Json;
 namespace SdkTestAutomation.Common.Models;
 
 /// <summary>
-/// Standardized response structure for all SDK operations
+/// Simplified response structure for SDK operations
 /// </summary>
 public class SdkResponse<T>
 {
-    [JsonProperty("statusCode")]
-    public int StatusCode { get; set; }
-    
     [JsonProperty("success")]
     public bool Success { get; set; }
     
@@ -22,9 +19,10 @@ public class SdkResponse<T>
     [JsonProperty("errorMessage")]
     public string ErrorMessage { get; set; } = string.Empty;
     
-    [JsonProperty("requestId")]
-    public string RequestId { get; set; } = string.Empty;
+    [JsonProperty("statusCode")]
+    public int StatusCode { get; set; } = 200;
     
-    [JsonProperty("timestamp")]
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    // Factory methods for common responses
+    public static SdkResponse<T> CreateSuccess(T data) => new() { Success = true, Data = data };
+    public static SdkResponse<T> CreateError(string message, int statusCode = 500) => new() { Success = false, ErrorMessage = message, StatusCode = statusCode };
 } 

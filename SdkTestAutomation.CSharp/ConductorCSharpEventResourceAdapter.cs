@@ -56,8 +56,11 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
     
     public override async Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
     {
-        return await ExecuteEventOperation("Adding event", request.Name, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Adding event", request.Name);
+            
             // Create a basic EventHandler with only known properties
             var eventHandler = new EventHandler
             {
@@ -67,13 +70,26 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
             
             await Task.Run(() => _eventApi!.AddEventHandler(eventHandler));
             return SdkResponseBuilder.CreateFromRequest(request);
-        });
+        }
+        catch (ApiException ex)
+        {
+            LogError("adding event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
+        }
+        catch (Exception ex)
+        {
+            LogError("adding event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
+        }
     }
     
     public override async Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
     {
-        return await ExecuteEventOperation("Getting all events", null, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Getting all events");
+            
             var events = await Task.Run(() => _eventApi!.GetEventHandlers());
             
             var data = new GetEventResponse
@@ -81,14 +97,27 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
                 Events = EventInfoMapper.MapCSharpCollection(events)
             };
             
-            return SdkResponseBuilder.CreateSuccessResponse(data, request.RequestId);
-        });
+            return SdkResponseBuilder.CreateSuccessResponse(data);
+        }
+        catch (ApiException ex)
+        {
+            LogError("getting events", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
+        }
+        catch (Exception ex)
+        {
+            LogError("getting events", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
+        }
     }
     
     public override async Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
     {
-        return await ExecuteEventOperation("Getting events by name", request.Event, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Getting events by name", request.Event);
+            
             var events = await Task.Run(() => _eventApi!.GetEventHandlersForEvent(request.Event, request.ActiveOnly));
             
             var data = new GetEventResponse
@@ -96,14 +125,27 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
                 Events = EventInfoMapper.MapCSharpCollection(events)
             };
             
-            return SdkResponseBuilder.CreateSuccessResponse(data, request.RequestId);
-        });
+            return SdkResponseBuilder.CreateSuccessResponse(data);
+        }
+        catch (ApiException ex)
+        {
+            LogError("getting events by name", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
+        }
+        catch (Exception ex)
+        {
+            LogError("getting events by name", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
+        }
     }
     
     public override async Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
     {
-        return await ExecuteEventOperation("Updating event", request.Name, request.RequestId, async () =>
+        try
         {
+            ValidateInitialization();
+            LogOperation("Updating event", request.Name);
+            
             // Create a basic EventHandler with only known properties
             var eventHandler = new EventHandler
             {
@@ -113,43 +155,38 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
             
             await Task.Run(() => _eventApi!.UpdateEventHandler(eventHandler));
             return SdkResponseBuilder.CreateFromRequest(request);
-        });
+        }
+        catch (ApiException ex)
+        {
+            LogError("updating event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
+        }
+        catch (Exception ex)
+        {
+            LogError("updating event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
+        }
     }
     
     public override async Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
     {
-        return await ExecuteEventOperation("Deleting event", request.Name, request.RequestId, async () =>
-        {
-            await Task.Run(() => _eventApi!.RemoveEventHandlerStatus(request.Name));
-            return SdkResponseBuilder.CreateEmptyResponse(request.RequestId);
-        });
-    }
-    
-    /// <summary>
-    /// Execute event operation with common error handling
-    /// </summary>
-    private async Task<SdkResponse<GetEventResponse>> ExecuteEventOperation(
-        string operation, 
-        string? details, 
-        string requestId, 
-        Func<Task<SdkResponse<GetEventResponse>>> operationFunc)
-    {
         try
         {
             ValidateInitialization();
-            LogOperation(operation, details);
+            LogOperation("Deleting event", request.Name);
             
-            return await operationFunc();
+            await Task.Run(() => _eventApi!.RemoveEventHandlerStatus(request.Name));
+            return SdkResponseBuilder.CreateEmptyResponse();
         }
         catch (ApiException ex)
         {
-            LogError(operation.ToLower(), ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, requestId, ex.ErrorCode);
+            LogError("deleting event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
         }
         catch (Exception ex)
         {
-            LogError(operation.ToLower(), ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, requestId);
+            LogError("deleting event", ex);
+            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
         }
     }
     
