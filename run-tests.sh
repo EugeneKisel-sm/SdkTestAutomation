@@ -79,5 +79,5 @@ else
 fi
 
 echo ""
-echo "Note: Make sure Conductor server is running at http://localhost:8080"
+echo "Note: Make sure Conductor server is running at http://localhost:8080/api"
 echo "To run a specific SDK test: $0 [csharp|java|python]" 

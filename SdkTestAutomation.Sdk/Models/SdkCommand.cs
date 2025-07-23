@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace SdkTestAutomation.Common.Models;
+namespace SdkTestAutomation.Sdk.Models;
 
 public class SdkCommand
 {

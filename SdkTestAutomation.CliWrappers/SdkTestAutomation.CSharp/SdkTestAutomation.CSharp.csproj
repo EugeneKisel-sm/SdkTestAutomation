@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\SdkTestAutomation.Common\SdkTestAutomation.Common.csproj" />
+    <ProjectReference Include="..\..\SdkTestAutomation.Sdk\SdkTestAutomation.Sdk.csproj" />
   </ItemGroup>
 
 </Project>

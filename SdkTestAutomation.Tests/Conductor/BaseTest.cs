@@ -1,7 +1,7 @@
 using SdkTestAutomation.Api.Conductor.EventResource;
 using SdkTestAutomation.Api.Conductor.WorkflowResource;
-using SdkTestAutomation.Common.Helpers;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk;
+using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils.Logging;
 using RestSharp;
 using Xunit;

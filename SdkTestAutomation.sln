@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Api", "Sd
 		{21A35852-3EB4-4B25-A765-63EF9245CDEF} = {21A35852-3EB4-4B25-A765-63EF9245CDEF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Common", "SdkTestAutomation.Common\SdkTestAutomation.Common.csproj", "{4031A782-D575-40BB-97ED-42B883820AFC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdkTestAutomation.Sdk", "SdkTestAutomation.Sdk\SdkTestAutomation.Sdk.csproj", "{4031A782-D575-40BB-97ED-42B883820AFC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SdkTestAutomation.CliWrappers", "SdkTestAutomation.CliWrappers", "{5BCAD2EF-516E-39B3-60E4-4D44F2B056FE}"
 EndProject

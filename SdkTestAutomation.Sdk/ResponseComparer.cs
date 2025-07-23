@@ -1,8 +1,8 @@
 using System.Text.Json;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils.Logging;
 
-namespace SdkTestAutomation.Common.Helpers;
+namespace SdkTestAutomation.Sdk;
 
 public class ResponseComparer
 {
@@ -17,15 +17,13 @@ public class ResponseComparer
     {
         _logger.Log("Comparing SDK and API responses...");
         
-        // Compare status codes and success status
         var apiSuccess = apiResponse.StatusCode == System.Net.HttpStatusCode.OK;
         if (sdkResponse.StatusCode != (int)apiResponse.StatusCode || sdkResponse.Success != apiSuccess)
         {
-            _logger.Log($"Status mismatch: SDK={sdkResponse.StatusCode}({sdkResponse.Success}), API={(int)apiResponse.StatusCode}({apiSuccess})");
+            _logger.Log($"Status mismatch: SDK={sdkResponse.StatusCode}({sdkResponse.Success}), API={(int)apiResponse.StatusCode}({apiSuccess}).");
             return Task.FromResult(false);
         }
         
-        // Compare content if available
         if (!string.IsNullOrEmpty(sdkResponse.Content) && !string.IsNullOrEmpty(apiResponse.Content))
         {
             try
@@ -35,7 +33,7 @@ public class ResponseComparer
                 
                 if (!JsonElementEquals(sdkJson, apiJson))
                 {
-                    _logger.Log("Content mismatch between SDK and API responses");
+                    _logger.Log("Content mismatch between SDK and API responses.");
                     _logger.Log($"SDK Content: {sdkResponse.Content}");
                     _logger.Log($"API Content: {apiResponse.Content}");
                     return Task.FromResult(false);
@@ -43,12 +41,12 @@ public class ResponseComparer
             }
             catch (JsonException ex)
             {
-                _logger.Log($"Error comparing JSON content: {ex.Message}");
+                _logger.Log($"Error comparing JSON content: {ex.Message}.");
                 return Task.FromResult(false);
             }
         }
         
-        _logger.Log("SDK and API responses match");
+        _logger.Log("SDK and API responses match.");
         return Task.FromResult(true);
     }
     

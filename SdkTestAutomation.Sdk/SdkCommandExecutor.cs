@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils.Logging;
 
-namespace SdkTestAutomation.Common.Helpers;
+namespace SdkTestAutomation.Sdk;
 
 public class SdkCommandExecutor
 {
@@ -101,7 +101,6 @@ public class SdkCommandExecutor
         if (trimmed.StartsWith("{") && trimmed.EndsWith("}"))
             return trimmed;
             
-        // Find first valid JSON object
         var lines = trimmed.Split('\n');
         return lines.FirstOrDefault(line => line.Trim().StartsWith("{") && line.Trim().EndsWith("}")) ?? trimmed;
     }
@@ -140,6 +139,6 @@ public class SdkCommandExecutor
             dir = dir.Parent;
         }
         
-        return currentDir; // Fallback to current directory
+        return currentDir;
     }
 } 

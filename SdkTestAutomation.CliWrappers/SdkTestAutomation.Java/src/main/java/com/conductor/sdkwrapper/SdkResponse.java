@@ -1,6 +1,7 @@
 package com.conductor.sdkwrapper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SdkResponse {
     @JsonProperty("statusCode")
@@ -71,5 +72,23 @@ public class SdkResponse {
     
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
+    }
+    
+    public static SdkResponse createSuccess() {
+        return new SdkResponse(true, null, 200, null);
+    }
+    
+    public static SdkResponse createSuccess(Object data) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String content = mapper.writeValueAsString(data);
+            return new SdkResponse(true, content, 200, data);
+        } catch (Exception e) {
+            return new SdkResponse(true, null, 200, data);
+        }
+    }
+    
+    public static SdkResponse createError(int statusCode, String errorMessage) {
+        return new SdkResponse(false, errorMessage, statusCode);
     }
 } 
