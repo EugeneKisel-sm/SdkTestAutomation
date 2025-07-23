@@ -11,32 +11,18 @@ public class AddEventTests : BaseTest
     [Fact]
     public async Task EventResource_AddEvent_200()
     {
-        /*var request = new AddEventRequest
-        {
-            Name = "test_event_add",
-            Event = "test_event",
-            Actions = new List<EventAction>
-            {
-            },
-            Active = true
-        };
-
-        var response = EventResourceApi.AddEvent(request);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);*/
-
-        var eventName = $"test_event_sdk_{Guid.NewGuid():N}";
         var parameters = new Dictionary<string, object>
         {
-            ["name"] = eventName,
+            ["name"] = $"test_event_sdk_{Guid.NewGuid():N}",
             ["event"] = "test_event",
             ["active"] = true
         };
 
-        var sdkResponse = await ExecuteSdkCallAsync<GetEventResponse>("add-event", parameters, "event");
+        var sdkResponse = await ExecuteSdkCallAsync<GetEventResponse>("event", parameters, "add-event");
         var apiResponse = EventResourceApi.AddEvent(
             new AddEventRequest
             {
-                Name = eventName,
+                Name = $"test_event_api_{Guid.NewGuid():N}",
                 Event = "test_event",
                 Actions = new List<EventAction>(),
                 Active = true

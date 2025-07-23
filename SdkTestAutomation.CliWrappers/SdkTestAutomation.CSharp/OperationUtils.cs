@@ -1,4 +1,3 @@
-using Conductor.Api;
 using Conductor.Client;
 using SdkTestAutomation.Sdk.Models;
 
@@ -22,10 +21,6 @@ public static class OperationUtils
         }
     }
     
-    /// <summary>
-    /// Creates SDK configuration with server URL from environment variable or default
-    /// </summary>
-    /// <returns>Conductor SDK configuration</returns>
     public static Configuration CreateSdkConfiguration()
     {
         var serverUrl = Environment.GetEnvironmentVariable("CONDUCTOR_SERVER_URL") ?? "http://localhost:8080/api";

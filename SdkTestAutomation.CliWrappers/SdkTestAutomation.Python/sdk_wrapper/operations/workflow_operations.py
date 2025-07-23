@@ -25,5 +25,5 @@ def _execute_operation(operation: str, parameters: Dict[str, Any]) -> SdkRespons
 def _get_workflow(parameters: Dict[str, Any], workflow_api: WorkflowResourceApi) -> SdkResponse:
     """Get workflow execution status"""
     workflow_id = parameters.get("workflowId", "")
-    workflow = workflow_api.get_execution_status(workflow_id)
+    workflow = workflow_api.get_workflow_status_summary(workflow_id)
     return SdkResponse.create_success(workflow) 

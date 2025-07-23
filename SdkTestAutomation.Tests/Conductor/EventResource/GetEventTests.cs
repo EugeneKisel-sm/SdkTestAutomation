@@ -23,19 +23,14 @@ public class GetEventTests : BaseTest
     [Fact]
     public async Task EventResource_GetEvent_EmptyName_404()
     {
-        /*var request = new GetEventByNameRequest() { ActiveOnly = true };
-        var response = EventResourceApi.GetEvent(request, null);
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);*/
-
         var eventName = "test_event";
         var parameters = new Dictionary<string, object>
         {
-            ["event"] = eventName,
             ["activeOnly"] = true
         };
 
-        var sdkResponse = await ExecuteSdkCallAsync<List<GetEventResponse>>("get-event-by-name", parameters, "event");
-        var apiResponse = EventResourceApi.GetEvent(new GetEventByNameRequest { Event = eventName, ActiveOnly = true },
+        var sdkResponse = await ExecuteSdkCallAsync<List<GetEventResponse>>("event", parameters, "get-event-by-name");
+        var apiResponse = EventResourceApi.GetEvent(new GetEventByNameRequest { ActiveOnly = true },
             eventName);
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");

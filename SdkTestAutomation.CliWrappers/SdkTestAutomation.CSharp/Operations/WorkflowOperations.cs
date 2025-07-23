@@ -1,6 +1,5 @@
 using Newtonsoft.Json.Linq;
 using Conductor.Api;
-using Conductor.Client;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.CSharp.Extensions;
 
@@ -26,7 +25,7 @@ public static class WorkflowOperations
     private static SdkResponse GetWorkflow(Dictionary<string, JToken> parameters, WorkflowResourceApi workflowApi)
     {
         var workflowId = parameters.GetString("workflowId");
-        var workflow = workflowApi.GetExecutionStatus(workflowId);
+        var workflow = workflowApi.GetWorkflow(workflowId);
         return SdkResponse.CreateSuccess(workflow);
     }
 } 

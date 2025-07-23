@@ -1,7 +1,5 @@
 using Newtonsoft.Json.Linq;
 using Conductor.Api;
-using Conductor.Client;
-using Conductor.Client.Models;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.CSharp.Extensions;
 
@@ -67,7 +65,7 @@ public static class EventOperations
     private static Conductor.Client.Models.EventHandler CreateEventHandler(Dictionary<string, JToken> parameters)
     {
         return new Conductor.Client.Models.EventHandler(
-            actions: new List<System.Action>(),
+            actions: new List<Action>(),
             active: parameters.GetBool("active"),
             condition: null,
             evaluatorType: null,

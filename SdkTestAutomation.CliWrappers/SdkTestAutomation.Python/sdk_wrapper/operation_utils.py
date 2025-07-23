@@ -20,4 +20,6 @@ def create_sdk_configuration() -> ApiClient:
     server_url = os.getenv('CONDUCTOR_SERVER_URL')
     if server_url:
         api_client.configuration.host = server_url
+    else: 
+        api_client.configuration.host = "http://localhost:8080/api"
     return api_client 
