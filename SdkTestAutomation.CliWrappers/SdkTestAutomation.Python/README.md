@@ -1,17 +1,18 @@
 # Python CLI Wrapper
 
-Optimized CLI wrapper for testing the Python Conductor SDK with clean separation of concerns.
+CLI wrapper for testing the Python Conductor SDK with clean separation of concerns.
 
 ## 📁 Architecture
 
 ```
-SdkTestAutomation.Python/sdk_wrapper/
-├── main.py                       # Main entry point
-├── operation_utils.py            # Common utilities
-├── sdk_response.py               # Response model
-└── operations/                   # Operation modules
-    ├── event_operations.py       # Event operations
-    └── workflow_operations.py    # Workflow operations
+SdkTestAutomation.Python/
+├── main.py                        # Main entry point
+├── operation_utils.py             # Common utilities
+├── sdk_response.py                # Response model
+├── operations/                    # Operation modules
+│   ├── event_operations.py        # Event operations
+│   └── workflow_operations.py     # Workflow operations
+└── sdk_wrapper/                   # Package directory
 ```
 
 ## 🎯 Key Features
@@ -21,26 +22,26 @@ SdkTestAutomation.Python/sdk_wrapper/
 - **Static Factory Methods**: Clean response creation with `SdkResponse.create_success()`
 - **Simplified Architecture**: Direct SDK interaction without unnecessary layers
 
-> **Note**: All CLI wrappers follow the same architecture pattern. See other wrapper READMEs for language-specific details.
-
 ## 🚀 Usage
 
-### Install
+### Build
 ```bash
 cd SdkTestAutomation.CliWrappers/SdkTestAutomation.Python
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e .
 ```
 
 ### Run Operations
 ```bash
 # Event operations
-python sdk_wrapper/main.py \
+python -m sdk_wrapper.main \
   --operation add-event \
   --parameters '{"name":"test","event":"test_event","active":true}' \
   --resource event
 
 # Workflow operations
-python sdk_wrapper/main.py \
+python -m sdk_wrapper.main \
   --operation get-workflow \
   --parameters '{"workflowId":"test-workflow"}' \
   --resource workflow
@@ -64,12 +65,13 @@ python sdk_wrapper/main.py \
 
 ## 📚 Documentation
 
-- **[Adding Operations](ADDING_OPERATIONS.md)** - Complete guide for adding new operations
+- **[Adding Operations](ADDING_OPERATIONS.md)** - Python specific implementation guide
+- **[Universal Operations Guide](../../ADDING_OPERATIONS_GUIDE.md)** - Cross-language patterns and best practices
 - **[C# Wrapper](../SdkTestAutomation.CSharp/README.md)** - C# CLI wrapper documentation
 - **[Java Wrapper](../SdkTestAutomation.Java/README.md)** - Java CLI wrapper documentation
 
 ## 🛠️ Dependencies
 
-- `conductor-python` - Python Conductor SDK
-- `argparse` - CLI argument parsing (built-in)
-- `json` - JSON serialization (built-in) 
+- `conductor-client` - Python Conductor SDK
+- `argparse` - CLI argument parsing
+- `json` - JSON serialization 

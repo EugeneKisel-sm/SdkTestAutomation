@@ -12,106 +12,47 @@ A .NET test automation framework for validating multiple Conductor SDKs (C#, Jav
 - **Deep Validation**: Compare SDK responses with direct REST API calls
 - **Extensible Design**: Easy to add new SDKs with minimal changes
 
-## 🏗️ Architecture
-
-See **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md#🏗️-architecture)** for detailed architecture diagram and flow.
-
-**Test Flow**: SDK Selection → Command Building → CLI Execution → Response Capture → API Comparison → Validation
-
 ## 🚀 Quick Start
 
 ### Prerequisites
 - .NET 8.0 SDK
-- Java 17+ and Maven
-- Python 3.9+ and pip
+- Java 17+ and Maven (for Java SDK)
+- Python 3.9+ and pip (for Python SDK)
 - Docker
 
-### Environment Setup
-1. **Quick setup (recommended):**
-   ```bash
-   ./scripts/setup-env.sh --minimal
-   ```
-
-2. **Full setup with all options:**
-   ```bash
-   ./scripts/setup-env.sh --full
-   ```
-
-3. **Manual setup:**
-   ```bash
-   cp SdkTestAutomation.Tests/env.example SdkTestAutomation.Tests/.env  # or cp SdkTestAutomation.Tests/env.template SdkTestAutomation.Tests/.env
-   # Edit SdkTestAutomation.Tests/.env file with your settings
-   ```
-
-### Build CLI Wrappers
-
-The CLI wrappers are automatically built when running tests, but you can also build them manually:
-
+### Setup & Run
 ```bash
-# Build all wrappers
-./scripts/build-wrappers.sh
+# 1. Setup environment
+./scripts/setup-env.sh --minimal
 
-# Build specific wrappers
-./scripts/build-wrappers.sh --csharp
-./scripts/build-wrappers.sh --java
-./scripts/build-wrappers.sh --python
+# 2. Start Conductor server
+docker run -d -p 8080:8080 conductoross/conductor-server:latest
 
-# Clean build (remove existing artifacts)
-./scripts/build-wrappers.sh --clean
+# 3. Run all SDK tests
+./scripts/run-tests.sh
 
-# Verbose output
-./scripts/build-wrappers.sh --verbose
-
-# Get help
-./scripts/build-wrappers.sh --help
+# 4. Or run specific SDK
+./scripts/run-tests.sh csharp
+./scripts/run-tests.sh java
+./scripts/run-tests.sh python
 ```
 
-### Run Tests
-
-1. **Start Conductor server**
-   ```bash
-   docker run -d -p 8080:8080 conductoross/conductor-server:latest
-   ```
-
-2. **Validate environment** (optional)
-   ```bash
-   ./scripts/run-tests.sh --validate
-   ```
-
-3. **Run all SDK tests**
-   ```bash
-   ./scripts/run-tests.sh
-   ```
-
-4. **Run specific SDK**
-   ```bash
-   ./scripts/run-tests.sh csharp
-   ./scripts/run-tests.sh java
-   ./scripts/run-tests.sh python
-   ```
-
-5. **Get help**
-   ```bash
-   ./scripts/run-tests.sh --help
-   ```
+> **📖 For detailed script documentation**: See **[Shell Scripts Reference](SCRIPTS_README.md)** for comprehensive explanations of all scripts, their options, and troubleshooting.
 
 ## 📁 Project Structure
 
 ```
 SdkTestAutomation/
-├── SdkTestAutomation.Common/           # Shared models and helpers
-├── SdkTestAutomation.CliWrappers/      # CLI wrappers for each SDK
-│   ├── SdkTestAutomation.CSharp/       # C# wrapper
-│   ├── SdkTestAutomation.Java/         # Java wrapper
-│   └── SdkTestAutomation.Python/       # Python wrapper
-├── SdkTestAutomation.Tests/            # Test implementations
-│   ├── env.template                     # Environment template
-│   └── env.example                      # Environment example
-├── SdkTestAutomation.Api/              # Direct API client
-└── scripts/                            # Build and test scripts
-    ├── build-wrappers.sh               # CLI wrapper build script
-    ├── run-tests.sh                    # Multi-SDK test runner
-    └── setup-env.sh                    # Environment setup script
+├── SdkTestAutomation.Core/           # HTTP client and request resolvers
+├── SdkTestAutomation.Api/            # Direct API client
+├── SdkTestAutomation.Sdk/            # SDK command executor and response comparer
+├── SdkTestAutomation.CliWrappers/    # CLI wrappers for each SDK
+│   ├── SdkTestAutomation.CSharp/     # C# wrapper
+│   ├── SdkTestAutomation.Java/       # Java wrapper
+│   └── SdkTestAutomation.Python/     # Python wrapper
+├── SdkTestAutomation.Tests/          # Test implementations
+├── SdkTestAutomation.Utils/          # Configuration and logging
+└── scripts/                          # Build and test scripts
 ```
 
 ## 🧪 Writing Tests
@@ -122,7 +63,6 @@ public class MyTests : BaseTest
     [Fact]
     public async Task MySdkTest()
     {
-        // Arrange
         var parameters = new Dictionary<string, object>
         {
             ["name"] = "test_event",
@@ -130,60 +70,37 @@ public class MyTests : BaseTest
             ["active"] = true
         };
 
-        // Act - Call SDK via CLI wrapper
         var sdkResponse = await ExecuteSdkCallAsync<GetEventResponse>("add-event", parameters, "event");
-        
-        // Act - Call API directly for comparison
         var apiResponse = EventResourceApi.AddEvent(request);
 
-        // Assert
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.True(await ValidateSdkResponseAsync(sdkResponse, apiResponse), 
-                   "SDK response does not match API response");
+        Assert.True(await ValidateSdkResponseAsync(sdkResponse, apiResponse));
     }
 }
 ```
 
 ## 🔧 CLI Wrappers
 
-All wrappers follow the same optimized architecture. See **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md#🔧-cli-wrappers)** for detailed usage examples.
+All wrappers follow the same architecture pattern. See individual wrapper READMEs for language-specific details:
 
-**Quick Examples:**
-- **C#**: `dotnet run --project SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp -- --operation add-event --parameters '{"name":"test"}' --resource event`
-- **Java**: `java -jar SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar --operation add-event --parameters '{"name":"test"}' --resource event`
-- **Python**: `python -m sdk_wrapper.main --operation add-event --parameters '{"name":"test"}' --resource event`
-
-## 📚 Documentation
-
-### Wrapper Documentation
 - **[C# CLI Wrapper](SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/README.md)**
 - **[Java CLI Wrapper](SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/README.md)**
 - **[Python CLI Wrapper](SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/README.md)**
 
-### Adding Operations
-- **[C# Adding Operations](SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/ADDING_OPERATIONS.md)**
-- **[Java Adding Operations](SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/ADDING_OPERATIONS.md)**
-- **[Python Adding Operations](SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/ADDING_OPERATIONS.md)**
-
 ## 🔧 Environment Variables
 
-The project uses environment variables for configuration. See **[env.template](SdkTestAutomation.Tests/env.template)** for all available options.
-
-**Essential variables:**
+Essential variables (see `env.template` for all options):
 ```bash
 export CONDUCTOR_SERVER_URL=http://localhost:8080/api
 export SDK_TYPE=csharp  # or java, python
 ```
 
-**Quick setup:**
-```bash
-cp SdkTestAutomation.Tests/env.example SdkTestAutomation.Tests/.env
-# Edit SdkTestAutomation.Tests/.env file with your settings
-```
+## 📚 Documentation
 
-## 🔄 Adding a New SDK
-
-See **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md#🔄-adding-new-sdk)** for detailed instructions on adding new SDKs.
+- **[Shell Scripts Reference](SCRIPTS_README.md)** - Comprehensive guide to all shell scripts
+- **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md)** - Detailed architecture and implementation guide
+- **[Adding Operations Guide](ADDING_OPERATIONS_GUIDE.md)** - Universal guide for adding new operations
+- **[Adding New SDK](SDK_INTEGRATION_GUIDE.md#🔄-adding-new-sdk)** - Instructions for adding new SDKs
 
 ## 📊 Test Reports
 

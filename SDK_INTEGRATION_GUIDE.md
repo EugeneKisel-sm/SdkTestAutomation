@@ -1,6 +1,6 @@
 # SDK Integration Guide
 
-Quick guide for understanding how the .NET test framework validates multiple Conductor SDKs through CLI wrappers.
+Technical guide for understanding how the .NET test framework validates multiple Conductor SDKs through CLI wrappers.
 
 > **See also**: **[Main README](README.md)** for project overview and quick start.
 
@@ -85,116 +85,100 @@ public async Task SdkIntegration_AddEvent_ValidatesAgainstApi()
 }
 ```
 
-## 🚀 Running Tests
-
-See **[Main README](README.md#🚀-quick-start)** for quick start instructions.
-
-### Using Test Runner
-```bash
-# Validate environment first
-./scripts/run-tests.sh --validate
-
-# Run all SDKs
-./scripts/run-tests.sh
-
-# Run specific SDK
-./scripts/run-tests.sh csharp
-./scripts/run-tests.sh java
-./scripts/run-tests.sh python
-
-# Get help
-./scripts/run-tests.sh --help
-```
-
-### Manual Commands
-```bash
-# C# SDK
-SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
-
-# Java SDK
-SDK_TYPE=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
-
-# Python SDK
-SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
-```
-
 ## 🔧 CLI Wrappers
 
-### C# Wrapper
-```bash
-dotnet run --project SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp -- \
-  --operation add-event \
-  --parameters '{"name":"test","event":"test_event","active":true}' \
-  --resource event
+All wrappers follow the same architecture pattern:
+
+### Common Structure
+```
+Wrapper/
+├── Main Entry Point          # CLI argument parsing and routing
+├── OperationUtils            # Common utilities and error handling
+├── Operations/               # Resource-specific operations
+│   ├── EventOperations       # Event resource operations
+│   └── WorkflowOperations    # Workflow resource operations
+└── Extensions/               # Parameter extraction helpers
 ```
 
-### Java Wrapper
+### Standard Interface
+All wrappers implement the same CLI interface:
 ```bash
-java -jar SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar \
-  --operation add-event \
-  --parameters '{"name":"test","event":"test_event","active":true}' \
-  --resource event
+--operation <operation_name> --parameters <json_parameters> --resource <resource_type>
 ```
 
-### Python Wrapper
-```bash
-python -m sdk_wrapper.main \
-  --operation add-event \
-  --parameters '{"name":"test","event":"test_event","active":true}' \
-  --resource event
+### Response Format
+All wrappers return standardized JSON responses:
+```json
+{
+  "success": true,
+  "data": { /* operation result */ },
+  "errorMessage": null
+}
 ```
 
 ## 🔄 Adding New SDK
 
-1. **Create CLI wrapper** following established patterns
-2. **Update SdkCommandExecutor** to support new SDK
-3. **Update test runner script** to include new SDK
+### Step 1: Create CLI Wrapper
+Create a new wrapper following the established pattern:
+- **Main entry point**: CLI argument parsing and routing
+- **Operation utilities**: Common error handling and response formatting
+- **Resource operations**: SDK-specific operation implementations
+- **Parameter helpers**: Type-safe parameter extraction
 
-Example for Go SDK:
-```csharp
-// In SdkCommandExecutor.cs
-"go" => ("go", $"run {Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.Go/main.go")} {command}")
-```
+### Step 2: Implement Standard Interface
+Ensure the wrapper implements:
+- **CLI arguments**: `--operation`, `--parameters`, `--resource`
+- **JSON communication**: Standardized input/output format
+- **Error handling**: Consistent error reporting
+- **Response format**: Standardized success/error responses
 
-## 🐛 Troubleshooting
+### Step 3: Add to Build System
+Update build scripts to include the new wrapper:
+- **build-wrappers.sh**: Add build option for new SDK
+- **run-tests.sh**: Add SDK type parameter
+- **CI/CD**: Update GitHub Actions workflows
 
-### Common Issues
-- **SDK Wrapper Not Found**: Ensure wrapper is built/installed
-- **JSON Parsing Errors**: Verify wrapper outputs valid JSON
-- **Response Mismatch**: Compare SDK and API response structures
+### Step 4: Test Integration
+Verify the new SDK works with existing tests:
+- **Environment setup**: Configure `SDK_TYPE` for new SDK
+- **Test execution**: Run existing tests against new SDK
+- **Response validation**: Ensure responses match API expectations
 
-### Debug Mode
+## 📁 Project Components
+
+### Core Framework
+- **SdkTestAutomation.Core**: HTTP client and request resolvers
+- **SdkTestAutomation.Api**: Direct API client for comparison
+- **SdkTestAutomation.Sdk**: SDK command executor and response comparer
+- **SdkTestAutomation.Utils**: Configuration and logging utilities
+
+### CLI Wrappers
+- **SdkTestAutomation.CSharp**: C# SDK wrapper
+- **SdkTestAutomation.Java**: Java SDK wrapper
+- **SdkTestAutomation.Python**: Python SDK wrapper
+
+### Test Framework
+- **SdkTestAutomation.Tests**: Test implementations using xUnit v3
+- **BaseTest**: Abstract base class with common test utilities
+- **Resource APIs**: Direct API clients for each resource type
+
+## 🔧 Configuration
+
+### Environment Variables
 ```bash
-LOG_LEVEL=Debug SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+CONDUCTOR_SERVER_URL=http://localhost:8080/api  # Conductor server endpoint
+SDK_TYPE=csharp                                  # Target SDK (csharp, java, python)
 ```
 
-## 🔧 Environment Variables
+### Test Configuration
+Tests use configuration from `SdkTestAutomation.Tests/env.template`:
+- **Server settings**: URL, authentication, timeouts
+- **Test settings**: Retry policies, validation options
+- **Logging**: Output verbosity and format
 
-The project uses environment variables for configuration. See **[env.template](../SdkTestAutomation.Tests/env.template)** for all available options.
+## 📚 Related Documentation
 
-**Essential variables:**
-```bash
-export CONDUCTOR_SERVER_URL=http://localhost:8080/api
-export SDK_TYPE=csharp  # or java, python
-```
-
-**Quick setup:**
-```bash
-cp SdkTestAutomation.Tests/env.example SdkTestAutomation.Tests/.env
-# Edit SdkTestAutomation.Tests/.env file with your settings
-```
-
-## 📋 Prerequisites
-
-- **Conductor Server**: Running at `http://localhost:8080`
-- **C# SDK**: .NET 8.0 runtime
-- **Java SDK**: Java 17+ and Maven
-- **Python SDK**: Python 3.9+ and pip
-
-## 🎯 Benefits
-
-- **Language Independence**: .NET tests validate any language SDK
-- **Extensibility**: Easy to add new SDKs with CLI wrappers
-- **Consistency**: Same test cases for all SDKs
-- **Isolation**: SDK issues don't affect test framework
-- **CI/CD Friendly**: Easy integration into automated pipelines 
+- **[Main README](README.md)** - Project overview and quick start
+- **[Shell Scripts Reference](SCRIPTS_README.md)** - Build and test automation
+- **[Adding Operations Guide](ADDING_OPERATIONS_GUIDE.md)** - Adding new operations to wrappers
+- **[CLI Wrapper READMEs](SdkTestAutomation.CliWrappers/)** - Language-specific wrapper documentation 

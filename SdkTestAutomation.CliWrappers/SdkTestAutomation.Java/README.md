@@ -1,17 +1,18 @@
 # Java CLI Wrapper
 
-Optimized CLI wrapper for testing the Java Conductor SDK with clean separation of concerns.
+CLI wrapper for testing the Java Conductor SDK with clean separation of concerns.
 
 ## 📁 Architecture
 
 ```
-SdkTestAutomation.Java/src/main/java/com/conductor/sdkwrapper/
+SdkTestAutomation.Java/
 ├── Main.java                     # Main entry point
 ├── OperationUtils.java           # Common utilities
 ├── SdkResponse.java              # Response model
-└── operations/                   # Operation classes
-    ├── EventOperations.java      # Event operations
-    └── WorkflowOperations.java   # Workflow operations
+├── operations/                   # Operation classes
+│   ├── EventOperations.java      # Event operations
+│   └── WorkflowOperations.java   # Workflow operations
+└── src/main/java/                # Source code
 ```
 
 ## 🎯 Key Features
@@ -21,26 +22,23 @@ SdkTestAutomation.Java/src/main/java/com/conductor/sdkwrapper/
 - **Static Factory Methods**: Clean response creation with `SdkResponse.createSuccess()`
 - **Simplified Architecture**: Direct SDK interaction without unnecessary layers
 
-> **Note**: All CLI wrappers follow the same architecture pattern. See other wrapper READMEs for language-specific details.
-
 ## 🚀 Usage
 
 ### Build
 ```bash
-cd SdkTestAutomation.CliWrappers/SdkTestAutomation.Java
-mvn clean package
+mvn clean package -f SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/pom.xml
 ```
 
 ### Run Operations
 ```bash
 # Event operations
-java -jar target/sdk-wrapper-1.0.0.jar \
+java -jar SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar \
   --operation add-event \
   --parameters '{"name":"test","event":"test_event","active":true}' \
   --resource event
 
 # Workflow operations
-java -jar target/sdk-wrapper-1.0.0.jar \
+java -jar SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar \
   --operation get-workflow \
   --parameters '{"workflowId":"test-workflow"}' \
   --resource workflow
@@ -64,7 +62,8 @@ java -jar target/sdk-wrapper-1.0.0.jar \
 
 ## 📚 Documentation
 
-- **[Adding Operations](ADDING_OPERATIONS.md)** - Complete guide for adding new operations
+- **[Adding Operations](ADDING_OPERATIONS.md)** - Java specific implementation guide
+- **[Universal Operations Guide](../../ADDING_OPERATIONS_GUIDE.md)** - Cross-language patterns and best practices
 - **[C# Wrapper](../SdkTestAutomation.CSharp/README.md)** - C# CLI wrapper documentation
 - **[Python Wrapper](../SdkTestAutomation.Python/README.md)** - Python CLI wrapper documentation
 
@@ -72,4 +71,4 @@ java -jar target/sdk-wrapper-1.0.0.jar \
 
 - `conductor-client` - Java Conductor SDK
 - `picocli` - CLI argument parsing
-- `jackson-databind` - JSON serialization 
+- `jackson` - JSON serialization 

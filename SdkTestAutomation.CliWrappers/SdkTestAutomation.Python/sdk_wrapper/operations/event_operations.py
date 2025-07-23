@@ -56,8 +56,8 @@ def _add_event(parameters: Dict[str, Any], event_api: EventResourceApi) -> SdkRe
         actions=[_create_simple_action()]
     )
     
-    event_api.add_event_handler(event_handler)
-    return SdkResponse.create_success()
+    add_resp = event_api.add_event_handler(event_handler)
+    return SdkResponse.create_success(add_resp)
 
 
 def _get_event(event_api: EventResourceApi) -> SdkResponse:
@@ -84,12 +84,12 @@ def _update_event(parameters: Dict[str, Any], event_api: EventResourceApi) -> Sd
         actions=[_create_simple_action()]
     )
     
-    event_api.update_event_handler(event_handler)
-    return SdkResponse.create_success()
+    update_resp = event_api.update_event_handler(event_handler)
+    return SdkResponse.create_success(update_resp)
 
 
 def _delete_event(parameters: Dict[str, Any], event_api: EventResourceApi) -> SdkResponse:
     """Delete an event handler"""
     event_name = parameters.get("name", "")
-    event_api.remove_event_handler_status(event_name)
-    return SdkResponse.create_success() 
+    delete_resp = event_api.remove_event_handler_status(event_name)
+    return SdkResponse.create_success(delete_resp) 
