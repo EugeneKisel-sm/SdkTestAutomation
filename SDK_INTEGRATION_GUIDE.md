@@ -91,6 +91,9 @@ See **[Main README](README.md#🚀-quick-start)** for quick start instructions.
 
 ### Using Test Runner
 ```bash
+# Validate environment first
+./run-tests.sh --validate
+
 # Run all SDKs
 ./run-tests.sh
 
@@ -98,6 +101,9 @@ See **[Main README](README.md#🚀-quick-start)** for quick start instructions.
 ./run-tests.sh csharp
 ./run-tests.sh java
 ./run-tests.sh python
+
+# Get help
+./run-tests.sh --help
 ```
 
 ### Manual Commands

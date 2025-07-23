@@ -33,16 +33,26 @@ See **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md#🏗️-architecture)** f
    docker run -d -p 8080:8080 conductoross/conductor-server:latest
    ```
 
-2. **Run all SDK tests**
+2. **Validate environment** (optional)
    ```bash
-   CONDUCTOR_SERVER_URL=http://localhost:8080/api ./run-tests.sh
+   ./run-tests.sh --validate
    ```
 
-3. **Run specific SDK**
+3. **Run all SDK tests**
    ```bash
-   CONDUCTOR_SERVER_URL=http://localhost:8080/api ./run-tests.sh csharp
-   CONDUCTOR_SERVER_URL=http://localhost:8080/api ./run-tests.sh java
-   CONDUCTOR_SERVER_URL=http://localhost:8080/api ./run-tests.sh python
+   ./run-tests.sh
+   ```
+
+4. **Run specific SDK**
+   ```bash
+   ./run-tests.sh csharp
+   ./run-tests.sh java
+   ./run-tests.sh python
+   ```
+
+5. **Get help**
+   ```bash
+   ./run-tests.sh --help
    ```
 
 ## 📁 Project Structure
