@@ -5,8 +5,8 @@ from conductor.client.http.api.event_resource_api import EventResourceApi
 from conductor.client.http.models.event_handler import EventHandler
 from conductor.client.http.models.action import Action
 from conductor.client.http.models.start_workflow import StartWorkflow
-from ..operation_utils import execute_with_error_handling, create_sdk_configuration
-from ..sdk_response import SdkResponse
+from operation_utils import execute_with_error_handling, create_sdk_configuration
+from sdk_response import SdkResponse
 
 
 def execute(operation: str, parameters: Dict[str, Any]) -> SdkResponse:

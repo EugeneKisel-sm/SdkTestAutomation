@@ -3,7 +3,7 @@
 import os
 from typing import Callable, Any
 from conductor.client.http.api_client import ApiClient
-from .sdk_response import SdkResponse
+from sdk_response import SdkResponse
 
 
 def execute_with_error_handling(operation: Callable[[], SdkResponse]) -> SdkResponse:

@@ -2,8 +2,8 @@
 
 from typing import Dict, Any
 from conductor.client.http.api.workflow_resource_api import WorkflowResourceApi
-from ..operation_utils import execute_with_error_handling, create_sdk_configuration
-from ..sdk_response import SdkResponse
+from operation_utils import execute_with_error_handling, create_sdk_configuration
+from sdk_response import SdkResponse
 
 
 def execute(operation: str, parameters: Dict[str, Any]) -> SdkResponse:

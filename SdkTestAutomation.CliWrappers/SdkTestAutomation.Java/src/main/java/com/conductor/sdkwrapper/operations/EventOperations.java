@@ -40,7 +40,7 @@ public class EventOperations {
     }
     
     private static SdkResponse getEvent(EventClient eventApi) throws Exception {
-        List<EventHandler> events = eventApi.getEventHandlers("", false);
+        List<EventHandler> events = eventApi.getEventHandlers(null, false);
         return SdkResponse.createSuccess(events);
     }
     

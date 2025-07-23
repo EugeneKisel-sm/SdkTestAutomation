@@ -34,13 +34,13 @@ pip install -e .
 ### Run Operations
 ```bash
 # Event operations
-python -m sdk_wrapper.main \
+python sdk_wrapper/main.py \
   --operation add-event \
   --parameters '{"name":"test","event":"test_event","active":true}' \
   --resource event
 
 # Workflow operations
-python -m sdk_wrapper.main \
+python sdk_wrapper/main.py \
   --operation get-workflow \
   --parameters '{"workflowId":"test-workflow"}' \
   --resource workflow
