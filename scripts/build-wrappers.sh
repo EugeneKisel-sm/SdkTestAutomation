@@ -331,7 +331,7 @@ main() {
     echo ""
     if [[ $build_errors -eq 0 ]]; then
         log_success "All requested wrappers built successfully!"
-        log_info "You can now run tests using: ./run-tests.sh"
+        log_info "You can now run tests using: ./scripts/run-tests.sh"
     else
         log_error "$build_errors wrapper(s) failed to build"
         exit 1

@@ -29,12 +29,12 @@ See **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md#🏗️-architecture)** f
 ### Environment Setup
 1. **Quick setup (recommended):**
    ```bash
-   ./setup-env.sh --minimal
+   ./scripts/setup-env.sh --minimal
    ```
 
 2. **Full setup with all options:**
    ```bash
-   ./setup-env.sh --full
+   ./scripts/setup-env.sh --full
    ```
 
 3. **Manual setup:**
@@ -49,21 +49,21 @@ The CLI wrappers are automatically built when running tests, but you can also bu
 
 ```bash
 # Build all wrappers
-./build-wrappers.sh
+./scripts/build-wrappers.sh
 
 # Build specific wrappers
-./build-wrappers.sh --csharp
-./build-wrappers.sh --java
-./build-wrappers.sh --python
+./scripts/build-wrappers.sh --csharp
+./scripts/build-wrappers.sh --java
+./scripts/build-wrappers.sh --python
 
 # Clean build (remove existing artifacts)
-./build-wrappers.sh --clean
+./scripts/build-wrappers.sh --clean
 
 # Verbose output
-./build-wrappers.sh --verbose
+./scripts/build-wrappers.sh --verbose
 
 # Get help
-./build-wrappers.sh --help
+./scripts/build-wrappers.sh --help
 ```
 
 ### Run Tests
@@ -75,24 +75,24 @@ The CLI wrappers are automatically built when running tests, but you can also bu
 
 2. **Validate environment** (optional)
    ```bash
-   ./run-tests.sh --validate
+   ./scripts/run-tests.sh --validate
    ```
 
 3. **Run all SDK tests**
    ```bash
-   ./run-tests.sh
+   ./scripts/run-tests.sh
    ```
 
 4. **Run specific SDK**
    ```bash
-   ./run-tests.sh csharp
-   ./run-tests.sh java
-   ./run-tests.sh python
+   ./scripts/run-tests.sh csharp
+   ./scripts/run-tests.sh java
+   ./scripts/run-tests.sh python
    ```
 
 5. **Get help**
    ```bash
-   ./run-tests.sh --help
+   ./scripts/run-tests.sh --help
    ```
 
 ## 📁 Project Structure
@@ -108,7 +108,10 @@ SdkTestAutomation/
 │   ├── env.template                     # Environment template
 │   └── env.example                      # Environment example
 ├── SdkTestAutomation.Api/              # Direct API client
-└── run-tests.sh                        # Multi-SDK test runner
+└── scripts/                            # Build and test scripts
+    ├── build-wrappers.sh               # CLI wrapper build script
+    ├── run-tests.sh                    # Multi-SDK test runner
+    └── setup-env.sh                    # Environment setup script
 ```
 
 ## 🧪 Writing Tests

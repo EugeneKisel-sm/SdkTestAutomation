@@ -176,7 +176,7 @@ main() {
     echo -e "${BLUE}Next steps:${NC}"
     echo -e "${GREEN}1. Edit SdkTestAutomation.Tests/.env file with your configuration${NC}"
     echo -e "${GREEN}2. Start Conductor server: docker run -d -p 8080:8080 conductoross/conductor-server:latest${NC}"
-    echo -e "${GREEN}3. Run tests: ./run-tests.sh --validate${NC}"
+    echo -e "${GREEN}3. Run tests: ./scripts/run-tests.sh --validate${NC}"
     echo ""
     echo -e "${BLUE}For more information, see:${NC}"
     echo -e "${GREEN}   - README.md${NC}"

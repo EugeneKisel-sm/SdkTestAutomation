@@ -6,12 +6,12 @@
 # by building the necessary CLI wrappers and executing the .NET test framework.
 #
 # Usage:
-#   ./run-tests.sh                    # Run tests with all SDKs
-#   ./run-tests.sh csharp             # Run tests with C# SDK only
-#   ./run-tests.sh java               # Run tests with Java SDK only
-#   ./run-tests.sh python             # Run tests with Python SDK only
-#   ./run-tests.sh --help             # Show this help message
-#   ./run-tests.sh --validate         # Validate environment and dependencies
+#   ./scripts/run-tests.sh                    # Run tests with all SDKs
+#   ./scripts/run-tests.sh csharp             # Run tests with C# SDK only
+#   ./scripts/run-tests.sh java               # Run tests with Java SDK only
+#   ./scripts/run-tests.sh python             # Run tests with Python SDK only
+#   ./scripts/run-tests.sh --help             # Show this help message
+#   ./scripts/run-tests.sh --validate         # Validate environment and dependencies
 
 set -e  # Exit on any error
 
