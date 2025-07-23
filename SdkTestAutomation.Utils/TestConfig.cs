@@ -10,7 +10,7 @@ public static class TestConfig
 
     static TestConfig()
     {
-        var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+        var envPath = Path.Combine(Directory.GetCurrentDirectory(), "SdkTestAutomation.Tests", ".env");
         if (File.Exists(envPath))
         {
             Env.Load(envPath);

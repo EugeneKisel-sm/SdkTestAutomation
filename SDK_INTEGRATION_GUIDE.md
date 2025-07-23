@@ -170,10 +170,18 @@ LOG_LEVEL=Debug SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTe
 
 ## 🔧 Environment Variables
 
+The project uses environment variables for configuration. See **[env.template](../SdkTestAutomation.Tests/env.template)** for all available options.
+
+**Essential variables:**
 ```bash
 export CONDUCTOR_SERVER_URL=http://localhost:8080/api
 export SDK_TYPE=csharp  # or java, python
-export LOG_LEVEL=Debug  # optional
+```
+
+**Quick setup:**
+```bash
+cp SdkTestAutomation.Tests/env.example SdkTestAutomation.Tests/.env
+# Edit SdkTestAutomation.Tests/.env file with your settings
 ```
 
 ## 📋 Prerequisites

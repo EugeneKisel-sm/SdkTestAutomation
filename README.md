@@ -26,6 +26,23 @@ See **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md#🏗️-architecture)** f
 - Python 3.9+ and pip
 - Docker
 
+### Environment Setup
+1. **Quick setup (recommended):**
+   ```bash
+   ./setup-env.sh --minimal
+   ```
+
+2. **Full setup with all options:**
+   ```bash
+   ./setup-env.sh --full
+   ```
+
+3. **Manual setup:**
+   ```bash
+   cp SdkTestAutomation.Tests/env.example SdkTestAutomation.Tests/.env  # or cp SdkTestAutomation.Tests/env.template SdkTestAutomation.Tests/.env
+   # Edit SdkTestAutomation.Tests/.env file with your settings
+   ```
+
 ### Run Tests
 
 1. **Start Conductor server**
@@ -65,6 +82,8 @@ SdkTestAutomation/
 │   ├── SdkTestAutomation.Java/         # Java wrapper
 │   └── SdkTestAutomation.Python/       # Python wrapper
 ├── SdkTestAutomation.Tests/            # Test implementations
+│   ├── env.template                     # Environment template
+│   └── env.example                      # Environment example
 ├── SdkTestAutomation.Api/              # Direct API client
 └── run-tests.sh                        # Multi-SDK test runner
 ```
@@ -119,6 +138,22 @@ All wrappers follow the same optimized architecture. See **[SDK Integration Guid
 - **[C# Adding Operations](SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/ADDING_OPERATIONS.md)**
 - **[Java Adding Operations](SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/ADDING_OPERATIONS.md)**
 - **[Python Adding Operations](SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/ADDING_OPERATIONS.md)**
+
+## 🔧 Environment Variables
+
+The project uses environment variables for configuration. See **[env.template](SdkTestAutomation.Tests/env.template)** for all available options.
+
+**Essential variables:**
+```bash
+export CONDUCTOR_SERVER_URL=http://localhost:8080/api
+export SDK_TYPE=csharp  # or java, python
+```
+
+**Quick setup:**
+```bash
+cp SdkTestAutomation.Tests/env.example SdkTestAutomation.Tests/.env
+# Edit SdkTestAutomation.Tests/.env file with your settings
+```
 
 ## 🔄 Adding a New SDK
 
