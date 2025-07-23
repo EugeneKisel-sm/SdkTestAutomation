@@ -140,50 +140,67 @@ run_tests_with_sdk() {
     fi
 }
 
-setup_java_wrapper() {
-    if command -v java &> /dev/null && command -v mvn &> /dev/null; then
-        echo -e "${BLUE}Building Java wrapper...${NC}"
-        cd SdkTestAutomation.CliWrappers/SdkTestAutomation.Java
-        if mvn clean package -q; then
-            echo -e "${GREEN}✅ Java wrapper built successfully${NC}"
-            cd ../../..
-            return 0
-        else
-            echo -e "${RED}❌ Failed to build Java wrapper${NC}"
-            cd ../../..
+check_wrapper_exists() {
+    local sdk_type=$1
+    case $sdk_type in
+        "csharp")
+            local csharp_exe="./SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/bin/Debug/net8.0/SdkTestAutomation.CSharp"
+            [ -f "$csharp_exe" ] || [ -f "${csharp_exe}.exe" ]
+            ;;
+        "java")
+            local java_jar="./SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar"
+            [ -f "$java_jar" ]
+            ;;
+        "python")
+            local python_venv="./SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/venv"
+            local python_exe="$python_venv/bin/python"
+            [ -d "$python_venv" ] && [ -f "$python_exe" ]
+            ;;
+        *)
             return 1
-        fi
-    else
-        echo -e "${YELLOW}⚠️  Skipping Java SDK - Java or Maven not found${NC}"
-        return 1
-    fi
+            ;;
+    esac
 }
 
-setup_python_wrapper() {
-    if command -v python3 &> /dev/null; then
-        echo -e "${BLUE}Setting up Python wrapper...${NC}"
-        cd SdkTestAutomation.CliWrappers/SdkTestAutomation.Python
-        
-        # Create virtual environment if it doesn't exist
-        if [ ! -d "venv" ]; then
-            echo -e "${BLUE}Creating Python virtual environment...${NC}"
-            python3 -m venv venv
-        fi
-        
-        # Install package
-        if source venv/bin/activate && pip install -e . -q; then
-            echo -e "${GREEN}✅ Python wrapper installed successfully${NC}"
-            cd ../../..
-            return 0
-        else
-            echo -e "${RED}❌ Failed to install Python wrapper${NC}"
-            cd ../../..
-            return 1
-        fi
+setup_wrapper() {
+    local sdk_type=$1
+    echo -e "${BLUE}Setting up $sdk_type wrapper...${NC}"
+    
+    # Check if wrapper already exists
+    if check_wrapper_exists "$sdk_type"; then
+        echo -e "${GREEN}✅ $sdk_type wrapper already exists${NC}"
+        return 0
+    fi
+    
+    # Use the build-wrappers.sh script
+    if [ -f "./build-wrappers.sh" ]; then
+        case $sdk_type in
+            "csharp")
+                if ./build-wrappers.sh --csharp; then
+                    echo -e "${GREEN}✅ $sdk_type wrapper built successfully${NC}"
+                    return 0
+                fi
+                ;;
+            "java")
+                if ./build-wrappers.sh --java; then
+                    echo -e "${GREEN}✅ $sdk_type wrapper built successfully${NC}"
+                    return 0
+                fi
+                ;;
+            "python")
+                if ./build-wrappers.sh --python; then
+                    echo -e "${GREEN}✅ $sdk_type wrapper built successfully${NC}"
+                    return 0
+                fi
+                ;;
+        esac
     else
-        echo -e "${YELLOW}⚠️  Skipping Python SDK - Python3 not found${NC}"
+        echo -e "${RED}❌ build-wrappers.sh not found${NC}"
         return 1
     fi
+    
+    echo -e "${RED}❌ Failed to setup $sdk_type wrapper${NC}"
+    return 1
 }
 
 cleanup() {
@@ -218,11 +235,8 @@ main() {
     if [ $# -eq 1 ]; then
         case $1 in
             "csharp"|"java"|"python")
-                if [ "$1" = "java" ] && ! setup_java_wrapper; then
-                    echo -e "${RED}❌ Failed to setup Java wrapper${NC}"
-                    exit 1
-                elif [ "$1" = "python" ] && ! setup_python_wrapper; then
-                    echo -e "${RED}❌ Failed to setup Python wrapper${NC}"
+                if ! setup_wrapper "$1"; then
+                    echo -e "${RED}❌ Failed to setup $1 wrapper${NC}"
                     exit 1
                 fi
                 run_tests_with_sdk $1
@@ -241,7 +255,7 @@ main() {
         local failed_sdks=()
         
         # C# SDK (always available)
-        if run_tests_with_sdk "csharp"; then
+        if setup_wrapper "csharp" && run_tests_with_sdk "csharp"; then
             echo -e "${GREEN}✅ C# SDK tests passed${NC}"
         else
             failed_sdks+=("csharp")
@@ -249,22 +263,18 @@ main() {
         echo ""
         
         # Java SDK
-        if setup_java_wrapper; then
-            if run_tests_with_sdk "java"; then
-                echo -e "${GREEN}✅ Java SDK tests passed${NC}"
-            else
-                failed_sdks+=("java")
-            fi
+        if setup_wrapper "java" && run_tests_with_sdk "java"; then
+            echo -e "${GREEN}✅ Java SDK tests passed${NC}"
+        else
+            failed_sdks+=("java")
         fi
         echo ""
         
         # Python SDK
-        if setup_python_wrapper; then
-            if run_tests_with_sdk "python"; then
-                echo -e "${GREEN}✅ Python SDK tests passed${NC}"
-            else
-                failed_sdks+=("python")
-            fi
+        if setup_wrapper "python" && run_tests_with_sdk "python"; then
+            echo -e "${GREEN}✅ Python SDK tests passed${NC}"
+        else
+            failed_sdks+=("python")
         fi
         echo ""
         

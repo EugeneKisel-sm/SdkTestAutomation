@@ -2,6 +2,7 @@ using SdkTestAutomation.Api.Conductor.EventResource;
 using SdkTestAutomation.Api.Conductor.WorkflowResource;
 using SdkTestAutomation.Sdk;
 using SdkTestAutomation.Sdk.Models;
+using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 using RestSharp;
 using Xunit;
@@ -22,10 +23,7 @@ public abstract class BaseTest : IDisposable
         var testContext = TestContext.Current;
         _logger = new ConsoleLogger(testContext);
         
-        var sdkType = Environment.GetEnvironmentVariable("SDK_TYPE") ?? "csharp";
-        _logger.Log($"Using SDK type: {sdkType}");
-        
-        _sdkCommandExecutor = new SdkCommandExecutor(sdkType, _logger);
+        _sdkCommandExecutor = new SdkCommandExecutor(_logger);
         _responseComparer = new ResponseComparer(_logger);
         
         _logger.Log($"Test '{testContext.TestCase.TestCaseDisplayName}' execution started.");

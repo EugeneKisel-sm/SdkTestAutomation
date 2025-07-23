@@ -7,16 +7,18 @@ public static class TestConfig
     public static string Key { get; }
     public static string Secret { get; }
     public static string ApiUrl { get; }
+    public static string SdkType { get; }
 
     static TestConfig()
     {
-        var envPath = Path.Combine(Directory.GetCurrentDirectory(), "SdkTestAutomation.Tests", ".env");
+        var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
         if (File.Exists(envPath))
         {
             Env.Load(envPath);
         }
         
         ApiUrl = GetRequired("CONDUCTOR_SERVER_URL");
+        SdkType = GetOptional("SDK_TYPE", "csharp");
         Key = GetOptional("CONDUCTOR_AUTH_KEY", "");
         Secret = GetOptional("CONDUCTOR_AUTH_SECRET", "");
     }

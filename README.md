@@ -43,6 +43,29 @@ See **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md#🏗️-architecture)** f
    # Edit SdkTestAutomation.Tests/.env file with your settings
    ```
 
+### Build CLI Wrappers
+
+The CLI wrappers are automatically built when running tests, but you can also build them manually:
+
+```bash
+# Build all wrappers
+./build-wrappers.sh
+
+# Build specific wrappers
+./build-wrappers.sh --csharp
+./build-wrappers.sh --java
+./build-wrappers.sh --python
+
+# Clean build (remove existing artifacts)
+./build-wrappers.sh --clean
+
+# Verbose output
+./build-wrappers.sh --verbose
+
+# Get help
+./build-wrappers.sh --help
+```
+
 ### Run Tests
 
 1. **Start Conductor server**

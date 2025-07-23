@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using SdkTestAutomation.Sdk.Models;
+using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 
 namespace SdkTestAutomation.Sdk;
@@ -8,11 +9,9 @@ namespace SdkTestAutomation.Sdk;
 public class SdkCommandExecutor
 {
     private readonly ILogger _logger;
-    private readonly string _sdkType;
     
-    public SdkCommandExecutor(string sdkType, ILogger logger)
+    public SdkCommandExecutor(ILogger logger)
     {
-        _sdkType = sdkType.ToLowerInvariant();
         _logger = logger;
     }
     
@@ -34,6 +33,9 @@ public class SdkCommandExecutor
         
         var (fileName, arguments) = GetProcessInfo(command);
         
+        _logger.Log($"Starting process with FileName: {fileName}");
+        _logger.Log($"Starting process with Arguments: {arguments}");
+        
         using var process = new Process
         {
             StartInfo = new ProcessStartInfo
@@ -47,14 +49,25 @@ public class SdkCommandExecutor
             }
         };
         
+        _logger.Log("Starting process...");
         process.Start();
+        _logger.Log($"Process started with ID: {process.Id}");
+        
+        _logger.Log("Reading process output...");
         var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();
+        
+        _logger.Log("Waiting for process to exit...");
         await process.WaitForExitAsync();
         
         _logger.Log($"Process exit code: {process.ExitCode}");
+        _logger.Log($"Process output length: {output?.Length ?? 0} characters");
+        _logger.Log($"Process error length: {error?.Length ?? 0} characters");
+        
+        if (!string.IsNullOrEmpty(output))
+            _logger.Log($"Process output: {output}");
         if (!string.IsNullOrEmpty(error))
-            _logger.Log($"Error: {error}");
+            _logger.Log($"Process error: {error}");
         
         if (process.ExitCode != 0)
         {
@@ -107,38 +120,59 @@ public class SdkCommandExecutor
     
     private (string fileName, string arguments) GetProcessInfo(string command)
     {
+        var sdkType = TestConfig.SdkType.ToLowerInvariant();
         var projectRoot = GetProjectRoot();
+        _logger.Log($"Getting process info for SDK type: {sdkType}");
+        _logger.Log($"Project root: {projectRoot}");
+        _logger.Log($"Command: {command}");
         
-        return _sdkType switch
+        var (fileName, arguments) = sdkType switch
         {
             "csharp" => (Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/bin/Debug/net8.0/SdkTestAutomation.CSharp"), command),
             "java" => ("java", $"-jar \"{Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar")}\" {command}"),
             "python" => (Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/venv/bin/python"), $"{Path.Combine(projectRoot, "SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/sdk_wrapper/main.py")} {command}"),
-            _ => throw new ArgumentException($"Unsupported SDK type: {_sdkType}")
+            _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
         };
+        
+        _logger.Log($"Process info - FileName: {fileName}");
+        _logger.Log($"Process info - Arguments: {arguments}");
+        
+        return (fileName, arguments);
     }
     
     private string GetProjectRoot()
     {
         var currentDir = Directory.GetCurrentDirectory();
+        _logger.Log($"Current directory: {currentDir}");
         
         // If we're in the test project's bin directory, go up to the project root
         if (currentDir.Contains("SdkTestAutomation.Tests/bin"))
-            return Path.GetFullPath(Path.Combine(currentDir, "../../../.."));
+        {
+            var projectRoot = Path.GetFullPath(Path.Combine(currentDir, "../../../.."));
+            _logger.Log($"Found project root (from tests bin): {projectRoot}");
+            return projectRoot;
+        }
         
         // If we're in the project root, return it
         if (File.Exists(Path.Combine(currentDir, "SdkTestAutomation.sln")))
+        {
+            _logger.Log($"Found project root (current directory): {currentDir}");
             return currentDir;
+        }
         
         // Try to find the project root by looking for the solution file
         var dir = new DirectoryInfo(currentDir);
         while (dir.Parent != null)
         {
             if (File.Exists(Path.Combine(dir.FullName, "SdkTestAutomation.sln")))
+            {
+                _logger.Log($"Found project root (parent search): {dir.FullName}");
                 return dir.FullName;
+            }
             dir = dir.Parent;
         }
         
+        _logger.Log($"Using current directory as project root: {currentDir}");
         return currentDir;
     }
 } 

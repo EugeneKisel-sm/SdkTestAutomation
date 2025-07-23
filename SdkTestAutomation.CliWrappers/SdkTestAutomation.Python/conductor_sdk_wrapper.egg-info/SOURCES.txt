@@ -1,3 +1,4 @@
+README.md
 setup.py
 conductor_sdk_wrapper.egg-info/PKG-INFO
 conductor_sdk_wrapper.egg-info/SOURCES.txt
@@ -7,3 +8,8 @@ conductor_sdk_wrapper.egg-info/requires.txt
 conductor_sdk_wrapper.egg-info/top_level.txt
 sdk_wrapper/__init__.py
 sdk_wrapper/main.py
+sdk_wrapper/operation_utils.py
+sdk_wrapper/sdk_response.py
+sdk_wrapper/operations/__init__.py
+sdk_wrapper/operations/event_operations.py
+sdk_wrapper/operations/workflow_operations.py
