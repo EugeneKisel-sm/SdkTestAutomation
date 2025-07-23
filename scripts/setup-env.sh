@@ -7,6 +7,10 @@
 
 set -e
 
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -44,12 +48,12 @@ EOF
 setup_minimal_env() {
     echo -e "${BLUE}Setting up minimal environment configuration...${NC}"
     
-    if [ -f "SdkTestAutomation.Tests/.env" ]; then
+    if [ -f "$PROJECT_ROOT/SdkTestAutomation.Tests/.env" ]; then
         echo -e "${YELLOW}⚠️  .env file already exists. Backing up to .env.backup${NC}"
-        cp SdkTestAutomation.Tests/.env SdkTestAutomation.Tests/.env.backup
+        cp "$PROJECT_ROOT/SdkTestAutomation.Tests/.env" "$PROJECT_ROOT/SdkTestAutomation.Tests/.env.backup"
     fi
     
-    cp SdkTestAutomation.Tests/env.example SdkTestAutomation.Tests/.env
+    cp "$PROJECT_ROOT/SdkTestAutomation.Tests/env.example" "$PROJECT_ROOT/SdkTestAutomation.Tests/.env"
     echo -e "${GREEN}✅ Minimal .env file created in SdkTestAutomation.Tests/${NC}"
     echo -e "${YELLOW}📝 Please edit SdkTestAutomation.Tests/.env file with your Conductor server URL${NC}"
 }
@@ -57,12 +61,12 @@ setup_minimal_env() {
 setup_full_env() {
     echo -e "${BLUE}Setting up full environment configuration...${NC}"
     
-    if [ -f "SdkTestAutomation.Tests/.env" ]; then
+    if [ -f "$PROJECT_ROOT/SdkTestAutomation.Tests/.env" ]; then
         echo -e "${YELLOW}⚠️  .env file already exists. Backing up to .env.backup${NC}"
-        cp SdkTestAutomation.Tests/.env SdkTestAutomation.Tests/.env.backup
+        cp "$PROJECT_ROOT/SdkTestAutomation.Tests/.env" "$PROJECT_ROOT/SdkTestAutomation.Tests/.env.backup"
     fi
     
-    cp SdkTestAutomation.Tests/env.template SdkTestAutomation.Tests/.env
+    cp "$PROJECT_ROOT/SdkTestAutomation.Tests/env.template" "$PROJECT_ROOT/SdkTestAutomation.Tests/.env"
     echo -e "${GREEN}✅ Full .env file created in SdkTestAutomation.Tests/${NC}"
     echo -e "${YELLOW}📝 Please edit SdkTestAutomation.Tests/.env file with your configuration${NC}"
 }
@@ -70,7 +74,7 @@ setup_full_env() {
 validate_env() {
     echo -e "${BLUE}Validating .env file...${NC}"
     
-    if [ ! -f "SdkTestAutomation.Tests/.env" ]; then
+    if [ ! -f "$PROJECT_ROOT/SdkTestAutomation.Tests/.env" ]; then
         echo -e "${RED}❌ .env file not found in SdkTestAutomation.Tests/${NC}"
         echo -e "${YELLOW}   Run this script without --validate to create one${NC}"
         return 1
@@ -79,7 +83,7 @@ validate_env() {
     # Check for required variables
     local missing_vars=()
     
-    if ! grep -q "^CONDUCTOR_SERVER_URL=" SdkTestAutomation.Tests/.env; then
+    if ! grep -q "^CONDUCTOR_SERVER_URL=" "$PROJECT_ROOT/SdkTestAutomation.Tests/.env"; then
         missing_vars+=("CONDUCTOR_SERVER_URL")
     fi
     
@@ -91,7 +95,7 @@ validate_env() {
     # Check for common issues
     local issues=()
     
-    if grep -q "^CONDUCTOR_SERVER_URL=$" SdkTestAutomation.Tests/.env; then
+    if grep -q "^CONDUCTOR_SERVER_URL=$" "$PROJECT_ROOT/SdkTestAutomation.Tests/.env"; then
         issues+=("CONDUCTOR_SERVER_URL is empty")
     fi
     

@@ -108,9 +108,9 @@ if [[ "$BUILD_ALL" == true ]]; then
     BUILD_PYTHON=true
 fi
 
-# Get script directory
+# Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 log_info "Building CLI wrappers from: $PROJECT_ROOT"
 

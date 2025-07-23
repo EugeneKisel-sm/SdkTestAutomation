@@ -22,8 +22,12 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
 # Configuration
-TEST_EXECUTABLE="./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+TEST_EXECUTABLE="$PROJECT_ROOT/SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
 TEST_FILTER="/SdkTestAutomation.Tests/SdkTestAutomation.Tests.Conductor.EventResource/SdkIntegrationTests"
 CONDUCTOR_URL="${CONDUCTOR_SERVER_URL:-http://localhost:8080/api}"
 
@@ -118,7 +122,7 @@ validate_environment() {
 
 build_tests() {
     echo -e "${BLUE}Building .NET tests...${NC}"
-    dotnet build SdkTestAutomation.Tests/SdkTestAutomation.Tests.csproj -c Debug
+    dotnet build "$PROJECT_ROOT/SdkTestAutomation.Tests/SdkTestAutomation.Tests.csproj" -c Debug
     echo -e "${GREEN}✅ Tests built successfully${NC}"
 }
 
@@ -144,15 +148,15 @@ check_wrapper_exists() {
     local sdk_type=$1
     case $sdk_type in
         "csharp")
-            local csharp_exe="./SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/bin/Debug/net8.0/SdkTestAutomation.CSharp"
+            local csharp_exe="$PROJECT_ROOT/SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/bin/Debug/net8.0/SdkTestAutomation.CSharp"
             [ -f "$csharp_exe" ] || [ -f "${csharp_exe}.exe" ]
             ;;
         "java")
-            local java_jar="./SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar"
+            local java_jar="$PROJECT_ROOT/SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/target/sdk-wrapper-1.0.0.jar"
             [ -f "$java_jar" ]
             ;;
         "python")
-            local python_venv="./SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/venv"
+            local python_venv="$PROJECT_ROOT/SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/venv"
             local python_exe="$python_venv/bin/python"
             [ -d "$python_venv" ] && [ -f "$python_exe" ]
             ;;
@@ -173,22 +177,22 @@ setup_wrapper() {
     fi
     
     # Use the build-wrappers.sh script
-    if [ -f "./build-wrappers.sh" ]; then
+    if [ -f "$SCRIPT_DIR/build-wrappers.sh" ]; then
         case $sdk_type in
             "csharp")
-                if ./build-wrappers.sh --csharp; then
+                if "$SCRIPT_DIR/build-wrappers.sh" --csharp; then
                     echo -e "${GREEN}✅ $sdk_type wrapper built successfully${NC}"
                     return 0
                 fi
                 ;;
             "java")
-                if ./build-wrappers.sh --java; then
+                if "$SCRIPT_DIR/build-wrappers.sh" --java; then
                     echo -e "${GREEN}✅ $sdk_type wrapper built successfully${NC}"
                     return 0
                 fi
                 ;;
             "python")
-                if ./build-wrappers.sh --python; then
+                if "$SCRIPT_DIR/build-wrappers.sh" --python; then
                     echo -e "${GREEN}✅ $sdk_type wrapper built successfully${NC}"
                     return 0
                 fi
