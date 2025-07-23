@@ -1,40 +1,34 @@
 using System.Diagnostics;
-using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 
 namespace SdkTestAutomation.Sdk;
 
-public class SdkCommandExecutor
+public class SdkCommandExecutor(ILogger logger)
 {
-    private readonly ILogger _logger;
-    
-    public SdkCommandExecutor(ILogger logger)
+    public async Task<SdkResponse<T>> ExecuteAsync<T>(string resource, Dictionary<string, object> parameters, string operation)
     {
-        _logger = logger;
-    }
-    
-    public async Task<SdkResponse<T>> ExecuteAsync<T>(string operation, Dictionary<string, object> parameters, string resource)
-    {
-        var command = BuildCommand(operation, parameters, resource);
+        var command = BuildCommand(resource, parameters, operation);
         return await ExecuteCommandAsync<T>(command);
     }
     
-    private string BuildCommand(string operation, Dictionary<string, object> parameters, string resource)
+    private string BuildCommand(string resource, Dictionary<string, object> parameters, string operation)
     {
-        var parametersJson = JsonSerializer.Serialize(parameters).Replace("\"", "\\\"");
+        var parametersJson = JsonConvert.SerializeObject(parameters).Replace("\"", "\\\"");
         return $"--operation {operation} --parameters \"{parametersJson}\" --resource {resource}";
     }
     
     private async Task<SdkResponse<T>> ExecuteCommandAsync<T>(string command)
     {
-        _logger.Log($"Executing SDK command: {command}");
+        logger.Log($"Executing SDK command: {command}");
         
         var (fileName, arguments) = GetProcessInfo(command);
         
-        _logger.Log($"Starting process with FileName: {fileName}");
-        _logger.Log($"Starting process with Arguments: {arguments}");
+        logger.Log($"Starting process with FileName: {fileName}");
+        logger.Log($"Starting process with Arguments: {arguments}");
         
         using var process = new Process
         {
@@ -49,25 +43,24 @@ public class SdkCommandExecutor
             }
         };
         
-        _logger.Log("Starting process...");
+        logger.Log("Starting process...");
         process.Start();
-        _logger.Log($"Process started with ID: {process.Id}");
         
-        _logger.Log("Reading process output...");
+        logger.Log("Reading process output...");
         var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();
         
-        _logger.Log("Waiting for process to exit...");
+        logger.Log("Waiting for process to exit...");
         await process.WaitForExitAsync();
         
-        _logger.Log($"Process exit code: {process.ExitCode}");
-        _logger.Log($"Process output length: {output?.Length ?? 0} characters");
-        _logger.Log($"Process error length: {error?.Length ?? 0} characters");
+        logger.Log($"Process exit code: {process.ExitCode}");
+        logger.Log($"Process output length: {output?.Length ?? 0} characters");
+        logger.Log($"Process error length: {error?.Length ?? 0} characters");
         
         if (!string.IsNullOrEmpty(output))
-            _logger.Log($"Process output: {output}");
+            logger.Log($"Process output: {output}");
         if (!string.IsNullOrEmpty(error))
-            _logger.Log($"Process error: {error}");
+            logger.Log($"Process error: {error}");
         
         if (process.ExitCode != 0)
         {
@@ -85,20 +78,20 @@ public class SdkCommandExecutor
     private SdkResponse<T> DeserializeResponse<T>(string output)
     {
         var cleanedOutput = CleanJsonOutput(output);
-        _logger.Log($"Cleaned Output: [{cleanedOutput}]");
+        logger.Log($"Cleaned Output: [{cleanedOutput}]");
         
         try
         {
-            var response = JsonSerializer.Deserialize<SdkResponse<T>>(cleanedOutput, new JsonSerializerOptions
+            var response = JsonConvert.DeserializeObject<SdkResponse<T>>(cleanedOutput, new JsonSerializerSettings
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
             
             return response ?? new SdkResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
         }
         catch (JsonException ex)
         {
-            _logger.Log($"Error deserializing response: {ex.Message}");
+            logger.Log($"Error deserializing response: {ex.Message}");
             return new SdkResponse<T>
             {
                 Success = false,
@@ -122,9 +115,9 @@ public class SdkCommandExecutor
     {
         var sdkType = TestConfig.SdkType.ToLowerInvariant();
         var projectRoot = GetProjectRoot();
-        _logger.Log($"Getting process info for SDK type: {sdkType}");
-        _logger.Log($"Project root: {projectRoot}");
-        _logger.Log($"Command: {command}");
+        logger.Log($"Getting process info for SDK type: {sdkType}");
+        logger.Log($"Project root: {projectRoot}");
+        logger.Log($"Command: {command}");
         
         var (fileName, arguments) = sdkType switch
         {
@@ -134,8 +127,8 @@ public class SdkCommandExecutor
             _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
         };
         
-        _logger.Log($"Process info - FileName: {fileName}");
-        _logger.Log($"Process info - Arguments: {arguments}");
+        logger.Log($"Process info - FileName: {fileName}");
+        logger.Log($"Process info - Arguments: {arguments}");
         
         return (fileName, arguments);
     }
@@ -143,20 +136,20 @@ public class SdkCommandExecutor
     private string GetProjectRoot()
     {
         var currentDir = Directory.GetCurrentDirectory();
-        _logger.Log($"Current directory: {currentDir}");
+        logger.Log($"Current directory: {currentDir}");
         
         // If we're in the test project's bin directory, go up to the project root
         if (currentDir.Contains("SdkTestAutomation.Tests/bin"))
         {
             var projectRoot = Path.GetFullPath(Path.Combine(currentDir, "../../../.."));
-            _logger.Log($"Found project root (from tests bin): {projectRoot}");
+            logger.Log($"Found project root (from tests bin): {projectRoot}");
             return projectRoot;
         }
         
         // If we're in the project root, return it
         if (File.Exists(Path.Combine(currentDir, "SdkTestAutomation.sln")))
         {
-            _logger.Log($"Found project root (current directory): {currentDir}");
+            logger.Log($"Found project root (current directory): {currentDir}");
             return currentDir;
         }
         
@@ -166,13 +159,13 @@ public class SdkCommandExecutor
         {
             if (File.Exists(Path.Combine(dir.FullName, "SdkTestAutomation.sln")))
             {
-                _logger.Log($"Found project root (parent search): {dir.FullName}");
+                logger.Log($"Found project root (parent search): {dir.FullName}");
                 return dir.FullName;
             }
             dir = dir.Parent;
         }
         
-        _logger.Log($"Using current directory as project root: {currentDir}");
+        logger.Log($"Using current directory as project root: {currentDir}");
         return currentDir;
     }
 } 

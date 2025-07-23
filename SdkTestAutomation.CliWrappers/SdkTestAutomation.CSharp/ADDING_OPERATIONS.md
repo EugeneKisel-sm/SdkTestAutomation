@@ -14,7 +14,7 @@ SdkTestAutomation.CSharp/
 │   ├── EventOperations.cs        # Event operations
 │   └── WorkflowOperations.cs     # Workflow operations
 └── Extensions/                   # Parameter extraction helpers
-    └── JsonElementExtensions.cs
+    └── JTokenExtensions.cs
 ```
 
 ## 🎯 Adding Event Operations
@@ -32,7 +32,7 @@ return operation switch
 };
 
 // Add the operation method
-private static SdkResponse NewOperation(Dictionary<string, JsonElement> parameters, EventResourceApi eventApi)
+private static SdkResponse NewOperation(Dictionary<string, JToken> parameters, EventResourceApi eventApi)
 {
     var param1 = parameters.GetString("param1");
     var param2 = parameters.GetBool("param2");
@@ -45,8 +45,8 @@ private static SdkResponse NewOperation(Dictionary<string, JsonElement> paramete
 ### Step 2: Add Extension Method (if needed)
 
 ```csharp
-// In Extensions/JsonElementExtensions.cs
-public static int GetInt(this Dictionary<string, JsonElement> parameters, string key, int defaultValue = 0)
+// In Extensions/JTokenExtensions.cs
+public static int GetInt(this Dictionary<string, JToken> parameters, string key, int defaultValue = 0)
 {
     return parameters.TryGetValue(key, out var element) ? element.GetInt32() : defaultValue;
 }
@@ -65,7 +65,7 @@ return operation switch
     _ => throw new ArgumentException($"Unknown workflow operation: {operation}")
 };
 
-private static SdkResponse NewWorkflowOperation(Dictionary<string, JsonElement> parameters, WorkflowResourceApi workflowApi)
+private static SdkResponse NewWorkflowOperation(Dictionary<string, JToken> parameters, WorkflowResourceApi workflowApi)
 {
     var workflowId = parameters.GetString("workflowId");
     var action = parameters.GetString("action");
@@ -83,7 +83,7 @@ private static SdkResponse NewWorkflowOperation(Dictionary<string, JsonElement> 
 // Create Operations/TaskOperations.cs
 public static class TaskOperations
 {
-    public static SdkResponse Execute(string operation, Dictionary<string, JsonElement> parameters)
+    public static SdkResponse Execute(string operation, Dictionary<string, JToken> parameters)
     {
         return OperationUtils.ExecuteWithErrorHandling(() =>
         {
@@ -99,7 +99,7 @@ public static class TaskOperations
         });
     }
     
-    private static SdkResponse GetTask(Dictionary<string, JsonElement> parameters, TaskResourceApi taskApi)
+    private static SdkResponse GetTask(Dictionary<string, JToken> parameters, TaskResourceApi taskApi)
     {
         var taskId = parameters.GetString("taskId");
         var task = taskApi.GetTask(taskId);
@@ -162,7 +162,7 @@ public async Task SdkIntegration_NewOperation_ValidatesAgainstApi()
 ## 📋 Best Practices
 
 - **Error Handling**: Use `OperationUtils.ExecuteWithErrorHandling()` - no try-catch needed
-- **Parameters**: Use extension methods from `JsonElementExtensions`
+- **Parameters**: Use extension methods from `JTokenExtensions`
 - **Responses**: Use `SdkResponse.CreateSuccess()` or `SdkResponse.CreateError()`
 - **Naming**: Operations in kebab-case, methods in PascalCase
 - **Documentation**: Add XML comments and update README.md
@@ -173,7 +173,7 @@ public async Task SdkIntegration_NewOperation_ValidatesAgainstApi()
 // Add to WorkflowOperations.cs
 case "pause-workflow" => PauseWorkflow(parameters, workflowApi),
 
-private static SdkResponse PauseWorkflow(Dictionary<string, JsonElement> parameters, WorkflowResourceApi workflowApi)
+private static SdkResponse PauseWorkflow(Dictionary<string, JToken> parameters, WorkflowResourceApi workflowApi)
 {
     var workflowId = parameters.GetString("workflowId");
     var reason = parameters.GetString("reason");

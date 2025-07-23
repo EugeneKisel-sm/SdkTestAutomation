@@ -12,7 +12,7 @@ SdkTestAutomation.CSharp/
 │   ├── EventOperations.cs        # Event operations
 │   └── WorkflowOperations.cs     # Workflow operations
 └── Extensions/                   # Parameter extraction helpers
-    └── JsonElementExtensions.cs
+    └── JTokenExtensions.cs
 ```
 
 ## 🎯 Key Features
@@ -72,4 +72,4 @@ dotnet run --project SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp -- \
 
 - `conductor-client` - C# Conductor SDK
 - `System.CommandLine` - CLI argument parsing
-- `System.Text.Json` - JSON serialization 
+- `Newtonsoft.Json` - JSON serialization 

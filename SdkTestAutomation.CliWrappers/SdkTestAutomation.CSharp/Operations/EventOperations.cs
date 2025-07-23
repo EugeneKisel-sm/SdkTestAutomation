@@ -1,4 +1,4 @@
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using Conductor.Api;
 using Conductor.Client;
 using Conductor.Client.Models;
@@ -9,7 +9,7 @@ namespace SdkTestAutomation.CSharp.Operations;
 
 public static class EventOperations
 {
-    public static SdkResponse Execute(string operation, Dictionary<string, JsonElement> parameters)
+    public static SdkResponse Execute(string operation, Dictionary<string, JToken> parameters)
     {
         return OperationUtils.ExecuteWithErrorHandling(() =>
         {
@@ -28,7 +28,7 @@ public static class EventOperations
         });
     }
     
-    private static SdkResponse AddEvent(Dictionary<string, JsonElement> parameters, EventResourceApi eventApi)
+    private static SdkResponse AddEvent(Dictionary<string, JToken> parameters, EventResourceApi eventApi)
     {
         var eventHandler = CreateEventHandler(parameters);
         eventApi.AddEventHandler(eventHandler);
@@ -41,7 +41,7 @@ public static class EventOperations
         return SdkResponse.CreateSuccess(events);
     }
     
-    private static SdkResponse GetEventByName(Dictionary<string, JsonElement> parameters, EventResourceApi eventApi)
+    private static SdkResponse GetEventByName(Dictionary<string, JToken> parameters, EventResourceApi eventApi)
     {
         var eventName = parameters.GetString("event");
         var activeOnly = parameters.GetBoolNullable("activeOnly");
@@ -50,21 +50,21 @@ public static class EventOperations
         return SdkResponse.CreateSuccess(events);
     }
     
-    private static SdkResponse UpdateEvent(Dictionary<string, JsonElement> parameters, EventResourceApi eventApi)
+    private static SdkResponse UpdateEvent(Dictionary<string, JToken> parameters, EventResourceApi eventApi)
     {
         var eventHandler = CreateEventHandler(parameters);
         eventApi.UpdateEventHandler(eventHandler);
         return SdkResponse.CreateSuccess();
     }
     
-    private static SdkResponse DeleteEvent(Dictionary<string, JsonElement> parameters, EventResourceApi eventApi)
+    private static SdkResponse DeleteEvent(Dictionary<string, JToken> parameters, EventResourceApi eventApi)
     {
         var eventName = parameters.GetString("name");
         eventApi.RemoveEventHandlerStatus(eventName);
         return SdkResponse.CreateSuccess();
     }
     
-    private static Conductor.Client.Models.EventHandler CreateEventHandler(Dictionary<string, JsonElement> parameters)
+    private static Conductor.Client.Models.EventHandler CreateEventHandler(Dictionary<string, JToken> parameters)
     {
         return new Conductor.Client.Models.EventHandler(
             actions: new List<System.Action>(),

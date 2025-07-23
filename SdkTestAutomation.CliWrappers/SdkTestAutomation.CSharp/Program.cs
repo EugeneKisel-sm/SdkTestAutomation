@@ -1,8 +1,7 @@
 ﻿using System.CommandLine;
-using System.Text.Json;
-using Conductor.Api;
-using Conductor.Client;
-using Conductor.Client.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.CSharp.Operations;
 
@@ -21,12 +20,12 @@ rootCommand.SetHandler((operation, parameters, resource) =>
     try
     {
         var result = ExecuteOperation(operation, parameters, resource);
-        Console.Write(JsonSerializer.Serialize(result, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+        Console.Write(JsonConvert.SerializeObject(result, new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() }));
     }
     catch (Exception ex)
     {
         var error = SdkResponse.CreateError(500, ex.Message);
-        Console.Write(JsonSerializer.Serialize(error, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+        Console.Write(JsonConvert.SerializeObject(error, new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() }));
         Environment.Exit(1);
     }
 }, operationOption, parametersOption, resourceOption);
@@ -35,7 +34,7 @@ await rootCommand.InvokeAsync(args);
 
 static SdkResponse ExecuteOperation(string operation, string parameters, string resource)
 {
-    var paramsDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(parameters) ?? new Dictionary<string, JsonElement>();
+    var paramsDict = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(parameters) ?? new Dictionary<string, JToken>();
     
     return resource switch
     {

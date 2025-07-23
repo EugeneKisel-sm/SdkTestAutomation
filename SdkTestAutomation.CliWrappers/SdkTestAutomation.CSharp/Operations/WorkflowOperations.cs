@@ -1,4 +1,4 @@
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using Conductor.Api;
 using Conductor.Client;
 using SdkTestAutomation.Sdk.Models;
@@ -8,7 +8,7 @@ namespace SdkTestAutomation.CSharp.Operations;
 
 public static class WorkflowOperations
 {
-    public static SdkResponse Execute(string operation, Dictionary<string, JsonElement> parameters)
+    public static SdkResponse Execute(string operation, Dictionary<string, JToken> parameters)
     {
         return OperationUtils.ExecuteWithErrorHandling(() =>
         {
@@ -23,7 +23,7 @@ public static class WorkflowOperations
         });
     }
     
-    private static SdkResponse GetWorkflow(Dictionary<string, JsonElement> parameters, WorkflowResourceApi workflowApi)
+    private static SdkResponse GetWorkflow(Dictionary<string, JToken> parameters, WorkflowResourceApi workflowApi)
     {
         var workflowId = parameters.GetString("workflowId");
         var workflow = workflowApi.GetExecutionStatus(workflowId);

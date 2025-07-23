@@ -1,26 +1,20 @@
-using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils.Logging;
 
 namespace SdkTestAutomation.Sdk;
 
-public class ResponseComparer
+public class ResponseComparer(ILogger logger)
 {
-    private readonly ILogger _logger;
-    
-    public ResponseComparer(ILogger logger)
-    {
-        _logger = logger;
-    }
-    
     public Task<bool> CompareAsync<T>(SdkResponse<T> sdkResponse, RestSharp.RestResponse<T> apiResponse)
     {
-        _logger.Log("Comparing SDK and API responses...");
+        logger.Log("Comparing SDK and API responses...");
         
         var apiSuccess = apiResponse.StatusCode == System.Net.HttpStatusCode.OK;
         if (sdkResponse.StatusCode != (int)apiResponse.StatusCode || sdkResponse.Success != apiSuccess)
         {
-            _logger.Log($"Status mismatch: SDK={sdkResponse.StatusCode}({sdkResponse.Success}), API={(int)apiResponse.StatusCode}({apiSuccess}).");
+            logger.Log($"Status mismatch: SDK={sdkResponse.StatusCode}({sdkResponse.Success}), API={(int)apiResponse.StatusCode}({apiSuccess}).");
             return Task.FromResult(false);
         }
         
@@ -28,65 +22,72 @@ public class ResponseComparer
         {
             try
             {
-                var sdkJson = JsonSerializer.Deserialize<JsonElement>(sdkResponse.Content);
-                var apiJson = JsonSerializer.Deserialize<JsonElement>(apiResponse.Content);
+                var sdkJson = JToken.Parse(sdkResponse.Content);
+                var apiJson = JToken.Parse(apiResponse.Content);
                 
-                if (!JsonElementEquals(sdkJson, apiJson))
+                if (!JTokenEquals(sdkJson, apiJson))
                 {
-                    _logger.Log("Content mismatch between SDK and API responses.");
-                    _logger.Log($"SDK Content: {sdkResponse.Content}");
-                    _logger.Log($"API Content: {apiResponse.Content}");
+                    logger.Log("Content mismatch between SDK and API responses.");
+                    logger.Log($"SDK Content: {sdkResponse.Content}");
+                    logger.Log($"API Content: {apiResponse.Content}");
                     return Task.FromResult(false);
                 }
             }
-            catch (JsonException ex)
+            catch (JsonReaderException ex)
             {
-                _logger.Log($"Error comparing JSON content: {ex.Message}.");
+                logger.Log($"Error comparing JSON content: {ex.Message}.");
                 return Task.FromResult(false);
             }
         }
         
-        _logger.Log("SDK and API responses match.");
+        logger.Log("SDK and API responses match.");
         return Task.FromResult(true);
     }
     
-    private bool JsonElementEquals(JsonElement element1, JsonElement element2)
+    private bool JTokenEquals(JToken token1, JToken token2)
     {
-        if (element1.ValueKind != element2.ValueKind)
+        if (token1.Type != token2.Type)
             return false;
             
-        return element1.ValueKind switch
+        return token1.Type switch
         {
-            JsonValueKind.Object => CompareObject(element1, element2),
-            JsonValueKind.Array => CompareArray(element1, element2),
-            JsonValueKind.String => element1.GetString() == element2.GetString(),
-            JsonValueKind.Number => element1.GetDecimal() == element2.GetDecimal(),
-            JsonValueKind.True or JsonValueKind.False => element1.GetBoolean() == element2.GetBoolean(),
-            JsonValueKind.Null => true,
+            JTokenType.Object => CompareObject(token1, token2),
+            JTokenType.Array => CompareArray(token1, token2),
+            JTokenType.String => token1.ToString() == token2.ToString(),
+            JTokenType.Integer => token1.Value<long>() == token2.Value<long>(),
+            JTokenType.Float => token1.Value<double>() == token2.Value<double>(),
+            JTokenType.Boolean => token1.Value<bool>() == token2.Value<bool>(),
+            JTokenType.Null => true,
             _ => false
         };
     }
     
-    private bool CompareObject(JsonElement element1, JsonElement element2)
+    private bool CompareObject(JToken token1, JToken token2)
     {
-        var properties1 = element1.EnumerateObject().ToDictionary(p => p.Name, p => p.Value);
-        var properties2 = element2.EnumerateObject().ToDictionary(p => p.Name, p => p.Value);
+        var obj1 = token1 as JObject;
+        var obj2 = token2 as JObject;
         
-        if (properties1.Count != properties2.Count)
+        if (obj1 == null || obj2 == null)
             return false;
             
-        return properties1.All(kvp => 
-            properties2.TryGetValue(kvp.Key, out var value2) && JsonElementEquals(kvp.Value, value2));
+        if (obj1.Count != obj2.Count)
+            return false;
+            
+        return obj1.Properties().All(prop => 
+            obj2.TryGetValue(prop.Name, out var value2) && JTokenEquals(prop.Value, value2));
     }
     
-    private bool CompareArray(JsonElement element1, JsonElement element2)
+    private bool CompareArray(JToken token1, JToken token2)
     {
-        var array1 = element1.EnumerateArray().ToArray();
-        var array2 = element2.EnumerateArray().ToArray();
+        var array1 = token1 as JArray;
+        var array2 = token2 as JArray;
         
-        if (array1.Length != array2.Length)
+        if (array1 == null || array2 == null)
             return false;
             
-        return array1.Select((item, index) => JsonElementEquals(item, array2[index])).All(x => x);
+        if (array1.Count != array2.Count)
+            return false;
+            
+        return array1.Select((item, index) => JTokenEquals(item, array2[index])).All(x => x);
     }
 } 

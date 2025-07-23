@@ -1,29 +1,24 @@
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SdkTestAutomation.CSharp.Extensions;
 
-public static class JsonElementExtensions
+public static class JTokenExtensions
 {
-    public static string GetString(this Dictionary<string, JsonElement> parameters, string key, string defaultValue = "")
+    public static string GetString(this Dictionary<string, JToken> parameters, string key, string defaultValue = "")
     {
-        return parameters.TryGetValue(key, out var element) ? element.GetString() ?? defaultValue : defaultValue;
+        return parameters.TryGetValue(key, out var token) ? token?.ToString() ?? defaultValue : defaultValue;
     }
     
-    public static bool GetBool(this Dictionary<string, JsonElement> parameters, string key, bool defaultValue = false)
+    public static bool GetBool(this Dictionary<string, JToken> parameters, string key, bool defaultValue = false)
     {
-        return parameters.TryGetValue(key, out var element) && element.ValueKind == JsonValueKind.True;
+        return parameters.TryGetValue(key, out var token) && token?.Type == JTokenType.Boolean && token.Value<bool>();
     }
     
-    public static bool? GetBoolNullable(this Dictionary<string, JsonElement> parameters, string key)
+    public static bool? GetBoolNullable(this Dictionary<string, JToken> parameters, string key)
     {
-        if (!parameters.TryGetValue(key, out var element))
+        if (!parameters.TryGetValue(key, out var token))
             return null;
             
-        return element.ValueKind switch
-        {
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            _ => null
-        };
+        return token?.Type == JTokenType.Boolean ? token.Value<bool>() : null;
     }
 } 
