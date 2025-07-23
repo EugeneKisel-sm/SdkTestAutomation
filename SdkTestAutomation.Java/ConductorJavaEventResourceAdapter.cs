@@ -7,11 +7,10 @@ using SdkTestAutomation.Java.JavaBridge;
 namespace SdkTestAutomation.Java;
 
 /// <summary>
-/// Java SDK adapter for event resource operations using MASES.JCOBridge
+/// Simplified Java SDK adapter for event resource operations using IKVM.NET
 /// </summary>
 public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
 {
-    private dynamic? _eventClient;
     private JavaEngine? _javaEngine;
     
     public override string SdkType => "java";
@@ -23,13 +22,9 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             _config = config;
             LogOperation("Initializing Java SDK adapter", config.ServerUrl);
             
-            // Initialize Java bridge
+            // Initialize Java bridge using IKVM
             _javaEngine = new JavaEngine();
             _javaEngine.Initialize(config);
-            
-            // Create Conductor client using JCOBridge
-            var conductorClient = _javaEngine.CreateInstance("com.netflix.conductor.client.http.ConductorClient", config.ServerUrl);
-            _eventClient = _javaEngine.CreateInstance("com.netflix.conductor.client.http.EventClient", conductorClient);
             
             LogOperation("Java SDK adapter initialized successfully");
             return true;
@@ -45,10 +40,10 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
     {
         try
         {
-            if (_eventClient == null) return false;
+            if (_javaEngine == null) return false;
             
             // Try to get events to check if the API is accessible
-            await Task.Run(() => _eventClient!.getEventHandlers("", false));
+            await Task.Run(() => _javaEngine!.GetEventHandlers("", false));
             return true;
         }
         catch
@@ -64,8 +59,8 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             ValidateInitialization();
             LogOperation("Adding event", request.Name);
             
-            var eventHandler = JavaEventHandlerBuilder.CreateEventHandler(_javaEngine!, request);
-            await Task.Run(() => _eventClient!.registerEventHandler(eventHandler));
+            var eventHandler = CreateEventHandler(request);
+            await Task.Run(() => _javaEngine!.RegisterEventHandler(eventHandler));
             return SdkResponseBuilder.CreateFromRequest(request);
         }
         catch (Exception ex)
@@ -82,7 +77,7 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             ValidateInitialization();
             LogOperation("Getting all events");
             
-            var events = await Task.Run(() => _eventClient!.getEventHandlers("", false));
+            var events = await Task.Run(() => _javaEngine!.GetEventHandlers("", false));
             
             var data = new GetEventResponse
             {
@@ -105,7 +100,7 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             ValidateInitialization();
             LogOperation("Getting events by name", request.Event);
             
-            var events = await Task.Run(() => _eventClient!.getEventHandlers(request.Event, request.ActiveOnly ?? false));
+            var events = await Task.Run(() => _javaEngine!.GetEventHandlers(request.Event, request.ActiveOnly ?? false));
             
             var data = new GetEventResponse
             {
@@ -128,8 +123,8 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             ValidateInitialization();
             LogOperation("Updating event", request.Name);
             
-            var eventHandler = JavaEventHandlerBuilder.CreateEventHandler(_javaEngine!, request);
-            await Task.Run(() => _eventClient!.updateEventHandler(eventHandler));
+            var eventHandler = CreateEventHandler(request);
+            await Task.Run(() => _javaEngine!.UpdateEventHandler(eventHandler));
             return SdkResponseBuilder.CreateFromRequest(request);
         }
         catch (Exception ex)
@@ -146,7 +141,7 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             ValidateInitialization();
             LogOperation("Deleting event", request.Name);
             
-            await Task.Run(() => _eventClient!.unregisterEventHandler(request.Name));
+            await Task.Run(() => _javaEngine!.UnregisterEventHandler(request.Name));
             return SdkResponseBuilder.CreateEmptyResponse();
         }
         catch (Exception ex)
@@ -156,15 +151,102 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
         }
     }
     
-    protected override string GetSdkVersion() => "4.0.0";
+    /// <summary>
+    /// Create a Java EventHandler object using IKVM
+    /// </summary>
+    private dynamic CreateEventHandler(AddEventRequest request)
+    {
+        try
+        {
+            // Create EventHandler using IKVM
+            var eventHandler = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler");
+            eventHandler.setName(request.Name);
+            eventHandler.setEvent(request.Event);
+            eventHandler.setActive(request.Active);
+            
+            // Set actions if any
+            if (request.Actions?.Any() == true)
+            {
+                var actions = new List<dynamic>();
+                foreach (var action in request.Actions)
+                {
+                    var javaAction = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler$Action");
+                    javaAction.setAction(action.Action);
+                    
+                    if (action.StartWorkflow != null)
+                    {
+                        var startWorkflow = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.workflow.StartWorkflowRequest");
+                        startWorkflow.setName(action.StartWorkflow.Name);
+                        startWorkflow.setVersion(action.StartWorkflow.Version);
+                        startWorkflow.setInput(JsonSerializer.Serialize(action.StartWorkflow.Input));
+                        javaAction.setStartWorkflow(startWorkflow);
+                    }
+                    
+                    actions.Add(javaAction);
+                }
+                eventHandler.setActions(actions);
+            }
+            
+            return eventHandler;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create Java EventHandler: {ex.Message}", ex);
+        }
+    }
     
-    protected override bool IsInitialized() => _eventClient != null;
+    /// <summary>
+    /// Create a Java EventHandler object using IKVM
+    /// </summary>
+    private dynamic CreateEventHandler(UpdateEventRequest request)
+    {
+        try
+        {
+            // Create EventHandler using IKVM
+            var eventHandler = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler");
+            eventHandler.setName(request.Name);
+            eventHandler.setEvent(request.Event);
+            eventHandler.setActive(request.Active);
+            
+            // Set actions if any
+            if (request.Actions?.Any() == true)
+            {
+                var actions = new List<dynamic>();
+                foreach (var action in request.Actions)
+                {
+                    var javaAction = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler$Action");
+                    javaAction.setAction(action.Action);
+                    
+                    if (action.StartWorkflow != null)
+                    {
+                        var startWorkflow = _javaEngine!.CreateInstance("com.netflix.conductor.common.metadata.workflow.StartWorkflowRequest");
+                        startWorkflow.setName(action.StartWorkflow.Name);
+                        startWorkflow.setVersion(action.StartWorkflow.Version);
+                        startWorkflow.setInput(JsonSerializer.Serialize(action.StartWorkflow.Input));
+                        javaAction.setStartWorkflow(startWorkflow);
+                    }
+                    
+                    actions.Add(javaAction);
+                }
+                eventHandler.setActions(actions);
+            }
+            
+            return eventHandler;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create Java EventHandler: {ex.Message}", ex);
+        }
+    }
+    
+    protected override string GetSdkVersion() => "3.15.0";
+    
+    protected override bool IsInitialized() => _javaEngine != null;
     
     public override void Dispose()
     {
         try
         {
-            _eventClient = null;
             _javaEngine?.Dispose();
         }
         catch (Exception ex)

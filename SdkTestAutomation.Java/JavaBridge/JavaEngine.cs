@@ -1,52 +1,153 @@
-using MASES.JCOBridge;
-using MASES.JCOBridge.C2JBridge;
+using System;
+using System.Reflection;
 using SdkTestAutomation.Common.Models;
 
 namespace SdkTestAutomation.Java.JavaBridge;
 
 /// <summary>
-/// Simplified Java bridge engine using MASES.JCOBridge
+/// Optimized Java bridge engine using IKVM.NET
 /// </summary>
-public class JavaEngine : SetupJVMWrapper, IDisposable
+public class JavaEngine : IDisposable
 {
     private bool _disposed = false;
+    private dynamic? _conductorClient;
+    private dynamic? _eventClient;
     
     /// <summary>
-    /// Initialize the Java bridge
+    /// Initialize the Java bridge using IKVM
     /// </summary>
     public void Initialize(AdapterConfiguration config)
     {
-        // Set Java home if provided
-        if (!string.IsNullOrEmpty(config.JavaHome))
+        try
         {
-            Environment.SetEnvironmentVariable("JAVA_HOME", config.JavaHome);
+            // Create Conductor client using IKVM
+            CreateConductorClient(config.ServerUrl);
         }
-        
-        // The JVM is automatically initialized when needed
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to initialize Java bridge: {ex.Message}", ex);
+        }
     }
     
     /// <summary>
-    /// Create a Java object instance using dynamic access
+    /// Create Conductor client using IKVM
+    /// </summary>
+    private void CreateConductorClient(string serverUrl)
+    {
+        try
+        {
+            // Create ConductorClient using IKVM - these are now .NET types
+            var conductorClientType = Type.GetType("com.netflix.conductor.client.http.ConductorClient, conductor-client");
+            if (conductorClientType == null)
+            {
+                throw new InvalidOperationException("ConductorClient class not found. Ensure conductor-client.jar is in the lib folder and properly referenced.");
+            }
+            
+            _conductorClient = Activator.CreateInstance(conductorClientType, serverUrl);
+            
+            // Create EventClient using IKVM
+            var eventClientType = Type.GetType("com.netflix.conductor.client.http.EventClient, conductor-client");
+            if (eventClientType == null)
+            {
+                throw new InvalidOperationException("EventClient class not found. Ensure conductor-client.jar is in the lib folder and properly referenced.");
+            }
+            
+            _eventClient = Activator.CreateInstance(eventClientType, _conductorClient);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create Conductor client: {ex.Message}", ex);
+        }
+    }
+    
+    /// <summary>
+    /// Get event handlers using Java SDK
+    /// </summary>
+    public dynamic GetEventHandlers(string eventName = "", bool activeOnly = false)
+    {
+        if (_eventClient == null)
+        {
+            throw new InvalidOperationException("EventClient not initialized");
+        }
+        
+        return _eventClient.getEventHandlers(eventName, activeOnly);
+    }
+    
+    /// <summary>
+    /// Register event handler using Java SDK
+    /// </summary>
+    public dynamic RegisterEventHandler(dynamic eventHandler)
+    {
+        if (_eventClient == null)
+        {
+            throw new InvalidOperationException("EventClient not initialized");
+        }
+        
+        return _eventClient.registerEventHandler(eventHandler);
+    }
+    
+    /// <summary>
+    /// Update event handler using Java SDK
+    /// </summary>
+    public dynamic UpdateEventHandler(dynamic eventHandler)
+    {
+        if (_eventClient == null)
+        {
+            throw new InvalidOperationException("EventClient not initialized");
+        }
+        
+        return _eventClient.updateEventHandler(eventHandler);
+    }
+    
+    /// <summary>
+    /// Unregister event handler using Java SDK
+    /// </summary>
+    public dynamic UnregisterEventHandler(string handlerName)
+    {
+        if (_eventClient == null)
+        {
+            throw new InvalidOperationException("EventClient not initialized");
+        }
+        
+        return _eventClient.unregisterEventHandler(handlerName);
+    }
+    
+    /// <summary>
+    /// Create a Java object instance using IKVM
     /// </summary>
     public dynamic CreateInstance(string className, params object[] args)
     {
-        return DynJVM.GetClass(className).NewInstance(args);
+        try
+        {
+            // Try to find the type in the appropriate assembly
+            Type? type = FindType(className);
+            if (type == null)
+            {
+                throw new InvalidOperationException($"Class {className} not found in any referenced assembly");
+            }
+            
+            return Activator.CreateInstance(type, args);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create instance of {className}: {ex.Message}", ex);
+        }
     }
     
     /// <summary>
-    /// Call a static method on a Java class using dynamic access
+    /// Find a type in the referenced assemblies
     /// </summary>
-    public dynamic CallStaticMethod(string className, string methodName, params object[] args)
+    private Type? FindType(string className)
     {
-        return DynJVM.GetClass(className).Invoke(methodName, args);
-    }
-    
-    /// <summary>
-    /// Get a Java class for direct access
-    /// </summary>
-    public dynamic GetClass(string className)
-    {
-        return DynJVM.GetClass(className);
+        var assemblies = new[] { "conductor-client", "conductor-common", "IKVM" };
+        
+        foreach (var assembly in assemblies)
+        {
+            var type = Type.GetType($"{className}, {assembly}");
+            if (type != null) return type;
+        }
+        
+        return null;
     }
     
     /// <summary>
@@ -56,7 +157,8 @@ public class JavaEngine : SetupJVMWrapper, IDisposable
     {
         if (!_disposed)
         {
-            // The JVM will be automatically cleaned up
+            _conductorClient = null;
+            _eventClient = null;
             _disposed = true;
         }
     }
