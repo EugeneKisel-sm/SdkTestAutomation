@@ -10,8 +10,8 @@ namespace SdkTestAutomation.Java.JavaBridge;
 public class JavaEngine : IDisposable
 {
     private bool _disposed = false;
-    private dynamic? _conductorClient;
-    private dynamic? _eventClient;
+    private dynamic _conductorClient;
+    private dynamic _eventClient;
     
     /// <summary>
     /// Initialize the Java bridge using IKVM
@@ -120,7 +120,7 @@ public class JavaEngine : IDisposable
         try
         {
             // Try to find the type in the appropriate assembly
-            Type? type = FindType(className);
+            Type type = FindType(className);
             if (type == null)
             {
                 throw new InvalidOperationException($"Class {className} not found in any referenced assembly");
@@ -137,7 +137,7 @@ public class JavaEngine : IDisposable
     /// <summary>
     /// Find a type in the referenced assemblies
     /// </summary>
-    private Type? FindType(string className)
+    private Type FindType(string className)
     {
         var assemblies = new[] { "conductor-client", "conductor-common", "IKVM" };
         
@@ -147,7 +147,7 @@ public class JavaEngine : IDisposable
             if (type != null) return type;
         }
         
-        return null;
+        throw new InvalidOperationException($"Class {className} not found in any referenced assembly");
     }
     
     /// <summary>

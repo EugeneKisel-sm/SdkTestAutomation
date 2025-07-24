@@ -14,11 +14,11 @@ namespace SdkTestAutomation.CSharp;
 /// </summary>
 public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
 {
-    private EventResourceApi? _eventApi;
+    private EventResourceApi _eventApi;
     
     public override string SdkType => "csharp";
     
-    public override async Task<bool> InitializeAsync(AdapterConfiguration config)
+    public override Task<bool> InitializeAsync(AdapterConfiguration config)
     {
         try
         {
@@ -29,28 +29,38 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
             _eventApi = new EventResourceApi(configuration);
             
             LogOperation("C# SDK adapter initialized successfully");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             LogError("initializing C# SDK adapter", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
     
-    public override async Task<bool> IsHealthyAsync()
+    public override Task<bool> IsHealthyAsync()
     {
         try
         {
-            if (_eventApi == null) return false;
+            if (_eventApi == null) return Task.FromResult(false);
             
             // Try to get events to check if the API is accessible
-            await Task.Run(() => _eventApi.GetEventHandlers());
-            return true;
+            return Task.Run(() => 
+            {
+                try
+                {
+                    _eventApi.GetEventHandlers();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            });
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
     

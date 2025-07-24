@@ -9,5 +9,5 @@ public class AdapterInfo
     public string Version { get; set; } = string.Empty;
     public bool IsInitialized { get; set; }
     public DateTime InitializedAt { get; set; }
-    public string? ErrorMessage { get; set; }
+    public string ErrorMessage { get; set; }
 } 

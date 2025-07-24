@@ -90,7 +90,7 @@ public static class AdapterFactory
     /// <summary>
     /// Find type by searching through all loaded assemblies
     /// </summary>
-    private static Type? FindType(string typeName)
+    private static Type FindType(string typeName)
     {
         // First try the simple approach
         var type = Type.GetType(typeName);
@@ -103,7 +103,7 @@ public static class AdapterFactory
             if (type != null) return type;
         }
         
-        return null;
+        throw new InvalidOperationException($"Could not find type: {typeName}");
     }
     
     /// <summary>

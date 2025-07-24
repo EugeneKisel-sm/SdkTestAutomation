@@ -16,8 +16,8 @@ public abstract class BaseTest : IDisposable
 {
     private readonly ILogger _logger;
     private readonly ResponseComparer _responseComparer;
-    private IEventResourceAdapter? _eventResourceAdapter;
-    private IWorkflowResourceAdapter? _workflowResourceAdapter;
+    private IEventResourceAdapter _eventResourceAdapter;
+    private IWorkflowResourceAdapter _workflowResourceAdapter;
     
     protected EventResourceApi EventResourceApi { get; }
     protected WorkflowResourceApi WorkflowResourceApi { get; }

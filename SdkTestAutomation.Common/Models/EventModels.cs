@@ -11,5 +11,5 @@ public class EventAction
     public string Action { get; set; } = string.Empty;
     
     [JsonProperty("startWorkflow")]
-    public StartWorkflow? StartWorkflow { get; set; }
+    public StartWorkflow StartWorkflow { get; set; }
 } 

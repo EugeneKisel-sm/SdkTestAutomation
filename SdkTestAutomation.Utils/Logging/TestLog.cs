@@ -10,7 +10,9 @@ public class TestLog
         LogTime = DateTime.Now;
     }
 
-    public TestLog() { }
+    public TestLog()
+    {
+    }
 
     public string Message { get; set; }
     public DateTime LogTime { get; set; }

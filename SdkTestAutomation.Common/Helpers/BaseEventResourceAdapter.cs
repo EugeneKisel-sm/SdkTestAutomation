@@ -10,7 +10,7 @@ namespace SdkTestAutomation.Common.Helpers;
 public abstract class BaseEventResourceAdapter : IEventResourceAdapter
 {
     protected readonly ILogger _logger;
-    protected AdapterConfiguration? _config;
+    protected AdapterConfiguration _config;
     
     protected BaseEventResourceAdapter()
     {
@@ -69,7 +69,7 @@ public abstract class BaseEventResourceAdapter : IEventResourceAdapter
     /// <summary>
     /// Log operation start
     /// </summary>
-    protected void LogOperation(string operation, string? details = null)
+    protected void LogOperation(string operation, string details = null)
     {
         var message = details != null ? $"{operation}: {details}" : operation;
         _logger.Log(message);

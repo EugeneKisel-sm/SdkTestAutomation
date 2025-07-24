@@ -11,16 +11,16 @@ public class AdapterConfiguration
     public string ServerUrl { get; set; } = "http://localhost:8080/api";
     
     [JsonProperty("pythonHome")]
-    public string? PythonHome { get; set; }
+    public string PythonHome { get; set; }
     
     [JsonProperty("pythonPath")]
-    public string? PythonPath { get; set; }
+    public string PythonPath { get; set; }
     
     [JsonProperty("javaHome")]
-    public string? JavaHome { get; set; }
+    public string JavaHome { get; set; }
     
     [JsonProperty("javaClassPath")]
-    public string? JavaClassPath { get; set; }
+    public string JavaClassPath { get; set; }
     
     [JsonProperty("enableLogging")]
     public bool EnableLogging { get; set; } = true;

@@ -128,7 +128,7 @@ public static class EventInfoMapper
     /// <summary>
     /// Map C# actions to EventAction list
     /// </summary>
-    private static List<EventAction> MapActionsFromCSharp(dynamic? actions)
+    private static List<EventAction> MapActionsFromCSharp(dynamic actions)
     {
         var result = new List<EventAction>();
         
@@ -160,7 +160,7 @@ public static class EventInfoMapper
     /// <summary>
     /// Map Java actions to EventAction list
     /// </summary>
-    private static List<EventAction> MapActionsFromJava(dynamic? javaActions)
+    private static List<EventAction> MapActionsFromJava(dynamic javaActions)
     {
         var result = new List<EventAction>();
         
@@ -194,7 +194,7 @@ public static class EventInfoMapper
     /// <summary>
     /// Map Python actions to EventAction list
     /// </summary>
-    private static List<EventAction> MapActionsFromPython(dynamic? pythonActions)
+    private static List<EventAction> MapActionsFromPython(dynamic pythonActions)
     {
         var result = new List<EventAction>();
         
@@ -228,7 +228,7 @@ public static class EventInfoMapper
     /// <summary>
     /// Safely get property value from dynamic object
     /// </summary>
-    private static string? GetPropertyValue(dynamic obj, string propertyName)
+    private static string GetPropertyValue(dynamic obj, string propertyName)
     {
         try
         {
@@ -243,13 +243,13 @@ public static class EventInfoMapper
         {
             // Property doesn't exist or is not accessible
         }
-        return null;
+        return string.Empty;
     }
     
     /// <summary>
     /// Safely get method value from dynamic object
     /// </summary>
-    private static string? GetMethodValue(dynamic obj, string methodName)
+    private static string GetMethodValue(dynamic obj, string methodName)
     {
         try
         {
@@ -264,6 +264,6 @@ public static class EventInfoMapper
         {
             // Method doesn't exist or is not accessible
         }
-        return null;
+        return string.Empty;
     }
 } 

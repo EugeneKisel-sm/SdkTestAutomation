@@ -12,8 +12,8 @@ public class PythonBridgeEngine : IDisposable
     private static readonly ILogger _logger = new ConsoleLogger(null);
     private bool _initialized = false;
     private bool _disposed = false;
-    private dynamic? _conductorClient;
-    private dynamic? _eventClient;
+    private dynamic _conductorClient;
+    private dynamic _eventClient;
     
     /// <summary>
     /// Initialize the Python bridge

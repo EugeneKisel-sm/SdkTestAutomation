@@ -20,8 +20,8 @@ public class EventInfo
     public List<EventAction> Actions { get; set; } = new();
     
     [JsonProperty("condition")]
-    public string? Condition { get; set; }
+    public string Condition { get; set; }
     
     [JsonProperty("evaluatorType")]
-    public string? EvaluatorType { get; set; }
+    public string EvaluatorType { get; set; }
 } 

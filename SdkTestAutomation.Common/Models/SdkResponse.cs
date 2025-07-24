@@ -11,7 +11,7 @@ public class SdkResponse<T>
     public bool Success { get; set; }
     
     [JsonProperty("data")]
-    public T? Data { get; set; }
+    public T Data { get; set; }
     
     [JsonProperty("content")]
     public string Content { get; set; } = string.Empty;

@@ -12,11 +12,11 @@ namespace SdkTestAutomation.Python;
 /// </summary>
 public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
 {
-    private PythonBridgeEngine? _pythonEngine;
+    private PythonBridgeEngine _pythonEngine;
     
     public override string SdkType => "python";
     
-    public override async Task<bool> InitializeAsync(AdapterConfiguration config)
+    public override Task<bool> InitializeAsync(AdapterConfiguration config)
     {
         try
         {
@@ -28,32 +28,42 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
             _pythonEngine.Initialize(config);
             
             LogOperation("Python SDK adapter initialized successfully");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             LogError("initializing Python SDK adapter", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
     
-    public override async Task<bool> IsHealthyAsync()
+    public override Task<bool> IsHealthyAsync()
     {
         try
         {
-            if (_pythonEngine == null) return false;
+            if (_pythonEngine == null) return Task.FromResult(false);
             
             // Try to get events to check if the API is accessible
-            await Task.Run(() => _pythonEngine.ExecuteWithGIL(() => 
+            return Task.Run(() => 
             {
-                var eventClient = _pythonEngine!.GetEventClient();
-                eventClient.get_event_handlers("", false);
-            }));
-            return true;
+                try
+                {
+                    _pythonEngine.ExecuteWithGIL(() => 
+                    {
+                        var eventClient = _pythonEngine.GetEventClient();
+                        eventClient.get_event_handlers("", false);
+                    });
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            });
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
     

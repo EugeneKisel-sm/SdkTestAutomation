@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -11,40 +11,40 @@
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.2"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
-        <PackageReference Include="xunit.v3" Version="3.0.0" />
-        <PackageReference Include="xunit.v3.assert" Version="3.0.0" />
-        <PackageReference Include="xunit.v3.common" Version="3.0.0" />
-        <PackageReference Include="xunit.v3.core" Version="3.0.0" />
-        <PackageReference Include="xunit.v3.runner.common" Version="3.0.0" />
-        <PackageReference Include="xunit.v3.runner.inproc.console" Version="3.0.0" />
+        <PackageReference Include="xunit.v3" Version="3.0.0"/>
+        <PackageReference Include="xunit.v3.assert" Version="3.0.0"/>
+        <PackageReference Include="xunit.v3.common" Version="3.0.0"/>
+        <PackageReference Include="xunit.v3.core" Version="3.0.0"/>
+        <PackageReference Include="xunit.v3.runner.common" Version="3.0.0"/>
+        <PackageReference Include="xunit.v3.runner.inproc.console" Version="3.0.0"/>
         <PackageReference Include="xunit.v3.runner.msbuild" Version="3.0.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="xunit.v3.runner.console" Version="3.0.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="xunit.v3.runner.utility" Version="3.0.0" />
+        <PackageReference Include="xunit.v3.runner.utility" Version="3.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SdkTestAutomation.Utils\SdkTestAutomation.Utils.csproj" />
-      <ProjectReference Include="..\SdkTestAutomation.Api\SdkTestAutomation.Api.csproj" />
-      <ProjectReference Include="..\SdkTestAutomation.Common\SdkTestAutomation.Common.csproj" />
-      <ProjectReference Include="..\SdkTestAutomation.CSharp\SdkTestAutomation.CSharp.csproj" />
-      <ProjectReference Include="..\SdkTestAutomation.Java\SdkTestAutomation.Java.csproj" />
-      <ProjectReference Include="..\SdkTestAutomation.Python\SdkTestAutomation.Python.csproj" />
+        <ProjectReference Include="..\SdkTestAutomation.Utils\SdkTestAutomation.Utils.csproj"/>
+        <ProjectReference Include="..\SdkTestAutomation.Api\SdkTestAutomation.Api.csproj"/>
+        <ProjectReference Include="..\SdkTestAutomation.Common\SdkTestAutomation.Common.csproj"/>
+        <ProjectReference Include="..\SdkTestAutomation.CSharp\SdkTestAutomation.CSharp.csproj"/>
+        <ProjectReference Include="..\SdkTestAutomation.Java\SdkTestAutomation.Java.csproj"/>
+        <ProjectReference Include="..\SdkTestAutomation.Python\SdkTestAutomation.Python.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Update=".env">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+        <None Update=".env">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Extensions\" />
+        <Folder Include="Extensions\"/>
     </ItemGroup>
 
 </Project>

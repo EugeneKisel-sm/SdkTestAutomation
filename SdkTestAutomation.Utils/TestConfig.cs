@@ -15,7 +15,7 @@ public static class TestConfig
         {
             Env.Load(envPath);
         }
-        
+
         ApiUrl = GetRequired("CONDUCTOR_SERVER_URL");
         Key = GetOptional("CONDUCTOR_AUTH_KEY", "");
         Secret = GetOptional("CONDUCTOR_AUTH_SECRET", "");
@@ -29,7 +29,7 @@ public static class TestConfig
             throw new InvalidOperationException(
                 $"Required environment variable '{name}' is missing.");
         }
-            
+
         return value;
     }
 

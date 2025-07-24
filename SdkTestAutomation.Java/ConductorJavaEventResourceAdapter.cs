@@ -11,11 +11,11 @@ namespace SdkTestAutomation.Java;
 /// </summary>
 public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
 {
-    private JavaEngine? _javaEngine;
+    private JavaEngine _javaEngine;
     
     public override string SdkType => "java";
     
-    public override async Task<bool> InitializeAsync(AdapterConfiguration config)
+    public override Task<bool> InitializeAsync(AdapterConfiguration config)
     {
         try
         {
@@ -27,28 +27,38 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
             _javaEngine.Initialize(config);
             
             LogOperation("Java SDK adapter initialized successfully");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             LogError("initializing Java SDK adapter", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
     
-    public override async Task<bool> IsHealthyAsync()
+    public override Task<bool> IsHealthyAsync()
     {
         try
         {
-            if (_javaEngine == null) return false;
+            if (_javaEngine == null) return Task.FromResult(false);
             
             // Try to get events to check if the API is accessible
-            await Task.Run(() => _javaEngine!.GetEventHandlers("", false));
-            return true;
+            return Task.Run(() => 
+            {
+                try
+                {
+                    _javaEngine.GetEventHandlers("", false);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            });
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
     
