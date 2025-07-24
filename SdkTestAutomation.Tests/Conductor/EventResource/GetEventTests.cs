@@ -11,7 +11,7 @@ public class GetEventTests : BaseTest
     public async Task EventResource_GetEvent_200()
     {
         var sdkResponse =
-            await ExecuteSdkCallAsync<List<GetEventResponse>>("get-event", new Dictionary<string, object>(), "event");
+            await ExecuteSdkCallAsync<List<GetEventResponse>>("event", new Dictionary<string, object>(), "get-event");
         var apiResponse = EventResourceApi.GetEvent(new GetEventRequest());
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
