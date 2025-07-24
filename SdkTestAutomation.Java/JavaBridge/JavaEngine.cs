@@ -36,27 +36,40 @@ public class JavaEngine : IDisposable
     {
         try
         {
-            // Create ConductorClient using IKVM - these are now .NET types
-            var conductorClientType = Type.GetType("com.netflix.conductor.client.http.ConductorClient, conductor-client");
-            if (conductorClientType == null)
-            {
-                throw new InvalidOperationException("ConductorClient class not found. Ensure conductor-client.jar is in the lib folder and properly referenced.");
-            }
-            
-            _conductorClient = Activator.CreateInstance(conductorClientType, serverUrl);
-            
-            // Create EventClient using IKVM
-            var eventClientType = Type.GetType("com.netflix.conductor.client.http.EventClient, conductor-client");
-            if (eventClientType == null)
-            {
-                throw new InvalidOperationException("EventClient class not found. Ensure conductor-client.jar is in the lib folder and properly referenced.");
-            }
-            
-            _eventClient = Activator.CreateInstance(eventClientType, _conductorClient);
+            // Use IKVM's JVM to create Java objects directly
+            // This approach is more reliable than reflection-based type resolution
+            _conductorClient = CreateJavaObject("com.netflix.conductor.client.http.ConductorClient", serverUrl);
+            _eventClient = CreateJavaObject("com.netflix.conductor.client.http.EventClient", _conductorClient);
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Failed to create Conductor client: {ex.Message}", ex);
+        }
+    }
+    
+    /// <summary>
+    /// Create Java object using IKVM's type system
+    /// </summary>
+    private dynamic CreateJavaObject(string className, params object[] args)
+    {
+        try
+        {
+            // Use IKVM's type system to create objects
+            // This is the recommended approach for IKVM 8.x
+            var type = Type.GetType($"{className}, conductor-client") ?? 
+                      Type.GetType($"{className}, conductor-common") ?? 
+                      Type.GetType($"{className}, IKVM");
+            
+            if (type == null)
+            {
+                throw new InvalidOperationException($"Could not find type {className} in any referenced assembly");
+            }
+            
+            return Activator.CreateInstance(type, args);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create Java object {className}: {ex.Message}", ex);
         }
     }
     
@@ -117,37 +130,7 @@ public class JavaEngine : IDisposable
     /// </summary>
     public dynamic CreateInstance(string className, params object[] args)
     {
-        try
-        {
-            // Try to find the type in the appropriate assembly
-            Type type = FindType(className);
-            if (type == null)
-            {
-                throw new InvalidOperationException($"Class {className} not found in any referenced assembly");
-            }
-            
-            return Activator.CreateInstance(type, args);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Failed to create instance of {className}: {ex.Message}", ex);
-        }
-    }
-    
-    /// <summary>
-    /// Find a type in the referenced assemblies
-    /// </summary>
-    private Type FindType(string className)
-    {
-        var assemblies = new[] { "conductor-client", "conductor-common", "IKVM" };
-        
-        foreach (var assembly in assemblies)
-        {
-            var type = Type.GetType($"{className}, {assembly}");
-            if (type != null) return type;
-        }
-        
-        throw new InvalidOperationException($"Class {className} not found in any referenced assembly");
+        return CreateJavaObject(className, args);
     }
     
     /// <summary>

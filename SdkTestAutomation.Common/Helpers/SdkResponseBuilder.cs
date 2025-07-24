@@ -29,28 +29,7 @@ public static class SdkResponseBuilder
     /// <summary>
     /// Create a response from request data (for add/update operations)
     /// </summary>
-    public static SdkResponse<GetEventResponse> CreateFromRequest(AddEventRequest request)
-    {
-        var eventInfo = new EventInfo
-        {
-            Name = request.Name,
-            Event = request.Event,
-            Active = request.Active,
-            Actions = request.Actions
-        };
-        
-        var data = new GetEventResponse
-        {
-            Events = new List<EventInfo> { eventInfo }
-        };
-        
-        return CreateSuccessResponse(data);
-    }
-    
-    /// <summary>
-    /// Create a response from update request data
-    /// </summary>
-    public static SdkResponse<GetEventResponse> CreateFromRequest(UpdateEventRequest request)
+    public static SdkResponse<GetEventResponse> CreateFromRequest(dynamic request)
     {
         var eventInfo = new EventInfo
         {

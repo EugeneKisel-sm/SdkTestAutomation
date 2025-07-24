@@ -3,6 +3,7 @@ using SdkTestAutomation.Api.Conductor.WorkflowResource;
 using SdkTestAutomation.Common.Helpers;
 using SdkTestAutomation.Common.Interfaces;
 using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 using RestSharp;
 using Xunit;
@@ -27,11 +28,7 @@ public abstract class BaseTest : IDisposable
         var testContext = TestContext.Current;
         _logger = new ConsoleLogger(testContext);
         
-        // Load environment configuration
-        EnvironmentConfig.LoadEnvironmentFile();
-        
-        var sdkType = EnvironmentConfig.GetEnvironmentVariable("TEST_SDK", "csharp");
-        _logger.Log($"Using SDK type: {sdkType}");
+        _logger.Log($"Using SDK type: {TestConfig.SdkType}");
         
         _responseComparer = new ResponseComparer(_logger);
         _logger.Log($"Test '{testContext.TestCase.TestCaseDisplayName}' execution started.");
@@ -47,8 +44,7 @@ public abstract class BaseTest : IDisposable
     {
         if (_eventResourceAdapter == null)
         {
-            var sdkType = EnvironmentConfig.GetEnvironmentVariable("TEST_SDK", "csharp");
-            _eventResourceAdapter = await AdapterFactory.CreateEventResourceAdapterAsync(sdkType);
+            _eventResourceAdapter = await AdapterFactory.CreateEventResourceAdapterAsync(TestConfig.SdkType);
         }
         return _eventResourceAdapter;
     }
@@ -60,8 +56,7 @@ public abstract class BaseTest : IDisposable
     {
         if (_workflowResourceAdapter == null)
         {
-            var sdkType = EnvironmentConfig.GetEnvironmentVariable("TEST_SDK", "csharp");
-            _workflowResourceAdapter = await AdapterFactory.CreateWorkflowResourceAdapterAsync(sdkType);
+            _workflowResourceAdapter = await AdapterFactory.CreateWorkflowResourceAdapterAsync(TestConfig.SdkType);
         }
         return _workflowResourceAdapter;
     }

@@ -1,5 +1,6 @@
 using SdkTestAutomation.Common.Interfaces;
 using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 
 namespace SdkTestAutomation.Common.Helpers;
@@ -72,7 +73,11 @@ public static class AdapterFactory
     /// </summary>
     private static T CreateAdapterInstance<T>(string typeName) where T : class
     {
-        var type = FindType(typeName);
+        var type = Type.GetType(typeName) ?? 
+                   AppDomain.CurrentDomain.GetAssemblies()
+                       .Select(asm => asm.GetType(typeName))
+                       .FirstOrDefault(t => t != null);
+        
         if (type == null)
         {
             throw new InvalidOperationException($"Could not find type: {typeName}");
@@ -88,38 +93,15 @@ public static class AdapterFactory
     }
     
     /// <summary>
-    /// Find type by searching through all loaded assemblies
-    /// </summary>
-    private static Type FindType(string typeName)
-    {
-        // First try the simple approach
-        var type = Type.GetType(typeName);
-        if (type != null) return type;
-        
-        // Search through all loaded assemblies
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            type = assembly.GetType(typeName);
-            if (type != null) return type;
-        }
-        
-        throw new InvalidOperationException($"Could not find type: {typeName}");
-    }
-    
-    /// <summary>
     /// Create configuration from environment variables
     /// </summary>
     private static AdapterConfiguration CreateConfiguration()
     {
         return new AdapterConfiguration
         {
-            ServerUrl = EnvironmentConfig.GetEnvironmentVariable("CONDUCTOR_SERVER_URL", "http://localhost:8080/api"),
-            PythonHome = EnvironmentConfig.GetEnvironmentVariable("PYTHON_HOME"),
-            PythonPath = EnvironmentConfig.GetEnvironmentVariable("PYTHONPATH"),
-            JavaHome = EnvironmentConfig.GetEnvironmentVariable("JAVA_HOME"),
-            JavaClassPath = EnvironmentConfig.GetEnvironmentVariable("JAVA_CLASSPATH"),
-            EnableLogging = EnvironmentConfig.GetEnvironmentVariable("ENABLE_LOGGING", "true").ToLower() == "true",
-            LogLevel = EnvironmentConfig.GetEnvironmentVariable("LOG_LEVEL", "Info")
+            ServerUrl = TestConfig.ApiUrl,
+            PythonHome = TestConfig.GetEnvironmentVariable("PYTHON_HOME"),
+            PythonPath = TestConfig.GetEnvironmentVariable("PYTHONPATH")
         };
     }
 } 

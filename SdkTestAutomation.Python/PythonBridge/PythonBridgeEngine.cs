@@ -1,6 +1,7 @@
 using System.Reflection;
 using SdkTestAutomation.Common.Models;
 using SdkTestAutomation.Utils.Logging;
+using Python.Runtime;
 
 namespace SdkTestAutomation.Python.PythonBridge;
 
@@ -39,26 +40,31 @@ public class PythonBridgeEngine : IDisposable
                 _logger.Log($"Set PYTHONPATH to: {config.PythonPath}");
             }
             
-            // Initialize Python runtime
-            var pythonEngineType = Type.GetType("Python.Runtime.PythonEngine, pythonnet");
-            if (pythonEngineType == null)
+            // Check for virtual environment path
+            var venvPath = Environment.GetEnvironmentVariable("PYTHON_VENV_PATH");
+            if (!string.IsNullOrEmpty(venvPath))
             {
-                throw new InvalidOperationException("Could not find Python.Runtime.PythonEngine type");
+                var venvPythonPath = Path.Combine(venvPath, "lib", "python3.13", "site-packages");
+                if (Directory.Exists(venvPythonPath))
+                {
+                    Environment.SetEnvironmentVariable("PYTHONPATH", venvPythonPath);
+                    _logger.Log($"Set PYTHONPATH to virtual environment: {venvPythonPath}");
+                }
             }
             
-            var isInitialized = (bool)pythonEngineType.GetProperty("IsInitialized")!.GetValue(null)!;
-            if (!isInitialized)
+            // Initialize Python runtime using direct Python.NET API
+            if (!PythonEngine.IsInitialized)
             {
-                pythonEngineType.GetMethod("Initialize")!.Invoke(null, null);
+                PythonEngine.Initialize();
                 _logger.Log("Python runtime initialized");
             }
             
-            // Import required Python modules
-            using (GetGIL())
+            // Import required Python modules using direct Python.NET API
+            using (Py.GIL())
             {
                 // Import conductor SDK
-                dynamic conductor = Import("conductor.client.http.conductor_client");
-                dynamic eventClient = Import("conductor.client.http.event_client");
+                dynamic conductor = Py.Import("conductor.client.http.conductor_client");
+                dynamic eventClient = Py.Import("conductor.client.http.event_client");
                 
                 // Create Conductor client
                 _conductorClient = conductor.ConductorClient(config.ServerUrl);
@@ -96,7 +102,7 @@ public class PythonBridgeEngine : IDisposable
         if (!_initialized)
             throw new InvalidOperationException("Python bridge not initialized");
         
-        using (GetGIL())
+        using (Py.GIL())
         {
             return action();
         }
@@ -110,7 +116,7 @@ public class PythonBridgeEngine : IDisposable
         if (!_initialized)
             throw new InvalidOperationException("Python bridge not initialized");
         
-        using (GetGIL())
+        using (Py.GIL())
         {
             action();
         }
@@ -122,21 +128,11 @@ public class PythonBridgeEngine : IDisposable
     public bool IsInitialized => _initialized;
     
     /// <summary>
-    /// Get GIL context
-    /// </summary>
-    private IDisposable GetGIL()
-    {
-        var pyType = Type.GetType("Python.Runtime.Py, pythonnet");
-        return (IDisposable)pyType!.GetMethod("GIL")!.Invoke(null, null)!;
-    }
-    
-    /// <summary>
-    /// Import Python module
+    /// Import Python module using direct Python.NET API
     /// </summary>
     private dynamic Import(string moduleName)
     {
-        var pyType = Type.GetType("Python.Runtime.Py, pythonnet");
-        return pyType!.GetMethod("Import")!.Invoke(null, new object[] { moduleName })!;
+        return Py.Import(moduleName);
     }
     
     /// <summary>
@@ -150,22 +146,17 @@ public class PythonBridgeEngine : IDisposable
             {
                 if (_initialized)
                 {
-                    using (GetGIL())
+                    using (Py.GIL())
                     {
                         _eventClient = null;
                         _conductorClient = null;
                     }
                     
-                    // Shutdown Python runtime
-                    var pythonEngineType = Type.GetType("Python.Runtime.PythonEngine, pythonnet");
-                    if (pythonEngineType != null)
+                    // Shutdown Python runtime using direct Python.NET API
+                    if (PythonEngine.IsInitialized)
                     {
-                        var isInitialized = (bool)pythonEngineType.GetProperty("IsInitialized")!.GetValue(null)!;
-                        if (isInitialized)
-                        {
-                            pythonEngineType.GetMethod("Shutdown")!.Invoke(null, null);
-                            _logger.Log("Python runtime shutdown");
-                        }
+                        PythonEngine.Shutdown();
+                        _logger.Log("Python runtime shutdown");
                     }
                 }
                 

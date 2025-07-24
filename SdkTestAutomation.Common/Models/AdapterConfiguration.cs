@@ -15,16 +15,4 @@ public class AdapterConfiguration
     
     [JsonProperty("pythonPath")]
     public string PythonPath { get; set; }
-    
-    [JsonProperty("javaHome")]
-    public string JavaHome { get; set; }
-    
-    [JsonProperty("javaClassPath")]
-    public string JavaClassPath { get; set; }
-    
-    [JsonProperty("enableLogging")]
-    public bool EnableLogging { get; set; } = true;
-    
-    [JsonProperty("logLevel")]
-    public string LogLevel { get; set; } = "Info";
 } 

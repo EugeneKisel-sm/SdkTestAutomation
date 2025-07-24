@@ -7,6 +7,7 @@ public static class TestConfig
     public static string Key { get; }
     public static string Secret { get; }
     public static string ApiUrl { get; }
+    public static string SdkType { get; }
 
     static TestConfig()
     {
@@ -19,6 +20,7 @@ public static class TestConfig
         ApiUrl = GetRequired("CONDUCTOR_SERVER_URL");
         Key = GetOptional("CONDUCTOR_AUTH_KEY", "");
         Secret = GetOptional("CONDUCTOR_AUTH_SECRET", "");
+        SdkType = GetRequired("TEST_SDK");
     }
 
     private static string GetRequired(string name)
@@ -37,4 +39,12 @@ public static class TestConfig
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(name))
             ? @default
             : Environment.GetEnvironmentVariable(name)!;
+    
+    /// <summary>
+    /// Get environment variable with fallback
+    /// </summary>
+    public static string GetEnvironmentVariable(string key, string defaultValue = "")
+    {
+        return Environment.GetEnvironmentVariable(key) ?? defaultValue;
+    }
 }

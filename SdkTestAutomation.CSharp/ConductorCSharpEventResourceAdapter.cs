@@ -18,193 +18,85 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
     
     public override string SdkType => "csharp";
     
-    public override Task<bool> InitializeAsync(AdapterConfiguration config)
+    protected override async Task InitializeEngineAsync(AdapterConfiguration config)
     {
-        try
-        {
-            _config = config;
-            LogOperation("Initializing C# SDK adapter", config.ServerUrl);
-            
-            var configuration = new Configuration { BasePath = config.ServerUrl };
-            _eventApi = new EventResourceApi(configuration);
-            
-            LogOperation("C# SDK adapter initialized successfully");
-            return Task.FromResult(true);
-        }
-        catch (Exception ex)
-        {
-            LogError("initializing C# SDK adapter", ex);
-            return Task.FromResult(false);
-        }
+        var configuration = new Configuration { BasePath = config.ServerUrl };
+        _eventApi = new EventResourceApi(configuration);
+        await Task.CompletedTask;
     }
     
-    public override Task<bool> IsHealthyAsync()
+    protected override void PerformHealthCheck()
     {
-        try
-        {
-            if (_eventApi == null) return Task.FromResult(false);
-            
-            // Try to get events to check if the API is accessible
-            return Task.Run(() => 
-            {
-                try
-                {
-                    _eventApi.GetEventHandlers();
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
-            });
-        }
-        catch
-        {
-            return Task.FromResult(false);
-        }
+        _eventApi.GetEventHandlers();
     }
     
-    public override async Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
+    public override Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
     {
-        try
+        return ExecuteOperationAsync($"Adding event: {request.Name}", () =>
         {
-            ValidateInitialization();
-            LogOperation("Adding event", request.Name);
-            
-            // Create a basic EventHandler with only known properties
             var eventHandler = new EventHandler
             {
                 Name = request.Name,
                 Active = request.Active
             };
             
-            await Task.Run(() => _eventApi!.AddEventHandler(eventHandler));
-            return SdkResponseBuilder.CreateFromRequest(request);
-        }
-        catch (ApiException ex)
-        {
-            LogError("adding event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("adding event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
+            _eventApi.AddEventHandler(eventHandler);
+            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
+        }, ex => GetApiExceptionStatusCode(ex));
     }
     
-    public override async Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
+    public override Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
     {
-        try
+        return ExecuteOperationAsync("Getting all events", () =>
         {
-            ValidateInitialization();
-            LogOperation("Getting all events");
-            
-            var events = await Task.Run(() => _eventApi!.GetEventHandlers());
-            
-            var data = new GetEventResponse
-            {
-                Events = EventInfoMapper.MapCSharpCollection(events)
-            };
-            
-            return SdkResponseBuilder.CreateSuccessResponse(data);
-        }
-        catch (ApiException ex)
-        {
-            LogError("getting events", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("getting events", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
+            var events = _eventApi.GetEventHandlers();
+            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapCSharpCollection"));
+        }, ex => GetApiExceptionStatusCode(ex));
     }
     
-    public override async Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
+    public override Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
     {
-        try
+        return ExecuteOperationAsync($"Getting events by name: {request.Event}", () =>
         {
-            ValidateInitialization();
-            LogOperation("Getting events by name", request.Event);
-            
-            var events = await Task.Run(() => _eventApi!.GetEventHandlersForEvent(request.Event, request.ActiveOnly));
-            
-            var data = new GetEventResponse
-            {
-                Events = EventInfoMapper.MapCSharpCollection(events)
-            };
-            
-            return SdkResponseBuilder.CreateSuccessResponse(data);
-        }
-        catch (ApiException ex)
-        {
-            LogError("getting events by name", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("getting events by name", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
+            var events = _eventApi.GetEventHandlersForEvent(request.Event, request.ActiveOnly);
+            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapCSharpCollection"));
+        }, ex => GetApiExceptionStatusCode(ex));
     }
     
-    public override async Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
+    public override Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
     {
-        try
+        return ExecuteOperationAsync($"Updating event: {request.Name}", () =>
         {
-            ValidateInitialization();
-            LogOperation("Updating event", request.Name);
-            
-            // Create a basic EventHandler with only known properties
             var eventHandler = new EventHandler
             {
                 Name = request.Name,
                 Active = request.Active
             };
             
-            await Task.Run(() => _eventApi!.UpdateEventHandler(eventHandler));
-            return SdkResponseBuilder.CreateFromRequest(request);
-        }
-        catch (ApiException ex)
-        {
-            LogError("updating event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("updating event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
+            _eventApi.UpdateEventHandler(eventHandler);
+            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
+        }, ex => GetApiExceptionStatusCode(ex));
     }
     
-    public override async Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
+    public override Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
     {
-        try
+        return ExecuteOperationAsync($"Deleting event: {request.Name}", () =>
         {
-            ValidateInitialization();
-            LogOperation("Deleting event", request.Name);
-            
-            await Task.Run(() => _eventApi!.RemoveEventHandlerStatus(request.Name));
-            return SdkResponseBuilder.CreateEmptyResponse();
-        }
-        catch (ApiException ex)
-        {
-            LogError("deleting event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message, ex.ErrorCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("deleting event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
+            _eventApi.RemoveEventHandlerStatus(request.Name);
+            return Task.FromResult(SdkResponseBuilder.CreateEmptyResponse());
+        }, ex => GetApiExceptionStatusCode(ex));
     }
     
     protected override string GetSdkVersion() => "1.1.3";
     
     protected override bool IsInitialized() => _eventApi != null;
     
-    public override void Dispose()
+    protected override int GetApiExceptionStatusCode(Exception ex, int defaultCode = 500)
+    {
+        return ex is ApiException apiEx ? apiEx.ErrorCode : defaultCode;
+    }
+    
+    protected override void DisposeEngine()
     {
         _eventApi = null;
     }

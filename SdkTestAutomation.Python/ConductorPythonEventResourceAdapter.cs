@@ -13,192 +13,96 @@ namespace SdkTestAutomation.Python;
 public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
 {
     private PythonBridgeEngine _pythonEngine;
+    private dynamic _eventClient;
     
     public override string SdkType => "python";
     
-    public override Task<bool> InitializeAsync(AdapterConfiguration config)
+    protected override async Task InitializeEngineAsync(AdapterConfiguration config)
     {
-        try
-        {
-            _config = config;
-            LogOperation("Initializing Python SDK adapter", config.ServerUrl);
-            
-            // Initialize Python bridge
-            _pythonEngine = new PythonBridgeEngine();
-            _pythonEngine.Initialize(config);
-            
-            LogOperation("Python SDK adapter initialized successfully");
-            return Task.FromResult(true);
-        }
-        catch (Exception ex)
-        {
-            LogError("initializing Python SDK adapter", ex);
-            return Task.FromResult(false);
-        }
+        _pythonEngine = new PythonBridgeEngine();
+        _pythonEngine.Initialize(config);
+        
+        // Cache the event client on initialization
+        _eventClient = _pythonEngine.ExecuteWithGIL(() => _pythonEngine.GetEventClient());
+        await Task.CompletedTask;
     }
     
-    public override Task<bool> IsHealthyAsync()
+    protected override void PerformHealthCheck()
     {
-        try
+        _pythonEngine.ExecuteWithGIL(() => _eventClient.get_event_handlers("", false));
+    }
+    
+    public override Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
+    {
+        return ExecuteOperationAsync($"Adding event: {request.Name}", () =>
         {
-            if (_pythonEngine == null) return Task.FromResult(false);
-            
-            // Try to get events to check if the API is accessible
-            return Task.Run(() => 
+            _pythonEngine.ExecuteWithGIL(() => 
             {
-                try
-                {
-                    _pythonEngine.ExecuteWithGIL(() => 
-                    {
-                        var eventClient = _pythonEngine.GetEventClient();
-                        eventClient.get_event_handlers("", false);
-                    });
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
+                var eventHandler = PythonEventHandlerBuilder.CreateEventHandler(request);
+                _eventClient.register_event_handler(eventHandler);
             });
-        }
-        catch
-        {
-            return Task.FromResult(false);
-        }
+            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
+        });
     }
     
-    public override async Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
+    public override Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
     {
-        try
+        return ExecuteOperationAsync("Getting all events", () =>
         {
-            ValidateInitialization();
-            LogOperation("Adding event", request.Name);
-            
-            await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
+            var events = _pythonEngine.ExecuteWithGIL(() => _eventClient.get_event_handlers("", false));
+            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapPythonCollection"));
+        });
+    }
+    
+    public override Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
+    {
+        return ExecuteOperationAsync($"Getting event by name: {request.Event}", () =>
+        {
+            var events = _pythonEngine.ExecuteWithGIL(() => 
+                _eventClient.get_event_handlers(request.Event, request.ActiveOnly ?? false));
+            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapPythonCollection"));
+        });
+    }
+    
+    public override Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
+    {
+        return ExecuteOperationAsync($"Updating event: {request.Name}", () =>
+        {
+            _pythonEngine.ExecuteWithGIL(() => 
             {
-                var eventClient = _pythonEngine!.GetEventClient();
                 var eventHandler = PythonEventHandlerBuilder.CreateEventHandler(request);
-                eventClient.register_event_handler(eventHandler);
-            }));
-            return SdkResponseBuilder.CreateFromRequest(request);
-        }
-        catch (Exception ex)
-        {
-            LogError("adding event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
+                _eventClient.update_event_handler(eventHandler);
+            });
+            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
+        });
     }
     
-    public override async Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
+    public override Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
     {
-        try
+        return ExecuteOperationAsync($"Deleting event: {request.Name}", () =>
         {
-            ValidateInitialization();
-            LogOperation("Getting all events");
-            
-            var events = await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
-            {
-                var eventClient = _pythonEngine!.GetEventClient();
-                return eventClient.get_event_handlers("", false);
-            }));
-            
-            var data = new GetEventResponse
-            {
-                Events = EventInfoMapper.MapPythonCollection(events)
-            };
-            
-            return SdkResponseBuilder.CreateSuccessResponse(data);
-        }
-        catch (Exception ex)
-        {
-            LogError("getting events", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
-    }
-    
-    public override async Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
-    {
-        try
-        {
-            ValidateInitialization();
-            LogOperation("Getting event by name", request.Event);
-            
-            var events = await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
-            {
-                var eventClient = _pythonEngine!.GetEventClient();
-                return eventClient.get_event_handlers(request.Event, request.ActiveOnly ?? false);
-            }));
-            
-            var data = new GetEventResponse
-            {
-                Events = EventInfoMapper.MapPythonCollection(events)
-            };
-            
-            return SdkResponseBuilder.CreateSuccessResponse(data);
-        }
-        catch (Exception ex)
-        {
-            LogError("getting events by name", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
-    }
-    
-    public override async Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
-    {
-        try
-        {
-            ValidateInitialization();
-            LogOperation("Updating event", request.Name);
-            
-            await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
-            {
-                var eventClient = _pythonEngine!.GetEventClient();
-                var eventHandler = PythonEventHandlerBuilder.CreateEventHandler(request);
-                eventClient.update_event_handler(eventHandler);
-            }));
-            return SdkResponseBuilder.CreateFromRequest(request);
-        }
-        catch (Exception ex)
-        {
-            LogError("updating event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
-    }
-    
-    public override async Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
-    {
-        try
-        {
-            ValidateInitialization();
-            LogOperation("Deleting event", request.Name);
-            
-            await Task.Run(() => _pythonEngine!.ExecuteWithGIL(() => 
-            {
-                var eventClient = _pythonEngine!.GetEventClient();
-                eventClient.unregister_event_handler(request.Name);
-            }));
-            return SdkResponseBuilder.CreateEmptyResponse();
-        }
-        catch (Exception ex)
-        {
-            LogError("deleting event", ex);
-            return SdkResponseBuilder.CreateErrorResponse(ex.Message);
-        }
+            _pythonEngine.ExecuteWithGIL(() => _eventClient.unregister_event_handler(request.Name));
+            return Task.FromResult(SdkResponseBuilder.CreateEmptyResponse());
+        });
     }
     
     protected override string GetSdkVersion() => "4.0.0";
     
-    protected override bool IsInitialized() => _pythonEngine != null;
+    protected override bool IsInitialized() => _pythonEngine != null && _eventClient != null;
     
-    public override void Dispose()
+    protected override void DisposeEngine()
     {
-        try
+        if (_eventClient != null)
         {
-            _pythonEngine?.Dispose();
+            _pythonEngine.ExecuteWithGIL(() => 
+            {
+                if (_eventClient is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+                _eventClient = null;
+            });
         }
-        catch (Exception ex)
-        {
-            LogError("disposing Python adapter", ex);
-        }
+        _pythonEngine?.Dispose();
     }
 } 

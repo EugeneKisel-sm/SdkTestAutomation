@@ -12,15 +12,7 @@ public static class PythonEventHandlerBuilder
     /// <summary>
     /// Create a Python EventHandler from C# request
     /// </summary>
-    public static dynamic CreateEventHandler(AddEventRequest request)
-    {
-        return CreateEventHandlerInternal(request.Name, request.Event, request.Active, request.Actions);
-    }
-    
-    /// <summary>
-    /// Create a Python EventHandler from C# update request
-    /// </summary>
-    public static dynamic CreateEventHandler(UpdateEventRequest request)
+    public static dynamic CreateEventHandler(dynamic request)
     {
         return CreateEventHandlerInternal(request.Name, request.Event, request.Active, request.Actions);
     }
@@ -30,20 +22,23 @@ public static class PythonEventHandlerBuilder
     /// </summary>
     private static dynamic CreateEventHandlerInternal(string name, string eventName, bool active, List<EventAction> actions)
     {
-        dynamic eventHandlerModule = Py.Import("conductor.common.metadata.events.event_handler");
-        dynamic EventHandler = eventHandlerModule.GetAttr("EventHandler");
-        dynamic eventHandler = EventHandler.Invoke();
-        
-        eventHandler.name = name;
-        eventHandler.event_name = eventName;
-        eventHandler.active = active;
-        
-        if (actions?.Any() == true)
+        using (Py.GIL())
         {
-            eventHandler.actions = CreateActions(actions);
+            dynamic eventHandlerModule = Py.Import("conductor.common.metadata.events.event_handler");
+            dynamic EventHandler = eventHandlerModule.GetAttr("EventHandler");
+            dynamic eventHandler = EventHandler.Invoke();
+            
+            eventHandler.name = name;
+            eventHandler.event_name = eventName;
+            eventHandler.active = active;
+            
+            if (actions?.Any() == true)
+            {
+                eventHandler.actions = CreateActions(actions);
+            }
+            
+            return eventHandler;
         }
-        
-        return eventHandler;
     }
     
     /// <summary>
@@ -76,14 +71,17 @@ public static class PythonEventHandlerBuilder
     /// </summary>
     private static dynamic CreateStartWorkflow(StartWorkflow startWorkflow)
     {
-        dynamic startWorkflowModule = Py.Import("conductor.common.metadata.workflow.start_workflow_request");
-        dynamic StartWorkflowRequest = startWorkflowModule.GetAttr("StartWorkflowRequest");
-        dynamic pythonStartWorkflow = StartWorkflowRequest.Invoke();
-        
-        pythonStartWorkflow.name = startWorkflow.Name;
-        pythonStartWorkflow.version = startWorkflow.Version;
-        pythonStartWorkflow.input = JsonSerializer.Serialize(startWorkflow.Input);
-        
-        return pythonStartWorkflow;
+        using (Py.GIL())
+        {
+            dynamic startWorkflowModule = Py.Import("conductor.common.metadata.workflow.start_workflow_request");
+            dynamic StartWorkflowRequest = startWorkflowModule.GetAttr("StartWorkflowRequest");
+            dynamic pythonStartWorkflow = StartWorkflowRequest.Invoke();
+            
+            pythonStartWorkflow.name = startWorkflow.Name;
+            pythonStartWorkflow.version = startWorkflow.Version;
+            pythonStartWorkflow.input = JsonSerializer.Serialize(startWorkflow.Input);
+            
+            return pythonStartWorkflow;
+        }
     }
 } 
