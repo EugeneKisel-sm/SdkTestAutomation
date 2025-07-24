@@ -4,16 +4,17 @@ Quick guide for adding new operations to the Java CLI wrapper.
 
 > **See also**: **[C# Adding Operations](../SdkTestAutomation.CSharp/ADDING_OPERATIONS.md)** | **[Python Adding Operations](../SdkTestAutomation.Python/ADDING_OPERATIONS.md)**
 
-## 📁 Structure
+## 📁 Architecture
 
 ```
-SdkTestAutomation.Java/src/main/java/com/conductor/sdkwrapper/
+SdkTestAutomation.Java/
 ├── Main.java                     # Main entry point
 ├── OperationUtils.java           # Common utilities
 ├── SdkResponse.java              # Response model
-└── operations/                   # Operation classes
-    ├── EventOperations.java      # Event operations
-    └── WorkflowOperations.java   # Workflow operations
+├── operations/                   # Operation classes
+│   ├── EventOperations.java      # Event operations
+│   └── WorkflowOperations.java   # Workflow operations
+└── src/main/java/                # Source code
 ```
 
 ## 🎯 Adding Event Operations
@@ -145,31 +146,6 @@ public async Task SdkIntegration_NewOperation_ValidatesAgainstApi()
 
     Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
     Assert.True(await ValidateSdkResponseAsync(sdkResponse, apiResponse));
-}
-```
-
-## 📋 Best Practices
-
-- **Error Handling**: Use `OperationUtils.executeWithErrorHandling()` - no try-catch needed
-- **Parameters**: Cast with null checks: `(String) parameters.get("key")`
-- **Responses**: Use `SdkResponse.createSuccess()` or `SdkResponse.createError()`
-- **Naming**: Operations in kebab-case, methods in camelCase
-- **Documentation**: Add JavaDoc comments and update README.md
-
-## 🔧 Parameter Types
-
-```java
-// Common parameter types
-String name = (String) parameters.get("name");
-Boolean active = (Boolean) parameters.get("active");
-Integer version = (Integer) parameters.get("version");
-Long id = (Long) parameters.get("id");
-Double value = (Double) parameters.get("value");
-
-// Safe extraction
-private static String getStringParameter(Map<String, Object> parameters, String key, String defaultValue) {
-    Object value = parameters.get(key);
-    return value != null ? value.toString() : defaultValue;
 }
 ```
 

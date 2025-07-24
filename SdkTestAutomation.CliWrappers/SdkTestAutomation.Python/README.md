@@ -1,26 +1,6 @@
 # Python CLI Wrapper
 
-CLI wrapper for testing the Python Conductor SDK with clean separation of concerns.
-
-## 📁 Architecture
-
-```
-SdkTestAutomation.Python/
-├── main.py                        # Main entry point
-├── operation_utils.py             # Common utilities
-├── sdk_response.py                # Response model
-├── operations/                    # Operation modules
-│   ├── event_operations.py        # Event operations
-│   └── workflow_operations.py     # Workflow operations
-└── sdk_wrapper/                   # Package directory
-```
-
-## 🎯 Key Features
-
-- **Separation of Concerns**: Event and workflow operations completely separated
-- **Centralized Error Handling**: All operations wrapped with error handling utilities
-- **Static Factory Methods**: Clean response creation with `SdkResponse.create_success()`
-- **Simplified Architecture**: Direct SDK interaction without unnecessary layers
+CLI wrapper for testing the Python Conductor SDK.
 
 ## 🚀 Usage
 

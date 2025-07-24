@@ -1,26 +1,6 @@
 # Java CLI Wrapper
 
-CLI wrapper for testing the Java Conductor SDK with clean separation of concerns.
-
-## 📁 Architecture
-
-```
-SdkTestAutomation.Java/
-├── Main.java                     # Main entry point
-├── OperationUtils.java           # Common utilities
-├── SdkResponse.java              # Response model
-├── operations/                   # Operation classes
-│   ├── EventOperations.java      # Event operations
-│   └── WorkflowOperations.java   # Workflow operations
-└── src/main/java/                # Source code
-```
-
-## 🎯 Key Features
-
-- **Separation of Concerns**: Event and workflow operations completely separated
-- **Centralized Error Handling**: All operations wrapped with error handling utilities
-- **Static Factory Methods**: Clean response creation with `SdkResponse.createSuccess()`
-- **Simplified Architecture**: Direct SDK interaction without unnecessary layers
+CLI wrapper for testing the Java Conductor SDK.
 
 ## 🚀 Usage
 

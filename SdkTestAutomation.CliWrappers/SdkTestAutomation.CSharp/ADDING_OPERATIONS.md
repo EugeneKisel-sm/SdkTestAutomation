@@ -4,7 +4,7 @@ Quick guide for adding new operations to the C# CLI wrapper.
 
 > **See also**: **[Java Adding Operations](../SdkTestAutomation.Java/ADDING_OPERATIONS.md)** | **[Python Adding Operations](../SdkTestAutomation.Python/ADDING_OPERATIONS.md)**
 
-## 📁 Structure
+## 📁 Architecture
 
 ```
 SdkTestAutomation.CSharp/
@@ -158,14 +158,6 @@ public async Task SdkIntegration_NewOperation_ValidatesAgainstApi()
     Assert.True(await ValidateSdkResponseAsync(sdkResponse, apiResponse));
 }
 ```
-
-## 📋 Best Practices
-
-- **Error Handling**: Use `OperationUtils.ExecuteWithErrorHandling()` - no try-catch needed
-- **Parameters**: Use extension methods from `JTokenExtensions`
-- **Responses**: Use `SdkResponse.CreateSuccess()` or `SdkResponse.CreateError()`
-- **Naming**: Operations in kebab-case, methods in PascalCase
-- **Documentation**: Add XML comments and update README.md
 
 ## 🔍 Example: Pause Workflow
 

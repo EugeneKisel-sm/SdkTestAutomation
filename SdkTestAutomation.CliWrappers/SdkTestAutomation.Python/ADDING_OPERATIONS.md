@@ -4,16 +4,17 @@ Quick guide for adding new operations to the Python CLI wrapper.
 
 > **See also**: **[C# Adding Operations](../SdkTestAutomation.CSharp/ADDING_OPERATIONS.md)** | **[Java Adding Operations](../SdkTestAutomation.Java/ADDING_OPERATIONS.md)**
 
-## 📁 Structure
+## 📁 Architecture
 
 ```
-SdkTestAutomation.Python/sdk_wrapper/
-├── main.py                       # Main entry point
-├── operation_utils.py            # Common utilities
-├── sdk_response.py               # Response model
-└── operations/                   # Operation modules
-    ├── event_operations.py       # Event operations
-    └── workflow_operations.py    # Workflow operations
+SdkTestAutomation.Python/
+├── main.py                        # Main entry point
+├── operation_utils.py             # Common utilities
+├── sdk_response.py                # Response model
+├── operations/                    # Operation modules
+│   ├── event_operations.py        # Event operations
+│   └── workflow_operations.py     # Workflow operations
+└── sdk_wrapper/                   # Package directory
 ```
 
 ## 🎯 Adding Event Operations

@@ -1,26 +1,6 @@
 # C# CLI Wrapper
 
-CLI wrapper for testing the C# Conductor SDK with clean separation of concerns.
-
-## 📁 Architecture
-
-```
-SdkTestAutomation.CSharp/
-├── Program.cs                    # Main entry point
-├── OperationUtils.cs             # Common utilities
-├── Operations/                   # Operation classes
-│   ├── EventOperations.cs        # Event operations
-│   └── WorkflowOperations.cs     # Workflow operations
-└── Extensions/                   # Parameter extraction helpers
-    └── JTokenExtensions.cs
-```
-
-## 🎯 Key Features
-
-- **Separation of Concerns**: Event and workflow operations completely separated
-- **Centralized Error Handling**: All operations wrapped with error handling utilities
-- **Static Factory Methods**: Clean response creation with `SdkResponse.CreateSuccess()`
-- **Simplified Architecture**: Direct SDK interaction without unnecessary layers
+CLI wrapper for testing the C# Conductor SDK.
 
 ## 🚀 Usage
 
@@ -66,9 +46,3 @@ dotnet run --project SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp -- \
 - **[Universal Operations Guide](../../ADDING_OPERATIONS_GUIDE.md)** - Cross-language patterns and best practices
 - **[Java Wrapper](../SdkTestAutomation.Java/README.md)** - Java CLI wrapper documentation
 - **[Python Wrapper](../SdkTestAutomation.Python/README.md)** - Python CLI wrapper documentation
-
-## 🛠️ Dependencies
-
-- `conductor-client` - C# Conductor SDK
-- `System.CommandLine` - CLI argument parsing
-- `Newtonsoft.Json` - JSON serialization 
