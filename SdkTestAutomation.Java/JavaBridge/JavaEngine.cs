@@ -18,15 +18,7 @@ public class JavaEngine : IDisposable
     /// </summary>
     public void Initialize(AdapterConfiguration config)
     {
-        try
-        {
-            // Create Conductor client using IKVM
-            CreateConductorClient(config.ServerUrl);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Failed to initialize Java bridge: {ex.Message}", ex);
-        }
+        CreateConductorClient(config.ServerUrl);
     }
     
     /// <summary>
@@ -34,17 +26,8 @@ public class JavaEngine : IDisposable
     /// </summary>
     private void CreateConductorClient(string serverUrl)
     {
-        try
-        {
-            // Use IKVM's JVM to create Java objects directly
-            // This approach is more reliable than reflection-based type resolution
-            _conductorClient = CreateJavaObject("com.netflix.conductor.client.http.ConductorClient", serverUrl);
-            _eventClient = CreateJavaObject("com.netflix.conductor.client.http.EventClient", _conductorClient);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Failed to create Conductor client: {ex.Message}", ex);
-        }
+        _conductorClient = CreateJavaObject("com.netflix.conductor.client.http.ConductorClient", serverUrl);
+        _eventClient = CreateJavaObject("com.netflix.conductor.client.http.EventClient", _conductorClient);
     }
     
     /// <summary>
@@ -52,25 +35,16 @@ public class JavaEngine : IDisposable
     /// </summary>
     private dynamic CreateJavaObject(string className, params object[] args)
     {
-        try
+        var type = Type.GetType($"{className}, conductor-client") ?? 
+                  Type.GetType($"{className}, conductor-common") ?? 
+                  Type.GetType($"{className}, IKVM");
+        
+        if (type == null)
         {
-            // Use IKVM's type system to create objects
-            // This is the recommended approach for IKVM 8.x
-            var type = Type.GetType($"{className}, conductor-client") ?? 
-                      Type.GetType($"{className}, conductor-common") ?? 
-                      Type.GetType($"{className}, IKVM");
-            
-            if (type == null)
-            {
-                throw new InvalidOperationException($"Could not find type {className} in any referenced assembly");
-            }
-            
-            return Activator.CreateInstance(type, args);
+            throw new InvalidOperationException($"Could not find type {className} in any referenced assembly");
         }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Failed to create Java object {className}: {ex.Message}", ex);
-        }
+        
+        return Activator.CreateInstance(type, args);
     }
     
     /// <summary>

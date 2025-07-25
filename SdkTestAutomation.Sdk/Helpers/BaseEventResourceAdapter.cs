@@ -68,4 +68,20 @@ public abstract class BaseEventResourceAdapter : IEventResourceAdapter
     protected abstract bool IsInitialized();
     protected abstract void DisposeEngine();
     protected virtual string GetSdkVersion() => "1.0.0";
+    
+    /// <summary>
+    /// Helper method to create GetEventResponse from request
+    /// </summary>
+    protected static GetEventResponse CreateResponseFromRequest(dynamic request)
+    {
+        return new GetEventResponse
+        {
+            Name = request.Name,
+            Event = request.Event,
+            Active = request.Active,
+            Actions = request.Actions,
+            Condition = request.Condition,
+            EvaluatorType = request.EvaluatorType
+        };
+    }
 } 

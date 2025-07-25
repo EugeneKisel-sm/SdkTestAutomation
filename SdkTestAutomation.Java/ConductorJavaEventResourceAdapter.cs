@@ -33,15 +33,7 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
         {
             var eventHandler = CreateEventHandler(request);
             _javaEngine.RegisterEventHandler(eventHandler);
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse
-            {
-                Name = request.Name,
-                Event = request.Event,
-                Active = request.Active,
-                Actions = request.Actions,
-                Condition = request.Condition,
-                EvaluatorType = request.EvaluatorType
-            }));
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request)));
         }
         catch (Exception ex)
         {
@@ -83,15 +75,7 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
         {
             var eventHandler = CreateEventHandler(request);
             _javaEngine.UpdateEventHandler(eventHandler);
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse
-            {
-                Name = request.Name,
-                Event = request.Event,
-                Active = request.Active,
-                Actions = request.Actions,
-                Condition = request.Condition,
-                EvaluatorType = request.EvaluatorType
-            }));
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request)));
         }
         catch (Exception ex)
         {

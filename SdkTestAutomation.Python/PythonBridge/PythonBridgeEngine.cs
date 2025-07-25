@@ -31,13 +31,11 @@ public class PythonBridgeEngine : IDisposable
             if (!string.IsNullOrEmpty(config.PythonHome))
             {
                 Environment.SetEnvironmentVariable("PYTHONHOME", config.PythonHome);
-                _logger.Log($"Set PYTHONHOME to: {config.PythonHome}");
             }
             
             if (!string.IsNullOrEmpty(config.PythonPath))
             {
                 Environment.SetEnvironmentVariable("PYTHONPATH", config.PythonPath);
-                _logger.Log($"Set PYTHONPATH to: {config.PythonPath}");
             }
             
             // Check for virtual environment path
@@ -48,29 +46,23 @@ public class PythonBridgeEngine : IDisposable
                 if (Directory.Exists(venvPythonPath))
                 {
                     Environment.SetEnvironmentVariable("PYTHONPATH", venvPythonPath);
-                    _logger.Log($"Set PYTHONPATH to virtual environment: {venvPythonPath}");
                 }
             }
             
-            // Initialize Python runtime using direct Python.NET API
+            // Initialize Python runtime
             if (!PythonEngine.IsInitialized)
             {
                 PythonEngine.Initialize();
-                _logger.Log("Python runtime initialized");
             }
             
-            // Import required Python modules using direct Python.NET API
+            // Import required Python modules
             using (Py.GIL())
             {
-                // Import conductor SDK
                 dynamic conductor = Py.Import("conductor.client.http.conductor_client");
                 dynamic eventClient = Py.Import("conductor.client.http.event_client");
                 
-                // Create Conductor client
                 _conductorClient = conductor.ConductorClient(config.ServerUrl);
                 _eventClient = eventClient.EventClient(_conductorClient);
-                
-                _logger.Log("Python Conductor client created successfully");
             }
             
             _initialized = true;
@@ -78,8 +70,7 @@ public class PythonBridgeEngine : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Log($"Failed to initialize Python bridge: {ex.Message}");
-            throw;
+            throw new InvalidOperationException($"Failed to initialize Python bridge: {ex.Message}", ex);
         }
     }
     
@@ -128,14 +119,6 @@ public class PythonBridgeEngine : IDisposable
     public bool IsInitialized => _initialized;
     
     /// <summary>
-    /// Import Python module using direct Python.NET API
-    /// </summary>
-    private dynamic Import(string moduleName)
-    {
-        return Py.Import(moduleName);
-    }
-    
-    /// <summary>
     /// Dispose the Python bridge
     /// </summary>
     public void Dispose()
@@ -152,15 +135,11 @@ public class PythonBridgeEngine : IDisposable
                         _conductorClient = null;
                     }
                     
-                    // Shutdown Python runtime using direct Python.NET API
                     if (PythonEngine.IsInitialized)
                     {
                         PythonEngine.Shutdown();
-                        _logger.Log("Python runtime shutdown");
                     }
                 }
-                
-                _logger.Log("Python bridge shutdown successfully");
             }
             catch (Exception ex)
             {

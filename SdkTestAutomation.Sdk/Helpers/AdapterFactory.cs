@@ -17,27 +17,7 @@ public static class AdapterFactory
     /// </summary>
     public static async Task<IEventResourceAdapter> CreateEventResourceAdapterAsync(string sdkType)
     {
-        _logger.Log($"Creating event resource adapter for SDK type: {sdkType}");
-        
-        // Use reflection to create adapters to avoid circular dependencies
-        IEventResourceAdapter adapter = sdkType.ToLowerInvariant() switch
-        {
-            "csharp" => CreateAdapterInstance<IEventResourceAdapter>("SdkTestAutomation.CSharp.ConductorCSharpEventResourceAdapter, SdkTestAutomation.CSharp"),
-            "java" => CreateAdapterInstance<IEventResourceAdapter>("SdkTestAutomation.Java.ConductorJavaEventResourceAdapter, SdkTestAutomation.Java"),
-            "python" => CreateAdapterInstance<IEventResourceAdapter>("SdkTestAutomation.Python.ConductorPythonEventResourceAdapter, SdkTestAutomation.Python"),
-            _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
-        };
-        
-        var config = CreateConfiguration();
-        var initialized = await adapter.InitializeAsync(config);
-        
-        if (!initialized)
-        {
-            throw new Exception($"Failed to initialize {sdkType} adapter");
-        }
-        
-        _logger.Log($"Successfully created {sdkType} event resource adapter");
-        return adapter;
+        return await CreateAdapterAsync<IEventResourceAdapter>(sdkType, "event resource");
     }
     
     /// <summary>
@@ -45,27 +25,41 @@ public static class AdapterFactory
     /// </summary>
     public static async Task<IWorkflowResourceAdapter> CreateWorkflowResourceAdapterAsync(string sdkType)
     {
-        _logger.Log($"Creating workflow resource adapter for SDK type: {sdkType}");
+        return await CreateAdapterAsync<IWorkflowResourceAdapter>(sdkType, "workflow resource");
+    }
+    
+    /// <summary>
+    /// Generic method to create adapters
+    /// </summary>
+    private static async Task<T> CreateAdapterAsync<T>(string sdkType, string adapterType) where T : class
+    {
+        _logger.Log($"Creating {adapterType} adapter for SDK: {sdkType}");
         
-        // Use reflection to create adapters to avoid circular dependencies
-        IWorkflowResourceAdapter adapter = sdkType.ToLowerInvariant() switch
+        var adapter = sdkType.ToLowerInvariant() switch
         {
-            "csharp" => CreateAdapterInstance<IWorkflowResourceAdapter>("SdkTestAutomation.CSharp.ConductorCSharpWorkflowResourceAdapter, SdkTestAutomation.CSharp"),
-            "java" => CreateAdapterInstance<IWorkflowResourceAdapter>("SdkTestAutomation.Java.ConductorJavaWorkflowResourceAdapter, SdkTestAutomation.Java"),
-            "python" => CreateAdapterInstance<IWorkflowResourceAdapter>("SdkTestAutomation.Python.ConductorPythonWorkflowResourceAdapter, SdkTestAutomation.Python"),
+            "csharp" => CreateAdapterInstance<T>($"SdkTestAutomation.CSharp.ConductorCSharp{GetAdapterClassName<T>()}, SdkTestAutomation.CSharp"),
+            "java" => CreateAdapterInstance<T>($"SdkTestAutomation.Java.ConductorJava{GetAdapterClassName<T>()}, SdkTestAutomation.Java"),
+            "python" => CreateAdapterInstance<T>($"SdkTestAutomation.Python.ConductorPython{GetAdapterClassName<T>()}, SdkTestAutomation.Python"),
             _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
         };
         
         var config = CreateConfiguration();
-        var initialized = await adapter.InitializeAsync(config);
+        var initialized = await ((ISdkAdapter)adapter).InitializeAsync(config);
         
         if (!initialized)
         {
-            throw new Exception($"Failed to initialize {sdkType} adapter");
+            throw new Exception($"Failed to initialize {sdkType} {adapterType} adapter");
         }
         
-        _logger.Log($"Successfully created {sdkType} workflow resource adapter");
         return adapter;
+    }
+    
+    /// <summary>
+    /// Get adapter class name based on interface type
+    /// </summary>
+    private static string GetAdapterClassName<T>()
+    {
+        return typeof(T).Name.Replace("I", "").Replace("Adapter", "") + "Adapter";
     }
     
     /// <summary>
