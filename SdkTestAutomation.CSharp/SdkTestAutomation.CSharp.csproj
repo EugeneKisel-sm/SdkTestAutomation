@@ -9,6 +9,7 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\SdkTestAutomation.Common\SdkTestAutomation.Common.csproj"/>
+        <ProjectReference Include="..\SdkTestAutomation.Sdk\SdkTestAutomation.Sdk.csproj"/>
+        <ProjectReference Include="..\SdkTestAutomation.Api\SdkTestAutomation.Api.csproj"/>
     </ItemGroup>
 </Project> 

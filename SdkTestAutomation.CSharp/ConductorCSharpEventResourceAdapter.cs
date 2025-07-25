@@ -1,10 +1,9 @@
 using Conductor.Api;
 using Conductor.Client;
-using Conductor.Client.Models;
-using SdkTestAutomation.Common.Helpers;
-using SdkTestAutomation.Common.Interfaces;
-using SdkTestAutomation.Common.Models;
-using Task = System.Threading.Tasks.Task;
+using SdkTestAutomation.Sdk.Models;
+using SdkTestAutomation.Sdk.Helpers;
+using SdkTestAutomation.Api.Conductor.EventResource.Request;
+using SdkTestAutomation.Api.Conductor.EventResource.Response;
 using EventHandler = Conductor.Client.Models.EventHandler;
 
 namespace SdkTestAutomation.CSharp;
@@ -18,11 +17,11 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
     
     public override string SdkType => "csharp";
     
-    protected override async Task InitializeEngineAsync(AdapterConfiguration config)
+    protected override Task InitializeEngineAsync()
     {
-        var configuration = new Configuration { BasePath = config.ServerUrl };
+        var configuration = new Configuration { BasePath = Config.ServerUrl };
         _eventApi = new EventResourceApi(configuration);
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
     
     protected override void PerformHealthCheck()
@@ -32,7 +31,7 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
     
     public override Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
     {
-        return ExecuteOperationAsync($"Adding event: {request.Name}", () =>
+        try
         {
             var eventHandler = new EventHandler
             {
@@ -41,31 +40,53 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
             };
             
             _eventApi.AddEventHandler(eventHandler);
-            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
-        }, ex => GetApiExceptionStatusCode(ex));
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse
+            {
+                Name = request.Name,
+                Event = request.Event,
+                Active = request.Active,
+                Actions = request.Actions,
+                Condition = request.Condition,
+                EvaluatorType = request.EvaluatorType
+            }));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
     {
-        return ExecuteOperationAsync("Getting all events", () =>
+        try
         {
             var events = _eventApi.GetEventHandlers();
-            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapCSharpCollection"));
-        }, ex => GetApiExceptionStatusCode(ex));
+            var firstEvent = events.FirstOrDefault();
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromCSharp(firstEvent)));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
     {
-        return ExecuteOperationAsync($"Getting events by name: {request.Event}", () =>
+        try
         {
             var events = _eventApi.GetEventHandlersForEvent(request.Event, request.ActiveOnly);
-            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapCSharpCollection"));
-        }, ex => GetApiExceptionStatusCode(ex));
+            var firstEvent = events.FirstOrDefault();
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromCSharp(firstEvent)));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
     {
-        return ExecuteOperationAsync($"Updating event: {request.Name}", () =>
+        try
         {
             var eventHandler = new EventHandler
             {
@@ -74,27 +95,38 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
             };
             
             _eventApi.UpdateEventHandler(eventHandler);
-            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
-        }, ex => GetApiExceptionStatusCode(ex));
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse
+            {
+                Name = request.Name,
+                Event = request.Event,
+                Active = request.Active,
+                Actions = request.Actions,
+                Condition = request.Condition,
+                EvaluatorType = request.EvaluatorType
+            }));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
     {
-        return ExecuteOperationAsync($"Deleting event: {request.Name}", () =>
+        try
         {
             _eventApi.RemoveEventHandlerStatus(request.Name);
-            return Task.FromResult(SdkResponseBuilder.CreateEmptyResponse());
-        }, ex => GetApiExceptionStatusCode(ex));
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse()));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     protected override string GetSdkVersion() => "1.1.3";
     
     protected override bool IsInitialized() => _eventApi != null;
-    
-    protected override int GetApiExceptionStatusCode(Exception ex, int defaultCode = 500)
-    {
-        return ex is ApiException apiEx ? apiEx.ErrorCode : defaultCode;
-    }
     
     protected override void DisposeEngine()
     {

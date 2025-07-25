@@ -1,6 +1,6 @@
 using System;
 using System.Reflection;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Models;
 
 namespace SdkTestAutomation.Java.JavaBridge;
 

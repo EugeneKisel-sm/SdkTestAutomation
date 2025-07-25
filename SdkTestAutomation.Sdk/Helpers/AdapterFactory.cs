@@ -1,9 +1,9 @@
-using SdkTestAutomation.Common.Interfaces;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Interfaces;
+using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 
-namespace SdkTestAutomation.Common.Helpers;
+namespace  SdkTestAutomation.Sdk.Helpers;
 
 /// <summary>
 /// Simplified factory for creating SDK adapters

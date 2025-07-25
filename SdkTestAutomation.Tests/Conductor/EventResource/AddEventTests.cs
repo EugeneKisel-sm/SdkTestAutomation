@@ -8,9 +8,26 @@ namespace SdkTestAutomation.Tests.Conductor.EventResource;
 public class AddEventTests : BaseTest
 {
     [Fact]
-    public void EventResource_AddEvent_200()
+    public async Task EventResource_AddEvent_200()
     {
+        var eventName = $"test_event_sdk_{Guid.NewGuid():N}";
         var request = new AddEventRequest
+        {
+            Name = eventName,
+            Event = "test_event",
+            Actions = new List<EventAction>(),
+            Active = true
+        };
+
+        // Act - Call SDK via adapter
+        var eventAdapter = await GetEventResourceAdapterAsync();
+        var sdkResponse = await eventAdapter.AddEventAsync(request);
+
+        // Assert
+        Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
+        Assert.Equal(200, sdkResponse.StatusCode);
+        
+        var apiRequest = new AddEventRequest
         {
             Name = "test_event_add",
             Event = "test_event",
@@ -20,7 +37,7 @@ public class AddEventTests : BaseTest
             Active = true
         };
         
-        var response = EventResourceApi.AddEvent(request);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var apiResponse = EventResourceApi.AddEvent(apiRequest);
+        Assert.Equal(HttpStatusCode.OK, apiResponse.StatusCode);
     }
 }

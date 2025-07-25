@@ -1,5 +1,5 @@
 using System.Reflection;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils.Logging;
 using Python.Runtime;
 

@@ -1,4 +1,4 @@
-namespace SdkTestAutomation.Common.Models;
+namespace SdkTestAutomation.Sdk.Models;
 
 /// <summary>
 /// Information about an SDK adapter

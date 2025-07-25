@@ -1,7 +1,7 @@
-using Python.Runtime;
-using SdkTestAutomation.Common.Helpers;
-using SdkTestAutomation.Common.Interfaces;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Models;
+using SdkTestAutomation.Sdk.Helpers;
+using SdkTestAutomation.Api.Conductor.EventResource.Request;
+using SdkTestAutomation.Api.Conductor.EventResource.Response;
 using SdkTestAutomation.Python.PythonBridge;
 using SdkTestAutomation.Python.Helpers;
 
@@ -17,14 +17,13 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
     
     public override string SdkType => "python";
     
-    protected override async Task InitializeEngineAsync(AdapterConfiguration config)
+    protected override Task InitializeEngineAsync()
     {
         _pythonEngine = new PythonBridgeEngine();
-        _pythonEngine.Initialize(config);
+        _pythonEngine.Initialize(Config);
         
-        // Cache the event client on initialization
         _eventClient = _pythonEngine.ExecuteWithGIL(() => _pythonEngine.GetEventClient());
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
     
     protected override void PerformHealthCheck()
@@ -34,56 +33,94 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
     
     public override Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
     {
-        return ExecuteOperationAsync($"Adding event: {request.Name}", () =>
+        try
         {
             _pythonEngine.ExecuteWithGIL(() => 
             {
                 var eventHandler = PythonEventHandlerBuilder.CreateEventHandler(request);
                 _eventClient.register_event_handler(eventHandler);
             });
-            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
-        });
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse
+            {
+                Name = request.Name,
+                Event = request.Event,
+                Active = request.Active,
+                Actions = request.Actions,
+                Condition = request.Condition,
+                EvaluatorType = request.EvaluatorType
+            }));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
     {
-        return ExecuteOperationAsync("Getting all events", () =>
+        try
         {
             var events = _pythonEngine.ExecuteWithGIL(() => _eventClient.get_event_handlers("", false));
-            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapPythonCollection"));
-        });
+            var firstEvent = events.FirstOrDefault();
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromPython(firstEvent)));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
     {
-        return ExecuteOperationAsync($"Getting event by name: {request.Event}", () =>
+        try
         {
             var events = _pythonEngine.ExecuteWithGIL(() => 
                 _eventClient.get_event_handlers(request.Event, request.ActiveOnly ?? false));
-            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapPythonCollection"));
-        });
+            var firstEvent = events.FirstOrDefault();
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromPython(firstEvent)));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
     {
-        return ExecuteOperationAsync($"Updating event: {request.Name}", () =>
+        try
         {
             _pythonEngine.ExecuteWithGIL(() => 
             {
                 var eventHandler = PythonEventHandlerBuilder.CreateEventHandler(request);
                 _eventClient.update_event_handler(eventHandler);
             });
-            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
-        });
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse
+            {
+                Name = request.Name,
+                Event = request.Event,
+                Active = request.Active,
+                Actions = request.Actions,
+                Condition = request.Condition,
+                EvaluatorType = request.EvaluatorType
+            }));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
     {
-        return ExecuteOperationAsync($"Deleting event: {request.Name}", () =>
+        try
         {
             _pythonEngine.ExecuteWithGIL(() => _eventClient.unregister_event_handler(request.Name));
-            return Task.FromResult(SdkResponseBuilder.CreateEmptyResponse());
-        });
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse()));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     protected override string GetSdkVersion() => "4.0.0";
@@ -92,17 +129,7 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
     
     protected override void DisposeEngine()
     {
-        if (_eventClient != null)
-        {
-            _pythonEngine.ExecuteWithGIL(() => 
-            {
-                if (_eventClient is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-                _eventClient = null;
-            });
-        }
-        _pythonEngine?.Dispose();
+        _eventClient = null;
+        _pythonEngine = null;
     }
 } 

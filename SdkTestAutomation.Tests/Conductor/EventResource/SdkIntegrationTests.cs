@@ -1,5 +1,7 @@
 using System.Net;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Models;
+using SdkTestAutomation.Api.Conductor.EventResource.Request;
+using SdkTestAutomation.Api.Conductor.EventResource.Models;
 using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.EventResource;
@@ -29,9 +31,6 @@ public class SdkIntegrationTests : BaseTest
         // Assert
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
         Assert.Equal(200, sdkResponse.StatusCode);
-        
-        // Log adapter information
-        LogAdapterInfo();
     }
     
     [Fact]
@@ -47,8 +46,5 @@ public class SdkIntegrationTests : BaseTest
         // Assert
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
         Assert.Equal(200, sdkResponse.StatusCode);
-        
-        // Log adapter information
-        LogAdapterInfo();
     }
 } 

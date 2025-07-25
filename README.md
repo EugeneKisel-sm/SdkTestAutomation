@@ -18,7 +18,7 @@ A .NET test automation framework for validating multiple Conductor SDKs (C#, Jav
 
 ```
 SdkTestAutomation/
-├── SdkTestAutomation.Common/           # Shared interfaces & models
+├── SdkTestAutomation.Sdk/           # Shared interfaces & models
 ├── SdkTestAutomation.CSharp/           # C# SDK adapter
 ├── SdkTestAutomation.Java/             # Java SDK adapter (IKVM.NET)
 ├── SdkTestAutomation.Python/           # Python SDK adapter (Python.NET)

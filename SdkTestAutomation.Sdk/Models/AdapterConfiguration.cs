@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace SdkTestAutomation.Common.Models;
+namespace SdkTestAutomation.Sdk.Models;
 
 /// <summary>
 /// Simplified configuration for SDK adapters

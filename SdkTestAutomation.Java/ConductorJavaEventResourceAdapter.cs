@@ -1,28 +1,25 @@
-using System.Text.Json;
-using SdkTestAutomation.Common.Helpers;
-using SdkTestAutomation.Common.Interfaces;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Models;
+using SdkTestAutomation.Sdk.Helpers;
+using SdkTestAutomation.Api.Conductor.EventResource.Request;
+using SdkTestAutomation.Api.Conductor.EventResource.Response;
 using SdkTestAutomation.Java.JavaBridge;
 
 namespace SdkTestAutomation.Java;
 
 /// <summary>
-/// Simplified Java SDK adapter for event resource operations using IKVM.NET
+/// Java SDK adapter for event resource operations using IKVM.NET
 /// </summary>
 public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
 {
     private JavaEngine _javaEngine;
-    private const string EVENT_HANDLER_CLASS = "com.netflix.conductor.common.metadata.events.EventHandler";
-    private const string ACTION_CLASS = "com.netflix.conductor.common.metadata.events.EventHandler$Action";
-    private const string START_WORKFLOW_CLASS = "com.netflix.conductor.common.metadata.workflow.StartWorkflowRequest";
     
     public override string SdkType => "java";
     
-    protected override async Task InitializeEngineAsync(AdapterConfiguration config)
+    protected override Task InitializeEngineAsync()
     {
         _javaEngine = new JavaEngine();
-        _javaEngine.Initialize(config);
-        await Task.CompletedTask;
+        _javaEngine.Initialize(Config);
+        return Task.CompletedTask;
     }
     
     protected override void PerformHealthCheck()
@@ -32,108 +29,96 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
     
     public override Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
     {
-        return ExecuteOperationAsync($"Adding event: {request.Name}", () =>
+        try
         {
             var eventHandler = CreateEventHandler(request);
             _javaEngine.RegisterEventHandler(eventHandler);
-            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
-        });
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse
+            {
+                Name = request.Name,
+                Event = request.Event,
+                Active = request.Active,
+                Actions = request.Actions,
+                Condition = request.Condition,
+                EvaluatorType = request.EvaluatorType
+            }));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
     {
-        return ExecuteOperationAsync("Getting all events", () =>
+        try
         {
             var events = _javaEngine.GetEventHandlers("", false);
-            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapJavaCollection"));
-        });
+            var firstEvent = events.FirstOrDefault();
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromJava(firstEvent)));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
     {
-        return ExecuteOperationAsync($"Getting events by name: {request.Event}", () =>
+        try
         {
             var events = _javaEngine.GetEventHandlers(request.Event, request.ActiveOnly ?? false);
-            return Task.FromResult(CreateSuccessResponseWithEvents(events, "MapJavaCollection"));
-        });
+            var firstEvent = events.FirstOrDefault();
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromJava(firstEvent)));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
     {
-        return ExecuteOperationAsync($"Updating event: {request.Name}", () =>
+        try
         {
             var eventHandler = CreateEventHandler(request);
             _javaEngine.UpdateEventHandler(eventHandler);
-            return Task.FromResult(SdkResponseBuilder.CreateFromRequest(request));
-        });
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse
+            {
+                Name = request.Name,
+                Event = request.Event,
+                Active = request.Active,
+                Actions = request.Actions,
+                Condition = request.Condition,
+                EvaluatorType = request.EvaluatorType
+            }));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+        }
     }
     
     public override Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
     {
-        return ExecuteOperationAsync($"Deleting event: {request.Name}", () =>
-        {
-            _javaEngine.UnregisterEventHandler(request.Name);
-            return Task.FromResult(SdkResponseBuilder.CreateEmptyResponse());
-        });
-    }
-    
-    /// <summary>
-    /// Create a Java EventHandler object using IKVM with optimized object creation
-    /// </summary>
-    private dynamic CreateEventHandler(dynamic request)
-    {
-        if (request == null)
-            throw new ArgumentNullException(nameof(request));
-            
-        if (string.IsNullOrEmpty(request.Name))
-            throw new ArgumentException("Event handler name is required", nameof(request));
-            
         try
         {
-            // Create EventHandler using IKVM - cache the type lookup
-            var eventHandler = _javaEngine.CreateInstance(EVENT_HANDLER_CLASS);
-            eventHandler.setName(request.Name);
-            eventHandler.setEvent(request.Event);
-            eventHandler.setActive(request.Active);
-            
-            // Set actions if any - optimize collection handling
-            if (request.Actions?.Any() == true)
-            {
-                var actions = new List<dynamic>();
-                foreach (var action in request.Actions)
-                {
-                    var javaAction = _javaEngine.CreateInstance(ACTION_CLASS);
-                    javaAction.setAction(action.Action);
-                    
-                    if (action.StartWorkflow != null)
-                    {
-                        var startWorkflow = _javaEngine.CreateInstance(START_WORKFLOW_CLASS);
-                        startWorkflow.setName(action.StartWorkflow.Name);
-                        startWorkflow.setVersion(action.StartWorkflow.Version);
-                        
-                        // Only serialize if input exists
-                        if (action.StartWorkflow.Input != null)
-                        {
-                            startWorkflow.setInput(JsonSerializer.Serialize(action.StartWorkflow.Input));
-                        }
-                        
-                        javaAction.setStartWorkflow(startWorkflow);
-                    }
-                    
-                    actions.Add(javaAction);
-                }
-                
-                eventHandler.setActions(actions);
-            }
-            
-            return eventHandler;
+            _javaEngine.UnregisterEventHandler(request.Name);
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse()));
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException(
-                $"Failed to create Java EventHandler '{request.Name}': {ex.Message}", 
-                ex);
+            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
         }
+    }
+    
+    private dynamic CreateEventHandler(dynamic request)
+    {
+        var eventHandler = _javaEngine.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler");
+        eventHandler.setName(request.Name);
+        eventHandler.setEvent(request.Event);
+        eventHandler.setActive(request.Active);
+        return eventHandler;
     }
     
     protected override string GetSdkVersion() => "3.15.0";
@@ -142,6 +127,6 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
     
     protected override void DisposeEngine()
     {
-        _javaEngine?.Dispose();
+        _javaEngine = null;
     }
 } 

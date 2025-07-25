@@ -1,8 +1,8 @@
 using System.Text.Json;
-using SdkTestAutomation.Common.Models;
+using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils.Logging;
 
-namespace SdkTestAutomation.Common.Helpers;
+namespace SdkTestAutomation.Sdk.Helpers;
 
 /// <summary>
 /// Helper for comparing SDK responses with direct API responses
