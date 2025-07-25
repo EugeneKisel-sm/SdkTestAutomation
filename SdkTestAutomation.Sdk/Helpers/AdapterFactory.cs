@@ -10,17 +10,17 @@ public class AdapterFactory(ILogger logger, string sdkType)
     private readonly ILogger _logger = logger;
     private readonly string _sdkType = sdkType;
     
-    public IEventResourceAdapter CreateEventResourceAdapterAsync()
+    public IEventResourceAdapter CreateEventResourceAdapter()
     {
-        return CreateAdapterAsync<IEventResourceAdapter>(_sdkType, "event resource");
+        return CreateAdapter<IEventResourceAdapter>(_sdkType, "event resource");
     }
     
-    public IWorkflowResourceAdapter CreateWorkflowResourceAdapterAsync()
+    public IWorkflowResourceAdapter CreateWorkflowResourceAdapter()
     {
-        return CreateAdapterAsync<IWorkflowResourceAdapter>(_sdkType, "workflow resource");
+        return CreateAdapter<IWorkflowResourceAdapter>(_sdkType, "workflow resource");
     }
     
-    private T CreateAdapterAsync<T>(string sdkType, string adapterType) where T : class
+    private T CreateAdapter<T>(string sdkType, string adapterType) where T : class
     {
         _logger.Log($"Creating {adapterType} adapter for SDK: {sdkType}");
         

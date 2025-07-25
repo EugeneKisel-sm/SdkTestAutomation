@@ -6,5 +6,5 @@ namespace SdkTestAutomation.Sdk.Interfaces;
 
 public interface IWorkflowResourceAdapter : ISdkAdapter
 {
-    Task<SdkResponse<GetWorkflowResponse>> GetWorkflowAsync(GetWorkflowRequest request);
+    SdkResponse<GetWorkflowResponse> GetWorkflow(GetWorkflowRequest request);
 } 

@@ -7,7 +7,7 @@ namespace SdkTestAutomation.Sdk.Helpers;
 
 public class ResponseComparer(ILogger logger)
 {
-    public Task<bool> CompareAsync<T>(SdkResponse<T> sdkResponse, RestResponse<T> apiResponse)
+    public bool Compare<T>(SdkResponse<T> sdkResponse, RestResponse<T> apiResponse)
     {
         logger.Log("Comparing SDK and API responses...");
         
@@ -15,13 +15,13 @@ public class ResponseComparer(ILogger logger)
         if (sdkResponse.StatusCode != (int)apiResponse.StatusCode || sdkResponse.Success != apiSuccess)
         {
             logger.Log($"Status mismatch: SDK={sdkResponse.StatusCode}({sdkResponse.Success}), API={(int)apiResponse.StatusCode}({apiSuccess})");
-            return Task.FromResult(false);
+            return false;
         }
         
         if (!sdkResponse.Success && !apiSuccess)
         {
             logger.Log("Both SDK and API failed - considering equal");
-            return Task.FromResult(true);
+            return true;
         }
         
         if (sdkResponse.Success && apiSuccess)
@@ -33,16 +33,16 @@ public class ResponseComparer(ILogger logger)
                 
                 var isEqual = JsonElementEquals(sdkJson, apiJson);
                 logger.Log($"Content comparison result: {isEqual}");
-                return Task.FromResult(isEqual);
+                return isEqual;
             }
             catch (Exception ex)
             {
                 logger.Log($"Error during JSON comparison: {ex.Message}");
-                return Task.FromResult(false);
+                return false;
             }
         }
         
-        return Task.FromResult(false);
+        return false;
     }
     
     private bool JsonElementEquals(JsonElement element1, JsonElement element2)

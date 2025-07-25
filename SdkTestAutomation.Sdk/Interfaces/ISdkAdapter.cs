@@ -8,7 +8,7 @@ public interface ISdkAdapter : IDisposable
     
     Task<bool> InitializeAsync(AdapterConfiguration config);
     
-    Task<bool> IsHealthyAsync();
+    bool IsHealthy();
     
     AdapterInfo GetAdapterInfo();
 }

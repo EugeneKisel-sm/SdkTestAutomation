@@ -25,16 +25,16 @@ public abstract class BaseEventResourceAdapter : IEventResourceAdapter
         }
     }
     
-    public virtual Task<bool> IsHealthyAsync()
+    public virtual bool IsHealthy()
     {
         try
         {
             PerformHealthCheck();
-            return Task.FromResult(true);
+            return true;
         }
         catch
         {
-            return Task.FromResult(false);
+            return false;
         }
     }
     
@@ -49,11 +49,11 @@ public abstract class BaseEventResourceAdapter : IEventResourceAdapter
         };
     }
     
-    public abstract Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request);
-    public abstract Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request);
-    public abstract Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request);
-    public abstract Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request);
-    public abstract Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request);
+    public abstract SdkResponse<GetEventResponse> AddEvent(AddEventRequest request);
+    public abstract SdkResponse<GetEventResponse> GetEvent(GetEventRequest request);
+    public abstract SdkResponse<GetEventResponse> GetEventByName(GetEventByNameRequest request);
+    public abstract SdkResponse<GetEventResponse> UpdateEvent(UpdateEventRequest request);
+    public abstract SdkResponse<GetEventResponse> DeleteEvent(DeleteEventRequest request);
     
     public virtual void Dispose()
     {

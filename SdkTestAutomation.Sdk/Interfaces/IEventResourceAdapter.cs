@@ -6,13 +6,13 @@ namespace SdkTestAutomation.Sdk.Interfaces;
 
 public interface IEventResourceAdapter : ISdkAdapter
 {
-    Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request);
+    SdkResponse<GetEventResponse> AddEvent(AddEventRequest request);
     
-    Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request);
+    SdkResponse<GetEventResponse> GetEvent(GetEventRequest request);
     
-    Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request);
+    SdkResponse<GetEventResponse> GetEventByName(GetEventByNameRequest request);
     
-    Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request);
+    SdkResponse<GetEventResponse> UpdateEvent(UpdateEventRequest request);
     
-    Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request);
+    SdkResponse<GetEventResponse> DeleteEvent(DeleteEventRequest request);
 } 

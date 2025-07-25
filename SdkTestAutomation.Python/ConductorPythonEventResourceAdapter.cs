@@ -31,7 +31,7 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
         _pythonEngine.ExecuteWithGIL(() => _eventClient.get_event_handlers("", false));
     }
     
-    public override Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
+    public override SdkResponse<GetEventResponse> AddEvent(AddEventRequest request)
     {
         try
         {
@@ -40,44 +40,44 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
                 var eventHandler = PythonEventHandlerBuilder.CreateEventHandler(request);
                 _eventClient.register_event_handler(eventHandler);
             });
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request)));
+            return SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     
-    public override Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
+    public override SdkResponse<GetEventResponse> GetEvent(GetEventRequest request)
     {
         try
         {
             var events = _pythonEngine.ExecuteWithGIL(() => _eventClient.get_event_handlers("", false));
             var firstEvent = events.FirstOrDefault();
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromPython(firstEvent)));
+            return SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromPython(firstEvent));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     
-    public override Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
+    public override SdkResponse<GetEventResponse> GetEventByName(GetEventByNameRequest request)
     {
         try
         {
             var events = _pythonEngine.ExecuteWithGIL(() => 
                 _eventClient.get_event_handlers(request.Event, request.ActiveOnly ?? false));
             var firstEvent = events.FirstOrDefault();
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromPython(firstEvent)));
+            return SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromPython(firstEvent));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     
-    public override Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
+    public override SdkResponse<GetEventResponse> UpdateEvent(UpdateEventRequest request)
     {
         try
         {
@@ -86,24 +86,24 @@ public class ConductorPythonEventResourceAdapter : BaseEventResourceAdapter
                 var eventHandler = PythonEventHandlerBuilder.CreateEventHandler(request);
                 _eventClient.update_event_handler(eventHandler);
             });
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request)));
+            return SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     
-    public override Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
+    public override SdkResponse<GetEventResponse> DeleteEvent(DeleteEventRequest request)
     {
         try
         {
             _pythonEngine.ExecuteWithGIL(() => _eventClient.unregister_event_handler(request.Name));
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse()));
+            return SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse());
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     

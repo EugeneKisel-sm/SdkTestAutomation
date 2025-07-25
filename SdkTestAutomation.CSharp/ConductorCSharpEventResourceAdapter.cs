@@ -29,7 +29,7 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
         _eventApi.GetEventHandlers();
     }
     
-    public override Task<SdkResponse<GetEventResponse>> AddEventAsync(AddEventRequest request)
+    public override SdkResponse<GetEventResponse> AddEvent(AddEventRequest request)
     {
         try
         {
@@ -40,43 +40,43 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
             };
             
             _eventApi.AddEventHandler(eventHandler);
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request)));
+            return SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     
-    public override Task<SdkResponse<GetEventResponse>> GetEventAsync(GetEventRequest request)
+    public override SdkResponse<GetEventResponse> GetEvent(GetEventRequest request)
     {
         try
         {
             var events = _eventApi.GetEventHandlers();
             var firstEvent = events.FirstOrDefault();
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromCSharp(firstEvent)));
+            return SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromCSharp(firstEvent));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     
-    public override Task<SdkResponse<GetEventResponse>> GetEventByNameAsync(GetEventByNameRequest request)
+    public override SdkResponse<GetEventResponse> GetEventByName(GetEventByNameRequest request)
     {
         try
         {
             var events = _eventApi.GetEventHandlersForEvent(request.Event, request.ActiveOnly);
             var firstEvent = events.FirstOrDefault();
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromCSharp(firstEvent)));
+            return SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromCSharp(firstEvent));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     
-    public override Task<SdkResponse<GetEventResponse>> UpdateEventAsync(UpdateEventRequest request)
+    public override SdkResponse<GetEventResponse> UpdateEvent(UpdateEventRequest request)
     {
         try
         {
@@ -87,24 +87,24 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
             };
             
             _eventApi.UpdateEventHandler(eventHandler);
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request)));
+            return SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     
-    public override Task<SdkResponse<GetEventResponse>> DeleteEventAsync(DeleteEventRequest request)
+    public override SdkResponse<GetEventResponse> DeleteEvent(DeleteEventRequest request)
     {
         try
         {
             _eventApi.RemoveEventHandlerStatus(request.Name);
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse()));
+            return SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse());
         }
         catch (Exception ex)
         {
-            return Task.FromResult(SdkResponse<GetEventResponse>.CreateError(ex.Message));
+            return SdkResponse<GetEventResponse>.CreateError(ex.Message);
         }
     }
     

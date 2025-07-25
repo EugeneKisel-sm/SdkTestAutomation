@@ -38,8 +38,8 @@ public abstract class BaseTest : IDisposable
         
         _responseComparer = new ResponseComparer(_logger);
         AdapterFactory = new AdapterFactory(_logger, TestConfig.SdkType);
-        EventResourceAdapter = AdapterFactory.CreateEventResourceAdapterAsync();
-        WorkflowResourceAdapter = AdapterFactory.CreateWorkflowResourceAdapterAsync();
+        EventResourceAdapter = AdapterFactory.CreateEventResourceAdapter();
+        WorkflowResourceAdapter = AdapterFactory.CreateWorkflowResourceAdapter();
         
         EventResourceApi = new EventResourceApi(_logger);
         WorkflowResourceApi = new WorkflowResourceApi(_logger);
@@ -48,9 +48,9 @@ public abstract class BaseTest : IDisposable
         
     }
     
-    protected async Task<bool> ValidateSdkResponseAsync<T>(SdkResponse<T> sdkResponse, RestResponse<T> apiResponse)
+    protected bool ValidateSdkResponse<T>(SdkResponse<T> sdkResponse, RestResponse<T> apiResponse)
     {
-        return await _responseComparer.CompareAsync(sdkResponse, apiResponse);
+        return _responseComparer.Compare(sdkResponse, apiResponse);
     }
     
     public virtual void Dispose()
