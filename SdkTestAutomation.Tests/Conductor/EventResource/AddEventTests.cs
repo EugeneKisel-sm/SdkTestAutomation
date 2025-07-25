@@ -19,11 +19,8 @@ public class AddEventTests : BaseTest
             Active = true
         };
 
-        // Act - Call SDK via adapter
-        var eventAdapter = await GetEventResourceAdapterAsync();
-        var sdkResponse = await eventAdapter.AddEventAsync(request);
+        var sdkResponse = await EventResourceAdapter.AddEventAsync(request);
 
-        // Assert
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
         Assert.Equal(200, sdkResponse.StatusCode);
         

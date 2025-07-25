@@ -3,9 +3,6 @@ using SdkTestAutomation.Api.Conductor.EventResource.Models;
 
 namespace SdkTestAutomation.Sdk.Helpers;
 
-/// <summary>
-/// Simple helper for mapping event handlers
-/// </summary>
 public static class EventInfoMapper
 {
     public static GetEventResponse MapFromCSharp(dynamic eventHandler)

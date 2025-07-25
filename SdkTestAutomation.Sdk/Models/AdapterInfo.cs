@@ -1,8 +1,5 @@
 namespace SdkTestAutomation.Sdk.Models;
 
-/// <summary>
-/// Information about an SDK adapter
-/// </summary>
 public class AdapterInfo
 {
     public string SdkType { get; set; } = string.Empty;

@@ -1,44 +1,29 @@
 using System.Text.Json;
+using RestSharp;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils.Logging;
 
 namespace SdkTestAutomation.Sdk.Helpers;
 
-/// <summary>
-/// Helper for comparing SDK responses with direct API responses
-/// </summary>
-public class ResponseComparer
+public class ResponseComparer(ILogger logger)
 {
-    private readonly ILogger _logger;
-    
-    public ResponseComparer(ILogger logger)
+    public Task<bool> CompareAsync<T>(SdkResponse<T> sdkResponse, RestResponse<T> apiResponse)
     {
-        _logger = logger;
-    }
-    
-    /// <summary>
-    /// Compare SDK response with API response for structural equality
-    /// </summary>
-    public Task<bool> CompareAsync<T>(SdkResponse<T> sdkResponse, RestSharp.RestResponse<T> apiResponse)
-    {
-        _logger.Log("Comparing SDK and API responses...");
+        logger.Log("Comparing SDK and API responses...");
         
-        // Compare status codes and success flags
         var apiSuccess = apiResponse.StatusCode == System.Net.HttpStatusCode.OK;
         if (sdkResponse.StatusCode != (int)apiResponse.StatusCode || sdkResponse.Success != apiSuccess)
         {
-            _logger.Log($"Status mismatch: SDK={sdkResponse.StatusCode}({sdkResponse.Success}), API={(int)apiResponse.StatusCode}({apiSuccess})");
+            logger.Log($"Status mismatch: SDK={sdkResponse.StatusCode}({sdkResponse.Success}), API={(int)apiResponse.StatusCode}({apiSuccess})");
             return Task.FromResult(false);
         }
         
-        // If both failed, consider them equal
         if (!sdkResponse.Success && !apiSuccess)
         {
-            _logger.Log("Both SDK and API failed - considering equal");
+            logger.Log("Both SDK and API failed - considering equal");
             return Task.FromResult(true);
         }
         
-        // Compare content if both succeeded
         if (sdkResponse.Success && apiSuccess)
         {
             try
@@ -47,12 +32,12 @@ public class ResponseComparer
                 var apiJson = JsonSerializer.Deserialize<JsonElement>(apiResponse.Content ?? "{}");
                 
                 var isEqual = JsonElementEquals(sdkJson, apiJson);
-                _logger.Log($"Content comparison result: {isEqual}");
+                logger.Log($"Content comparison result: {isEqual}");
                 return Task.FromResult(isEqual);
             }
             catch (Exception ex)
             {
-                _logger.Log($"Error during JSON comparison: {ex.Message}");
+                logger.Log($"Error during JSON comparison: {ex.Message}");
                 return Task.FromResult(false);
             }
         }
@@ -60,9 +45,6 @@ public class ResponseComparer
         return Task.FromResult(false);
     }
     
-    /// <summary>
-    /// Compare two JsonElement objects for structural equality
-    /// </summary>
     private bool JsonElementEquals(JsonElement element1, JsonElement element2)
     {
         if (element1.ValueKind != element2.ValueKind) return false;
@@ -79,9 +61,6 @@ public class ResponseComparer
         };
     }
     
-    /// <summary>
-    /// Compare JSON objects
-    /// </summary>
     private bool CompareObject(JsonElement obj1, JsonElement obj2)
     {
         var properties1 = obj1.EnumerateObject().ToDictionary(p => p.Name, p => p.Value);
@@ -98,21 +77,13 @@ public class ResponseComparer
         return true;
     }
     
-    /// <summary>
-    /// Compare JSON arrays
-    /// </summary>
     private bool CompareArray(JsonElement arr1, JsonElement arr2)
     {
         var elements1 = arr1.EnumerateArray().ToList();
         var elements2 = arr2.EnumerateArray().ToList();
         
         if (elements1.Count != elements2.Count) return false;
-        
-        for (int i = 0; i < elements1.Count; i++)
-        {
-            if (!JsonElementEquals(elements1[i], elements2[i])) return false;
-        }
-        
-        return true;
+
+        return !elements1.Where((t, i) => !JsonElementEquals(t, elements2[i])).Any();
     }
 } 

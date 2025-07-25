@@ -5,9 +5,6 @@ using SdkTestAutomation.Api.Conductor.EventResource.Response;
 
 namespace SdkTestAutomation.Sdk.Helpers;
 
-/// <summary>
-/// Simple base class for event resource adapters
-/// </summary>
 public abstract class BaseEventResourceAdapter : IEventResourceAdapter
 {
     protected AdapterConfiguration Config { get; private set; }

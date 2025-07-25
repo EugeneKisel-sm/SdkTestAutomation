@@ -2,9 +2,6 @@ using Newtonsoft.Json;
 
 namespace SdkTestAutomation.Sdk.Models;
 
-/// <summary>
-/// Simplified response structure for SDK operations
-/// </summary>
 public class SdkResponse<T>
 {
     [JsonProperty("success")]
@@ -22,7 +19,6 @@ public class SdkResponse<T>
     [JsonProperty("statusCode")]
     public int StatusCode { get; set; } = 200;
     
-    // Factory methods for common responses
     public static SdkResponse<T> CreateSuccess(T data) => new() { Success = true, Data = data };
     public static SdkResponse<T> CreateError(string message, int statusCode = 500) => new() { Success = false, ErrorMessage = message, StatusCode = statusCode };
 } 

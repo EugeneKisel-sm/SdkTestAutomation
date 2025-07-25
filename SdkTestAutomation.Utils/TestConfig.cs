@@ -40,9 +40,6 @@ public static class TestConfig
             ? @default
             : Environment.GetEnvironmentVariable(name)!;
     
-    /// <summary>
-    /// Get environment variable with fallback
-    /// </summary>
     public static string GetEnvironmentVariable(string key, string defaultValue = "")
     {
         return Environment.GetEnvironmentVariable(key) ?? defaultValue;

@@ -1,14 +1,12 @@
 using Newtonsoft.Json;
+using SdkTestAutomation.Utils;
 
 namespace SdkTestAutomation.Sdk.Models;
 
-/// <summary>
-/// Simplified configuration for SDK adapters
-/// </summary>
 public class AdapterConfiguration
 {
-    [JsonProperty("serverUrl")]
-    public string ServerUrl { get; set; } = "http://localhost:8080/api";
+    [JsonProperty("serverUrl")] 
+    public string ServerUrl { get; set; } = TestConfig.ApiUrl;
     
     [JsonProperty("pythonHome")]
     public string PythonHome { get; set; }

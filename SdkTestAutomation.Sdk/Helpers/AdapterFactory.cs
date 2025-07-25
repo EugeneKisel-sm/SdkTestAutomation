@@ -5,33 +5,22 @@ using SdkTestAutomation.Utils.Logging;
 
 namespace  SdkTestAutomation.Sdk.Helpers;
 
-/// <summary>
-/// Simplified factory for creating SDK adapters
-/// </summary>
-public static class AdapterFactory
+public class AdapterFactory(ILogger logger, string sdkType)
 {
-    private static readonly ILogger _logger = new ConsoleLogger(null);
+    private readonly ILogger _logger = logger;
+    private readonly string _sdkType = sdkType;
     
-    /// <summary>
-    /// Create an event resource adapter for the specified SDK type
-    /// </summary>
-    public static async Task<IEventResourceAdapter> CreateEventResourceAdapterAsync(string sdkType)
+    public IEventResourceAdapter CreateEventResourceAdapterAsync()
     {
-        return await CreateAdapterAsync<IEventResourceAdapter>(sdkType, "event resource");
+        return CreateAdapterAsync<IEventResourceAdapter>(_sdkType, "event resource");
     }
     
-    /// <summary>
-    /// Create a workflow resource adapter for the specified SDK type
-    /// </summary>
-    public static async Task<IWorkflowResourceAdapter> CreateWorkflowResourceAdapterAsync(string sdkType)
+    public IWorkflowResourceAdapter CreateWorkflowResourceAdapterAsync()
     {
-        return await CreateAdapterAsync<IWorkflowResourceAdapter>(sdkType, "workflow resource");
+        return CreateAdapterAsync<IWorkflowResourceAdapter>(_sdkType, "workflow resource");
     }
     
-    /// <summary>
-    /// Generic method to create adapters
-    /// </summary>
-    private static async Task<T> CreateAdapterAsync<T>(string sdkType, string adapterType) where T : class
+    private T CreateAdapterAsync<T>(string sdkType, string adapterType) where T : class
     {
         _logger.Log($"Creating {adapterType} adapter for SDK: {sdkType}");
         
@@ -44,7 +33,7 @@ public static class AdapterFactory
         };
         
         var config = CreateConfiguration();
-        var initialized = await ((ISdkAdapter)adapter).InitializeAsync(config);
+        var initialized = ((ISdkAdapter)adapter).InitializeAsync(config).Result;
         
         if (!initialized)
         {
@@ -54,18 +43,12 @@ public static class AdapterFactory
         return adapter;
     }
     
-    /// <summary>
-    /// Get adapter class name based on interface type
-    /// </summary>
-    private static string GetAdapterClassName<T>()
+    private string GetAdapterClassName<T>()
     {
         return typeof(T).Name.Replace("I", "").Replace("Adapter", "") + "Adapter";
     }
     
-    /// <summary>
-    /// Create an adapter instance using reflection
-    /// </summary>
-    private static T CreateAdapterInstance<T>(string typeName) where T : class
+    private T CreateAdapterInstance<T>(string typeName) where T : class
     {
         var type = Type.GetType(typeName) ?? 
                    AppDomain.CurrentDomain.GetAssemblies()
@@ -86,9 +69,6 @@ public static class AdapterFactory
         return adapter;
     }
     
-    /// <summary>
-    /// Create configuration from environment variables
-    /// </summary>
     private static AdapterConfiguration CreateConfiguration()
     {
         return new AdapterConfiguration
