@@ -3,7 +3,7 @@ using RestSharp;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils.Logging;
 
-namespace SdkTestAutomation.Sdk.Helpers;
+namespace SdkTestAutomation.Sdk;
 
 public class ResponseComparer(ILogger logger)
 {

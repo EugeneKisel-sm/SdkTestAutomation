@@ -1,9 +1,10 @@
 using SdkTestAutomation.Sdk.Models;
-using SdkTestAutomation.Sdk.Helpers;
 using SdkTestAutomation.Api.Conductor.EventResource.Request;
 using SdkTestAutomation.Api.Conductor.EventResource.Response;
 using SdkTestAutomation.Python.PythonBridge;
 using SdkTestAutomation.Python.Helpers;
+using SdkTestAutomation.Sdk;
+using SdkTestAutomation.Sdk.Adapters;
 
 namespace SdkTestAutomation.Python;
 

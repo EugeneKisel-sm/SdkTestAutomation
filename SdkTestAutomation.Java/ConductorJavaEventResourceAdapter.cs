@@ -1,8 +1,9 @@
 using SdkTestAutomation.Sdk.Models;
-using SdkTestAutomation.Sdk.Helpers;
 using SdkTestAutomation.Api.Conductor.EventResource.Request;
 using SdkTestAutomation.Api.Conductor.EventResource.Response;
 using SdkTestAutomation.Java.JavaBridge;
+using SdkTestAutomation.Sdk;
+using SdkTestAutomation.Sdk.Adapters;
 
 namespace SdkTestAutomation.Java;
 

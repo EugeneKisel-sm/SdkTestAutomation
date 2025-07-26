@@ -1,7 +1,7 @@
 using SdkTestAutomation.Api.Conductor.EventResource.Response;
 using SdkTestAutomation.Api.Conductor.EventResource.Models;
 
-namespace SdkTestAutomation.Sdk.Helpers;
+namespace SdkTestAutomation.Sdk;
 
 public static class EventInfoMapper
 {

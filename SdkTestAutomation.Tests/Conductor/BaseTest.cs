@@ -1,6 +1,6 @@
 using SdkTestAutomation.Api.Conductor.EventResource;
 using SdkTestAutomation.Api.Conductor.WorkflowResource;
-using SdkTestAutomation.Sdk.Helpers;
+using SdkTestAutomation.Sdk;
 using SdkTestAutomation.Sdk.Interfaces;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils;

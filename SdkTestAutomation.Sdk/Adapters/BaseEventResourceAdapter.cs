@@ -3,7 +3,7 @@ using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Api.Conductor.EventResource.Request;
 using SdkTestAutomation.Api.Conductor.EventResource.Response;
 
-namespace SdkTestAutomation.Sdk.Helpers;
+namespace SdkTestAutomation.Sdk.Adapters;
 
 public abstract class BaseEventResourceAdapter : IEventResourceAdapter
 {
@@ -41,19 +41,13 @@ public abstract class BaseEventResourceAdapter : IEventResourceAdapter
     public virtual AdapterInfo GetAdapterInfo()
     {
         return new AdapterInfo
-        {
+        { 
             SdkType = SdkType,
             Version = GetSdkVersion(),
             IsInitialized = IsInitialized(),
             InitializedAt = DateTime.UtcNow
         };
     }
-    
-    public abstract SdkResponse<GetEventResponse> AddEvent(AddEventRequest request);
-    public abstract SdkResponse<GetEventResponse> GetEvent(GetEventRequest request);
-    public abstract SdkResponse<GetEventResponse> GetEventByName(GetEventByNameRequest request);
-    public abstract SdkResponse<GetEventResponse> UpdateEvent(UpdateEventRequest request);
-    public abstract SdkResponse<GetEventResponse> DeleteEvent(DeleteEventRequest request);
     
     public virtual void Dispose()
     {
@@ -64,11 +58,14 @@ public abstract class BaseEventResourceAdapter : IEventResourceAdapter
     protected abstract void PerformHealthCheck();
     protected abstract bool IsInitialized();
     protected abstract void DisposeEngine();
-    protected virtual string GetSdkVersion() => "1.0.0";
+    protected abstract string GetSdkVersion();
     
-    /// <summary>
-    /// Helper method to create GetEventResponse from request
-    /// </summary>
+    public abstract SdkResponse<GetEventResponse> AddEvent(AddEventRequest request);
+    public abstract SdkResponse<GetEventResponse> GetEvent(GetEventRequest request);
+    public abstract SdkResponse<GetEventResponse> GetEventByName(GetEventByNameRequest request);
+    public abstract SdkResponse<GetEventResponse> UpdateEvent(UpdateEventRequest request);
+    public abstract SdkResponse<GetEventResponse> DeleteEvent(DeleteEventRequest request);
+    
     protected static GetEventResponse CreateResponseFromRequest(dynamic request)
     {
         return new GetEventResponse

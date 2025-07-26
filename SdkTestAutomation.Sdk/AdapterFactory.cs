@@ -3,7 +3,7 @@ using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 
-namespace  SdkTestAutomation.Sdk.Helpers;
+namespace  SdkTestAutomation.Sdk;
 
 public class AdapterFactory(ILogger logger, string sdkType)
 {
