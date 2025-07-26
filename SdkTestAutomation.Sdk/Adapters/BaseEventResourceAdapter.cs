@@ -5,60 +5,9 @@ using SdkTestAutomation.Api.Conductor.EventResource.Response;
 
 namespace SdkTestAutomation.Sdk.Adapters;
 
-public abstract class BaseEventResourceAdapter : IEventResourceAdapter
+public abstract class BaseEventResourceAdapter : BaseConductorAdapter, IEventResourceAdapter
 {
-    protected AdapterConfiguration Config { get; private set; }
-    
-    public abstract string SdkType { get; }
-    
-    public virtual async Task<bool> InitializeAsync(AdapterConfiguration config)
-    {
-        try
-        {
-            Config = config;
-            await InitializeEngineAsync();
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-    
-    public virtual bool IsHealthy()
-    {
-        try
-        {
-            PerformHealthCheck();
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-    
-    public virtual AdapterInfo GetAdapterInfo()
-    {
-        return new AdapterInfo
-        { 
-            SdkType = SdkType,
-            Version = GetSdkVersion(),
-            IsInitialized = IsInitialized(),
-            InitializedAt = DateTime.UtcNow
-        };
-    }
-    
-    public virtual void Dispose()
-    {
-        DisposeEngine();
-    }
-    
-    protected abstract Task InitializeEngineAsync();
-    protected abstract void PerformHealthCheck();
-    protected abstract bool IsInitialized();
-    protected abstract void DisposeEngine();
-    protected abstract string GetSdkVersion();
+    protected readonly EventInfoMapper EventMapper = new();
     
     public abstract SdkResponse<GetEventResponse> AddEvent(AddEventRequest request);
     public abstract SdkResponse<GetEventResponse> GetEvent(GetEventRequest request);
@@ -66,16 +15,13 @@ public abstract class BaseEventResourceAdapter : IEventResourceAdapter
     public abstract SdkResponse<GetEventResponse> UpdateEvent(UpdateEventRequest request);
     public abstract SdkResponse<GetEventResponse> DeleteEvent(DeleteEventRequest request);
     
-    protected static GetEventResponse CreateResponseFromRequest(dynamic request)
+    protected static GetEventResponse CreateResponseFromRequest(dynamic request) => new()
     {
-        return new GetEventResponse
-        {
-            Name = request.Name,
-            Event = request.Event,
-            Active = request.Active,
-            Actions = request.Actions,
-            Condition = request.Condition,
-            EvaluatorType = request.EvaluatorType
-        };
-    }
+        Name = request.Name,
+        Event = request.Event,
+        Active = request.Active,
+        Actions = request.Actions,
+        Condition = request.Condition,
+        EvaluatorType = request.EvaluatorType
+    };
 } 

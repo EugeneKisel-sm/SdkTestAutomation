@@ -1,39 +1,24 @@
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Api.Conductor.EventResource.Request;
 using SdkTestAutomation.Api.Conductor.EventResource.Response;
-using SdkTestAutomation.Java.JavaBridge;
 using SdkTestAutomation.Sdk;
 using SdkTestAutomation.Sdk.Adapters;
 
 namespace SdkTestAutomation.Java;
 
-/// <summary>
-/// Java SDK adapter for event resource operations using IKVM.NET
-/// </summary>
 public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
 {
-    private JavaEngine _javaEngine;
-    
+    private JavaConductorClient JavaClient => (JavaConductorClient)Client;
     public override string SdkType => "java";
     
-    protected override Task InitializeEngineAsync()
-    {
-        _javaEngine = new JavaEngine();
-        _javaEngine.Initialize(Config);
-        return Task.CompletedTask;
-    }
-    
-    protected override void PerformHealthCheck()
-    {
-        _javaEngine.GetEventHandlers("", false);
-    }
+    protected override ConductorClient CreateClient(string serverUrl) => new JavaConductorClient(serverUrl);
     
     public override SdkResponse<GetEventResponse> AddEvent(AddEventRequest request)
     {
         try
         {
             var eventHandler = CreateEventHandler(request);
-            _javaEngine.RegisterEventHandler(eventHandler);
+            JavaClient.EventClient.registerEventHandler(eventHandler);
             return SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request));
         }
         catch (Exception ex)
@@ -46,9 +31,9 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
     {
         try
         {
-            var events = _javaEngine.GetEventHandlers("", false);
+            var events = JavaClient.EventClient.getEventHandlers("", false);
             var firstEvent = events.FirstOrDefault();
-            return SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromJava(firstEvent));
+            return SdkResponse<GetEventResponse>.CreateSuccess(EventMapper.MapFromJava(firstEvent));
         }
         catch (Exception ex)
         {
@@ -60,9 +45,9 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
     {
         try
         {
-            var events = _javaEngine.GetEventHandlers(request.Event, request.ActiveOnly ?? false);
+            var events = JavaClient.EventClient.getEventHandlers(request.Event, request.ActiveOnly ?? false);
             var firstEvent = events.FirstOrDefault();
-            return SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromJava(firstEvent));
+            return SdkResponse<GetEventResponse>.CreateSuccess(EventMapper.MapFromJava(firstEvent));
         }
         catch (Exception ex)
         {
@@ -75,7 +60,7 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
         try
         {
             var eventHandler = CreateEventHandler(request);
-            _javaEngine.UpdateEventHandler(eventHandler);
+            JavaClient.EventClient.updateEventHandler(eventHandler);
             return SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request));
         }
         catch (Exception ex)
@@ -88,7 +73,7 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
     {
         try
         {
-            _javaEngine.UnregisterEventHandler(request.Name);
+            JavaClient.EventClient.unregisterEventHandler(request.Name);
             return SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse());
         }
         catch (Exception ex)
@@ -99,19 +84,13 @@ public class ConductorJavaEventResourceAdapter : BaseEventResourceAdapter
     
     private dynamic CreateEventHandler(dynamic request)
     {
-        var eventHandler = _javaEngine.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler");
+        var eventHandler = JavaClient.EventClient.CreateInstance("com.netflix.conductor.common.metadata.events.EventHandler");
         eventHandler.setName(request.Name);
         eventHandler.setEvent(request.Event);
         eventHandler.setActive(request.Active);
         return eventHandler;
     }
     
-    protected override string GetSdkVersion() => "3.15.0";
-    
-    protected override bool IsInitialized() => _javaEngine != null;
-    
-    protected override void DisposeEngine()
-    {
-        _javaEngine = null;
-    }
+    protected override string GetSdkVersion() => SdkVersionHelper.GetTypeVersion(
+        "com.netflix.conductor.client.http.ConductorClient", "conductor-client");
 } 

@@ -3,9 +3,9 @@ using SdkTestAutomation.Api.Conductor.EventResource.Models;
 
 namespace SdkTestAutomation.Sdk;
 
-public static class EventInfoMapper
+public class EventInfoMapper
 {
-    public static GetEventResponse MapFromCSharp(dynamic eventHandler)
+    public GetEventResponse MapFromCSharp(dynamic eventHandler)
     {
         if (eventHandler == null) return new GetEventResponse();
         
@@ -20,7 +20,7 @@ public static class EventInfoMapper
         };
     }
     
-    public static GetEventResponse MapFromJava(dynamic javaEvent)
+    public GetEventResponse MapFromJava(dynamic javaEvent)
     {
         if (javaEvent == null) return new GetEventResponse();
         
@@ -35,7 +35,7 @@ public static class EventInfoMapper
         };
     }
     
-    public static GetEventResponse MapFromPython(dynamic pythonEvent)
+    public GetEventResponse MapFromPython(dynamic pythonEvent)
     {
         if (pythonEvent == null) return new GetEventResponse();
         

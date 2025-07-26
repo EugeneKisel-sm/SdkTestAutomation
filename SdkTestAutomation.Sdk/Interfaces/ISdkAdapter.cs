@@ -6,7 +6,7 @@ public interface ISdkAdapter : IDisposable
 {
     string SdkType { get; }
     
-    Task<bool> InitializeAsync(AdapterConfiguration config);
+    bool Initialize(AdapterConfiguration config);
     
     bool IsHealthy();
     

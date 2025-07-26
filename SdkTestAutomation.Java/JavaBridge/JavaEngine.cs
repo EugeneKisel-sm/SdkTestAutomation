@@ -48,6 +48,19 @@ public class JavaEngine : IDisposable
     }
     
     /// <summary>
+    /// Get the Conductor client instance
+    /// </summary>
+    public dynamic GetConductorClient()
+    {
+        if (_conductorClient == null)
+        {
+            throw new InvalidOperationException("ConductorClient not initialized");
+        }
+        
+        return _conductorClient;
+    }
+    
+    /// <summary>
     /// Get event handlers using Java SDK
     /// </summary>
     public dynamic GetEventHandlers(string eventName = "", bool activeOnly = false)

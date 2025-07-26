@@ -24,23 +24,30 @@ public class AdapterFactory(ILogger logger, string sdkType)
     {
         _logger.Log($"Creating {adapterType} adapter for SDK: {sdkType}");
         
-        var adapter = sdkType.ToLowerInvariant() switch
+        try
         {
-            "csharp" => CreateAdapterInstance<T>($"SdkTestAutomation.CSharp.ConductorCSharp{GetAdapterClassName<T>()}, SdkTestAutomation.CSharp"),
-            "java" => CreateAdapterInstance<T>($"SdkTestAutomation.Java.ConductorJava{GetAdapterClassName<T>()}, SdkTestAutomation.Java"),
-            "python" => CreateAdapterInstance<T>($"SdkTestAutomation.Python.ConductorPython{GetAdapterClassName<T>()}, SdkTestAutomation.Python"),
-            _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
-        };
-        
-        var config = CreateConfiguration();
-        var initialized = ((ISdkAdapter)adapter).InitializeAsync(config).Result;
-        
-        if (!initialized)
-        {
-            throw new Exception($"Failed to initialize {sdkType} {adapterType} adapter");
+            var adapter = sdkType.ToLowerInvariant() switch
+            {
+                "csharp" => CreateAdapterInstance<T>($"SdkTestAutomation.CSharp.ConductorCSharp{GetAdapterClassName<T>()}, SdkTestAutomation.CSharp"),
+                "java" => CreateAdapterInstance<T>($"SdkTestAutomation.Java.ConductorJava{GetAdapterClassName<T>()}, SdkTestAutomation.Java"),
+                "python" => CreateAdapterInstance<T>($"SdkTestAutomation.Python.ConductorPython{GetAdapterClassName<T>()}, SdkTestAutomation.Python"),
+                _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}. Supported types are: csharp, java, python")
+            };
+            
+            var config = CreateConfiguration();
+            var initialized = ((ISdkAdapter)adapter).Initialize(config);
+            
+            if (!initialized)
+            {
+                throw new InvalidOperationException($"Failed to initialize {sdkType} {adapterType} adapter. Check server URL and SDK configuration.");
+            }
+            
+            return adapter;
         }
-        
-        return adapter;
+        catch (Exception ex) when (ex is not ArgumentException && ex is not InvalidOperationException)
+        {
+            throw new InvalidOperationException($"Failed to create {sdkType} {adapterType} adapter: {ex.Message}", ex);
+        }
     }
     
     private string GetAdapterClassName<T>()
@@ -57,23 +64,36 @@ public class AdapterFactory(ILogger logger, string sdkType)
         
         if (type == null)
         {
-            throw new InvalidOperationException($"Could not find type: {typeName}");
+            throw new InvalidOperationException($"Could not find adapter type: {typeName}. Make sure the SDK assembly is referenced and loaded.");
         }
         
-        var instance = Activator.CreateInstance(type);
-        if (instance is not T adapter)
+        try
         {
-            throw new InvalidOperationException($"Type {typeName} does not implement {typeof(T).Name}");
+            var instance = Activator.CreateInstance(type);
+            if (instance is not T adapter)
+            {
+                throw new InvalidOperationException($"Type {typeName} does not implement {typeof(T).Name}. Check SDK implementation.");
+            }
+            
+            return adapter;
         }
-        
-        return adapter;
+        catch (Exception ex) when (ex is not InvalidOperationException)
+        {
+            throw new InvalidOperationException($"Failed to create instance of {typeName}: {ex.Message}", ex);
+        }
     }
     
     private static AdapterConfiguration CreateConfiguration()
     {
+        var serverUrl = TestConfig.ApiUrl;
+        if (string.IsNullOrEmpty(serverUrl))
+        {
+            throw new InvalidOperationException("Server URL is not configured. Set CONDUCTOR_SERVER_URL environment variable.");
+        }
+        
         return new AdapterConfiguration
         {
-            ServerUrl = TestConfig.ApiUrl,
+            ServerUrl = serverUrl,
             PythonHome = TestConfig.GetEnvironmentVariable("PYTHON_HOME"),
             PythonPath = TestConfig.GetEnvironmentVariable("PYTHONPATH")
         };

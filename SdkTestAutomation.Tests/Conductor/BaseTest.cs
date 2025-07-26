@@ -45,7 +45,6 @@ public abstract class BaseTest : IDisposable
         WorkflowResourceApi = new WorkflowResourceApi(_logger);
         
         _logger.Log($"Test '{testContext.TestCase?.TestCaseDisplayName}' execution started.");
-        
     }
     
     protected bool ValidateSdkResponse<T>(SdkResponse<T> sdkResponse, RestResponse<T> apiResponse)

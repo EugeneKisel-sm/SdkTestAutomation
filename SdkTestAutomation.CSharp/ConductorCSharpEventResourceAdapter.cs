@@ -1,4 +1,3 @@
-using Conductor.Api;
 using Conductor.Client;
 using SdkTestAutomation.Sdk.Models;
 using SdkTestAutomation.Api.Conductor.EventResource.Request;
@@ -9,26 +8,12 @@ using EventHandler = Conductor.Client.Models.EventHandler;
 
 namespace SdkTestAutomation.CSharp;
 
-/// <summary>
-/// C# SDK adapter for event resource operations
-/// </summary>
 public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
 {
-    private EventResourceApi _eventApi;
-    
+    private CSharpConductorClient CSharpClient => (CSharpConductorClient)Client;
     public override string SdkType => "csharp";
     
-    protected override Task InitializeEngineAsync()
-    {
-        var configuration = new Configuration { BasePath = Config.ServerUrl };
-        _eventApi = new EventResourceApi(configuration);
-        return Task.CompletedTask;
-    }
-    
-    protected override void PerformHealthCheck()
-    {
-        _eventApi.GetEventHandlers();
-    }
+    protected override ConductorClient CreateClient(string serverUrl) => new CSharpConductorClient(serverUrl);
     
     public override SdkResponse<GetEventResponse> AddEvent(AddEventRequest request)
     {
@@ -40,7 +25,7 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
                 Active = request.Active
             };
             
-            _eventApi.AddEventHandler(eventHandler);
+            CSharpClient.EventApi.AddEventHandler(eventHandler);
             return SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request));
         }
         catch (Exception ex)
@@ -53,9 +38,9 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
     {
         try
         {
-            var events = _eventApi.GetEventHandlers();
+            var events = CSharpClient.EventApi.GetEventHandlers();
             var firstEvent = events.FirstOrDefault();
-            return SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromCSharp(firstEvent));
+            return SdkResponse<GetEventResponse>.CreateSuccess(EventMapper.MapFromCSharp(firstEvent));
         }
         catch (Exception ex)
         {
@@ -67,9 +52,9 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
     {
         try
         {
-            var events = _eventApi.GetEventHandlersForEvent(request.Event, request.ActiveOnly);
+            var events = CSharpClient.EventApi.GetEventHandlersForEvent(request.Event, request.ActiveOnly);
             var firstEvent = events.FirstOrDefault();
-            return SdkResponse<GetEventResponse>.CreateSuccess(EventInfoMapper.MapFromCSharp(firstEvent));
+            return SdkResponse<GetEventResponse>.CreateSuccess(EventMapper.MapFromCSharp(firstEvent));
         }
         catch (Exception ex)
         {
@@ -87,7 +72,7 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
                 Active = request.Active
             };
             
-            _eventApi.UpdateEventHandler(eventHandler);
+            CSharpClient.EventApi.UpdateEventHandler(eventHandler);
             return SdkResponse<GetEventResponse>.CreateSuccess(CreateResponseFromRequest(request));
         }
         catch (Exception ex)
@@ -100,7 +85,7 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
     {
         try
         {
-            _eventApi.RemoveEventHandlerStatus(request.Name);
+            CSharpClient.EventApi.RemoveEventHandlerStatus(request.Name);
             return SdkResponse<GetEventResponse>.CreateSuccess(new GetEventResponse());
         }
         catch (Exception ex)
@@ -109,12 +94,5 @@ public class ConductorCSharpEventResourceAdapter : BaseEventResourceAdapter
         }
     }
     
-    protected override string GetSdkVersion() => "1.1.3";
-    
-    protected override bool IsInitialized() => _eventApi != null;
-    
-    protected override void DisposeEngine()
-    {
-        _eventApi = null;
-    }
+    protected override string GetSdkVersion() => SdkVersionHelper.GetAssemblyVersion(typeof(Configuration));
 } 

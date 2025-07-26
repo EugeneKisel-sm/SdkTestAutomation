@@ -4,14 +4,14 @@ using SdkTestAutomation.Api.Conductor.EventResource.Models;
 namespace SdkTestAutomation.Python.Helpers;
 
 /// <summary>
-/// Simple helper for building Python event handler objects
+/// Helper for building Python event handler objects
 /// </summary>
-public static class PythonEventHandlerBuilder
+public class PythonEventHandlerBuilder
 {
     /// <summary>
     /// Create a Python event handler from request
     /// </summary>
-    public static dynamic CreateEventHandler(dynamic request)
+    public dynamic CreateEventHandler(dynamic request)
     {
         using (Py.GIL())
         {
