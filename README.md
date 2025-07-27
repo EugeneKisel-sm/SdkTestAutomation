@@ -3,11 +3,11 @@
 [![Build and Test](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml)
 [![Build](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build.yml)
 
-A .NET test automation framework for validating multiple Conductor SDKs (C#, Java, Python) through in-process adapters.
+A .NET test automation framework for validating multiple Conductor SDKs (C#, Java, Python, Go) through in-process adapters.
 
 ## 🎯 Key Features
 
-- **Multi-SDK Support**: Test C#, Java, and Python Conductor SDKs with a single test codebase
+- **Multi-SDK Support**: Test C#, Java, Python, and Go Conductor SDKs with a single test codebase
 - **In-Process Adapters**: Direct SDK integration without CLI overhead
 - **Response Validation**: Deep structural comparison of SDK responses with direct API calls
 - **Extensible Architecture**: Easy to add new SDKs by implementing shared interfaces
@@ -19,13 +19,16 @@ A .NET test automation framework for validating multiple Conductor SDKs (C#, Jav
 ```
 SdkTestAutomation/
 ├── SdkTestAutomation.Sdk/           # Shared interfaces & models
-├── SdkTestAutomation.CSharp/           # C# SDK adapter
-├── SdkTestAutomation.Java/             # Java SDK adapter (IKVM.NET)
-├── SdkTestAutomation.Python/           # Python SDK adapter (Python.NET)
-├── SdkTestAutomation.Tests/            # Test implementations
-├── SdkTestAutomation.Api/              # Direct API client
-├── SdkTestAutomation.Core/             # Core HTTP functionality
-└── SdkTestAutomation.Utils/            # Utilities & logging
+│   ├── Implementations/
+│   │   ├── CSharp/                  # C# SDK adapter
+│   │   ├── Java/                    # Java SDK adapter (IKVM.NET)
+│   │   ├── Python/                  # Python SDK adapter (Python.NET)
+│   │   └── Go/                      # Go SDK adapter (Process communication)
+│   └── lib/                         # JAR files for Java SDK
+├── SdkTestAutomation.Tests/         # Test implementations
+├── SdkTestAutomation.Api/           # Direct API client
+├── SdkTestAutomation.Core/          # Core HTTP functionality
+└── SdkTestAutomation.Utils/         # Utilities & logging
 ```
 
 ## 🚀 Quick Start
@@ -35,6 +38,7 @@ SdkTestAutomation/
 - .NET 8.0 SDK
 - Java 17+ (for Java SDK testing)
 - Python 3.9+ (for Python SDK testing)
+- Go 1.19+ (for Go SDK testing)
 
 ### Quick Setup
 
@@ -68,6 +72,7 @@ dotnet build
 TEST_SDK=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 TEST_SDK=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 TEST_SDK=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+TEST_SDK=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 ```
 
 ## 📝 Writing Tests
@@ -106,11 +111,12 @@ The framework automatically selects the SDK based on the `TEST_SDK` environment 
 | **C#** | ✅ Ready | Direct NuGet package |
 | **Java** | ✅ Ready | IKVM.NET bridge |
 | **Python** | ✅ Ready | Python.NET bridge |
+| **Go** | ✅ Ready | HTTP API Bridge |
 
 ## 📚 Documentation
 
 - [SDK Integration Guide](SDK_INTEGRATION.md) - Detailed setup instructions
-- [Official SDK Repositories](https://github.com/conductor-oss) - C#, Java, Python SDKs
+- [Official SDK Repositories](https://github.com/conductor-oss) - C#, Java, Python, Go SDKs
 
 
 
@@ -118,8 +124,9 @@ The framework automatically selects the SDK based on the `TEST_SDK` environment 
 
 ## 🔧 Troubleshooting
 
-- **Java SDK**: Verify Java 17+ and JAR files in `SdkTestAutomation.Java/lib/`
+- **Java SDK**: Verify Java 17+ and JAR files in `SdkTestAutomation.Sdk/lib/`
 - **Python SDK**: Check Python 3.9+ and `conductor-python` installation
+- **Go SDK**: Verify Go 1.19+ and `conductor-go` module installation
 - **Environment**: Ensure `.env` file exists in `SdkTestAutomation.Tests/`
 
 See [SDK Integration Guide](SDK_INTEGRATION.md) for detailed troubleshooting.

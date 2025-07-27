@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SDK Setup Script for SdkTestAutomation
-# This script helps set up all three Conductor SDKs
+# This script helps set up all four Conductor SDKs
 
 set -e
 
@@ -196,6 +196,89 @@ setup_python_sdk() {
     print_success "Python SDK setup complete (Python.NET bridge)"
 }
 
+# Setup Go SDK
+setup_go_sdk() {
+    print_status "Setting up Go SDK..."
+    
+    # Check if Go is installed with version check
+    if command -v go &> /dev/null; then
+        local version=$(go version | cut -d' ' -f3 | sed 's/go//')
+        if check_version "$version" "1.19.0"; then
+            print_success "Go $version is installed (meets minimum requirement of 1.19)"
+        else
+            print_warning "Go $version is installed but version 1.19+ is required"
+            return 1
+        fi
+    else
+        print_warning "Go is not installed. Please install Go 1.19+ for Go SDK support."
+        return 1
+    fi
+    
+    # Check if conductor-go module is available
+    print_status "Checking conductor-go module..."
+    if go list -m github.com/conductor-sdk/conductor-go &> /dev/null; then
+        print_success "conductor-go module is available"
+    else
+        print_warning "conductor-go module is not available"
+        print_status "Installing conductor-go module..."
+        
+        # Create a temporary go.mod file to install the module
+        local temp_dir=$(mktemp -d)
+        cd "$temp_dir"
+        
+        go mod init temp
+        if go get github.com/conductor-sdk/conductor-go; then
+            print_success "conductor-go module installed successfully"
+        else
+            print_warning "Failed to install conductor-go module automatically"
+            print_status "Please install manually: go get github.com/conductor-sdk/conductor-go"
+            cd - > /dev/null
+            rm -rf "$temp_dir"
+            return 1
+        fi
+        
+        cd - > /dev/null
+        rm -rf "$temp_dir"
+    fi
+    
+    # Check for gorilla/mux dependency (required for HTTP API Bridge)
+    print_status "Checking gorilla/mux dependency..."
+    if go list -m github.com/gorilla/mux &> /dev/null; then
+        print_success "gorilla/mux module is available"
+    else
+        print_warning "gorilla/mux module is not available"
+        print_status "Installing gorilla/mux module..."
+        
+        # Create a temporary go.mod file to install the module
+        local temp_dir=$(mktemp -d)
+        cd "$temp_dir"
+        
+        go mod init temp
+        if go get github.com/gorilla/mux; then
+            print_success "gorilla/mux module installed successfully"
+        else
+            print_warning "Failed to install gorilla/mux module automatically"
+            print_status "Please install manually: go get github.com/gorilla/mux"
+            cd - > /dev/null
+            rm -rf "$temp_dir"
+            return 1
+        fi
+        
+        cd - > /dev/null
+        rm -rf "$temp_dir"
+    fi
+    
+    # Go SDK is integrated through HTTP API Bridge
+    # Just verify the Go integration works
+    print_status "Verifying Go SDK integration..."
+    
+    # Build the main SDK project to verify Go integration
+    dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj
+    dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj
+    
+    print_success "Go SDK setup complete (HTTP API Bridge)"
+}
+
 # Create environment file
 create_env_file() {
     print_status "Creating environment configuration..."
@@ -213,7 +296,7 @@ create_env_file() {
 # Conductor Server Configuration
 CONDUCTOR_SERVER_URL=http://localhost:8080/api
 
-# SDK Selection (csharp, java, python)
+# SDK Selection (csharp, java, python, go)
 TEST_SDK=csharp
 
 # Python Configuration (if using Python SDK)
@@ -224,6 +307,10 @@ $(if [ -n "$venv_path" ]; then echo "# Python Virtual Environment (if created by
 # Java Configuration (if using Java SDK)
 JAVA_HOME=\${JAVA_HOME:-$(echo $JAVA_HOME)}
 JAVA_CLASSPATH=\${JAVA_CLASSPATH:-""}
+
+# Go Configuration (if using Go SDK)
+GOPATH=\${GOPATH:-$(go env GOPATH 2>/dev/null || echo "$HOME/go")}
+GOROOT=\${GOROOT:-$(go env GOROOT 2>/dev/null || echo "/usr/local/go")}
 EOF
         print_success "Environment file created: $env_file"
     else
@@ -283,6 +370,14 @@ main() {
     fi
     echo ""
     
+    if setup_go_sdk; then
+        GO_READY=true
+    else
+        GO_READY=false
+        print_warning "Go SDK setup incomplete"
+    fi
+    echo ""
+    
     # Create environment file
     create_env_file
     echo ""
@@ -306,6 +401,12 @@ main() {
         print_success "✅ Python SDK: Ready to use"
     else
         print_warning "⚠️  Python SDK: Needs manual setup"
+    fi
+    
+    if [ "$GO_READY" = true ]; then
+        print_success "✅ Go SDK: Ready to use"
+    else
+        print_warning "⚠️  Go SDK: Needs manual setup"
     fi
     
     echo ""

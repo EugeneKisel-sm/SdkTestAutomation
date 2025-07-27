@@ -30,4 +30,10 @@
         </IkvmReference>
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="Implementations/Go/go-server-template.go">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project> 

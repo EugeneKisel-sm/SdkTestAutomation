@@ -7,6 +7,7 @@
 | **C#** | ✅ Ready | Direct NuGet | `conductor-csharp` v1.1.3 |
 | **Java** | ✅ Ready | IKVM.NET Bridge | `conductor-client.jar` + `conductor-common.jar` |
 | **Python** | ✅ Ready | Python.NET Bridge | `conductor-python` |
+| **Go** | ✅ Ready | Process Communication | `conductor-go` |
 
 ## 🚀 Quick Start
 
@@ -18,6 +19,7 @@
 TEST_SDK=csharp dotnet test SdkTestAutomation.Tests
 TEST_SDK=java dotnet test SdkTestAutomation.Tests
 TEST_SDK=python dotnet test SdkTestAutomation.Tests
+TEST_SDK=go dotnet test SdkTestAutomation.Tests
 ```
 
 ## 🔧 Detailed Setup
@@ -37,6 +39,12 @@ TEST_SDK=python dotnet test SdkTestAutomation.Tests
 - **Package**: `conductor-python` from PyPI
 - **Method**: Python.NET bridge for .NET ↔ Python communication
 
+### Go SDK
+- **Prerequisites**: Go 1.19+, go modules
+- **Package**: `conductor-go` from GitHub
+- **Method**: HTTP API Bridge for .NET ↔ Go communication
+- **Dependencies**: `gorilla/mux` for HTTP routing
+
 ## 🧪 Testing
 
 ```bash
@@ -44,9 +52,10 @@ TEST_SDK=python dotnet test SdkTestAutomation.Tests
 TEST_SDK=csharp dotnet test SdkTestAutomation.Tests
 TEST_SDK=java dotnet test SdkTestAutomation.Tests
 TEST_SDK=python dotnet test SdkTestAutomation.Tests
+TEST_SDK=go dotnet test SdkTestAutomation.Tests
 
 # Test all SDKs
-for sdk in csharp java python; do
+for sdk in csharp java python go; do
     TEST_SDK=$sdk dotnet test SdkTestAutomation.Tests
 done
 ```
@@ -58,6 +67,7 @@ done
 - **C# SDK**: Package not found → Run `dotnet restore`
 - **Java SDK**: JAR files missing → Download from Conductor releases
 - **Python SDK**: ModuleNotFoundError → Install `conductor-python` package
+- **Go SDK**: Module not found → Run `go get github.com/conductor-sdk/conductor-go`
 
 ### Debug Mode
 
@@ -70,10 +80,14 @@ _logger.LogLevel = "Debug";
 - **C# SDK**: [conductor-csharp](https://github.com/Netflix/conductor-csharp)
 - **Java SDK**: [conductor-oss/java-sdk](https://github.com/conductor-oss/java-sdk)
 - **Python SDK**: [conductor-oss/python-sdk](https://github.com/conductor-oss/python-sdk)
+- **Go SDK**: [conductor-oss/go-sdk](https://github.com/conductor-oss/go-sdk)
 
 ## 🔄 Version Compatibility
 
-| Component | C# SDK | Java SDK | Python SDK |
-|-----------|--------|----------|------------|
-| **Conductor Server** | 1.x | 3.x | 3.x |
-| **SDK Version** | 1.1.3 | 3.15.0 | Latest | 
+| Component | C# SDK | Java SDK | Python SDK | Go SDK |
+|-----------|--------|----------|------------|--------|
+| **Conductor Server** | 1.x | 4.x | 4.x | 4.x |
+| **SDK Version** | 1.1.3 | 4.0.12 | Latest | Latest |
+| **Runtime** | .NET 8.0 | Java 17+ | Python 3.9+ | Go 1.19+ |
+| **Bridge** | Direct | IKVM.NET | Python.NET | HTTP API |
+| **Repository** | [conductor-csharp](https://github.com/Netflix/conductor-csharp) | [conductor-oss/java-sdk](https://github.com/conductor-oss/java-sdk) | [conductor-oss/python-sdk](https://github.com/conductor-oss/python-sdk) | [conductor-oss/go-sdk](https://github.com/conductor-oss/go-sdk) | 
