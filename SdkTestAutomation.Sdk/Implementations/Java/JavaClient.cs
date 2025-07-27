@@ -13,21 +13,27 @@ public class JavaClient : ISdkClient
     
     public void Initialize(string serverUrl)
     {
-        _conductorClient = CreateJavaObject("com.netflix.conductor.client.http.ConductorClient", serverUrl);
-        WorkflowApi = CreateJavaObject("com.netflix.conductor.client.http.WorkflowClient", _conductorClient);
-        EventApi = CreateJavaObject("com.netflix.conductor.client.http.EventClient", _conductorClient);
-        _initialized = true;
-    }
-    
-    private dynamic CreateJavaObject(string className, params object[] args)
-    {
-        var type = Type.GetType($"{className}, conductor-client") ?? 
-                  Type.GetType($"{className}, conductor-common");
-        
-        if (type == null)
-            throw new InvalidOperationException($"Could not find type {className}");
-        
-        return Activator.CreateInstance(type, args);
+        try
+        {
+            // Use proper IKVM.NET type resolution
+            var conductorClientType = Type.GetType("com.netflix.conductor.client.http.ConductorClient, conductor-client");
+            var workflowClientType = Type.GetType("com.netflix.conductor.client.http.WorkflowClient, conductor-client");
+            var eventClientType = Type.GetType("com.netflix.conductor.client.http.EventClient, conductor-client");
+            
+            if (conductorClientType == null || workflowClientType == null || eventClientType == null)
+            {
+                throw new InvalidOperationException("Required Java types not found. Ensure JAR files are properly referenced.");
+            }
+            
+            _conductorClient = Activator.CreateInstance(conductorClientType, serverUrl);
+            WorkflowApi = Activator.CreateInstance(workflowClientType, _conductorClient);
+            EventApi = Activator.CreateInstance(eventClientType, _conductorClient);
+            _initialized = true;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to initialize Java client: {ex.Message}", ex);
+        }
     }
     
     public void Dispose()

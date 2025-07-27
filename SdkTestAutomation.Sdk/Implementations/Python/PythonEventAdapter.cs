@@ -108,16 +108,30 @@ public class PythonEventAdapter : IEventAdapter
     
     private dynamic CreateEventHandler(string name, string eventType, bool active)
     {
-        var eventHandlerModule = Py.Import("conductor.common.metadata.events.event_handler");
-        var EventHandler = eventHandlerModule.GetAttr("EventHandler");
-        dynamic eventHandler = EventHandler.Invoke();
-        
-        eventHandler.name = name;
-        eventHandler.event_name = eventType;
-        eventHandler.active = active;
-        eventHandler.actions = new List<dynamic>();
-        
-        return eventHandler;
+        try
+        {
+            using (Py.GIL())
+            {
+                // Import the EventHandler class
+                dynamic eventHandlerModule = Py.Import("conductor.common.metadata.events.event_handler");
+                dynamic EventHandler = eventHandlerModule.GetAttr("EventHandler");
+                
+                // Create EventHandler instance
+                dynamic eventHandler = EventHandler.Invoke();
+                
+                // Set properties using Python attribute assignment
+                eventHandler.name = name;
+                eventHandler.event_name = eventType;
+                eventHandler.active = active;
+                eventHandler.actions = new List<dynamic>(); // Initialize empty actions list
+                
+                return eventHandler;
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create Python EventHandler: {ex.Message}", ex);
+        }
     }
     
     public void Dispose()

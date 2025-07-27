@@ -92,14 +92,28 @@ public class JavaEventAdapter : IEventAdapter
     
     private dynamic CreateEventHandler(string name, string eventType, bool active)
     {
-        var eventHandler = Activator.CreateInstance(Type.GetType("com.netflix.conductor.common.metadata.events.EventHandler, conductor-common"));
-        if (eventHandler != null)
+        try
         {
-            ((dynamic)eventHandler).setName(name);
-            ((dynamic)eventHandler).setEvent(eventType);
-            ((dynamic)eventHandler).setActive(active);
+            var eventHandlerType = Type.GetType("com.netflix.conductor.common.metadata.events.EventHandler, conductor-common");
+            if (eventHandlerType == null)
+            {
+                throw new InvalidOperationException("EventHandler type not found in conductor-common assembly");
+            }
+            
+            var eventHandler = Activator.CreateInstance(eventHandlerType);
+            if (eventHandler != null)
+            {
+                // Use proper Java setter methods
+                ((dynamic)eventHandler).setName(name);
+                ((dynamic)eventHandler).setEvent(eventType);
+                ((dynamic)eventHandler).setActive(active);
+            }
+            return eventHandler;
         }
-        return eventHandler;
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create EventHandler: {ex.Message}", ex);
+        }
     }
     
     public void Dispose()

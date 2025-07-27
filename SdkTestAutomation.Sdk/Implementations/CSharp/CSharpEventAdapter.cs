@@ -28,13 +28,13 @@ public class CSharpEventAdapter : IEventAdapter
     {
         try
         {
-            var eventHandler = new Conductor.Client.Models.EventHandler();
-            eventHandler.Name = name;
-            // Try to set the event property using reflection or different approach
-            var eventProperty = typeof(Conductor.Client.Models.EventHandler).GetProperty("Event");
-            if (eventProperty != null)
-                eventProperty.SetValue(eventHandler, eventType);
-            eventHandler.Active = active;
+            var eventHandler = new Conductor.Client.Models.EventHandler
+            {
+                Name = name,
+                _Event = eventType,
+                Active = active,
+                Actions = new List<Action>()
+            };
             
             _client.EventApi.AddEventHandler(eventHandler);
             return SdkResponse.CreateSuccess();
@@ -75,13 +75,13 @@ public class CSharpEventAdapter : IEventAdapter
     {
         try
         {
-            var eventHandler = new Conductor.Client.Models.EventHandler();
-            eventHandler.Name = name;
-            // Try to set the event property using reflection or different approach
-            var eventProperty = typeof(Conductor.Client.Models.EventHandler).GetProperty("Event");
-            if (eventProperty != null)
-                eventProperty.SetValue(eventHandler, eventType);
-            eventHandler.Active = active;
+            var eventHandler = new Conductor.Client.Models.EventHandler
+            {
+                Name = name,
+                _Event = eventType,
+                Active = active,
+                Actions = new List<Action>()
+            };
             
             _client.EventApi.UpdateEventHandler(eventHandler);
             return SdkResponse.CreateSuccess();

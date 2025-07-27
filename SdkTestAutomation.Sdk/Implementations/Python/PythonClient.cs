@@ -14,32 +14,51 @@ public class PythonClient : ISdkClient
     
     public void Initialize(string serverUrl)
     {
-        if (!PythonEngine.IsInitialized)
-            PythonEngine.Initialize();
-        
-        using (Py.GIL())
+        try
         {
-            dynamic conductor = Py.Import("conductor.client.http.conductor_client");
-            dynamic workflowClient = Py.Import("conductor.client.http.workflow_client");
-            dynamic eventClient = Py.Import("conductor.client.http.event_client");
+            if (!PythonEngine.IsInitialized)
+            {
+                PythonEngine.Initialize();
+            }
             
-            _conductorClient = conductor.ConductorClient(serverUrl);
-            WorkflowApi = workflowClient.WorkflowClient(_conductorClient);
-            EventApi = eventClient.EventClient(_conductorClient);
+            using (Py.GIL())
+            {
+                // Import required modules
+                dynamic conductor = Py.Import("conductor.client.http.conductor_client");
+                dynamic workflowClient = Py.Import("conductor.client.http.workflow_client");
+                dynamic eventClient = Py.Import("conductor.client.http.event_client");
+                
+                // Create client instances
+                _conductorClient = conductor.ConductorClient(serverUrl);
+                WorkflowApi = workflowClient.WorkflowClient(_conductorClient);
+                EventApi = eventClient.EventClient(_conductorClient);
+            }
+            
+            _initialized = true;
         }
-        
-        _initialized = true;
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to initialize Python client: {ex.Message}", ex);
+        }
     }
     
     public void Dispose()
     {
         if (_initialized)
         {
-            using (Py.GIL())
+            try
             {
-                _conductorClient = null;
-                WorkflowApi = null;
-                EventApi = null;
+                using (Py.GIL())
+                {
+                    _conductorClient = null;
+                    WorkflowApi = null;
+                    EventApi = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log disposal error but don't throw
+                System.Diagnostics.Debug.WriteLine($"Error during Python client disposal: {ex.Message}");
             }
         }
         _initialized = false;
