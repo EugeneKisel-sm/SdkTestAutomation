@@ -59,11 +59,13 @@ check_dotnet() {
 setup_csharp_sdk() {
     print_status "Setting up C# SDK..."
     
-    # Restore packages
-    dotnet restore SdkTestAutomation.CSharp/SdkTestAutomation.CSharp.csproj
+    # C# SDK is integrated directly in SdkTestAutomation.Sdk project
+    # Just verify the conductor-csharp package is available
+    print_status "Verifying conductor-csharp package..."
     
-    # Build to verify
-    dotnet build SdkTestAutomation.CSharp/SdkTestAutomation.CSharp.csproj
+    # Build the main SDK project to verify C# integration
+    dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj
+    dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj
     
     print_success "C# SDK setup complete (conductor-csharp v1.1.3)"
 }
@@ -87,27 +89,27 @@ setup_java_sdk() {
     fi
     
     # Check JAR files
-    local jar_dir="SdkTestAutomation.Java/lib"
+    local jar_dir="SdkTestAutomation.Sdk/lib"
     if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/conductor-common.jar" ]; then
         print_success "JAR files found in $jar_dir"
     else
         print_warning "JAR files not found in $jar_dir"
-        print_status "Downloading latest conductor JAR files..."
+        print_status "Downloading latest conductor v4.x JAR files..."
         mkdir -p "$jar_dir"
-        curl -L -o "$jar_dir/conductor-client.jar" "https://repo1.maven.org/maven2/com/netflix/conductor/conductor-client/3.15.0/conductor-client-3.15.0.jar"
-        curl -L -o "$jar_dir/conductor-common.jar" "https://repo1.maven.org/maven2/com/netflix/conductor/conductor-common/3.15.0/conductor-common-3.15.0.jar"
+        curl -L -o "$jar_dir/conductor-client.jar" "https://repo1.maven.org/maven2/com/netflix/conductor/conductor-client/4.0.12/conductor-client-4.0.12.jar"
+        curl -L -o "$jar_dir/conductor-common.jar" "https://repo1.maven.org/maven2/com/netflix/conductor/conductor-common/4.0.12/conductor-common-4.0.12.jar"
         if [ $? -eq 0 ]; then
             print_success "JAR files downloaded successfully"
         else
             print_warning "Failed to download JAR files automatically"
-            print_status "Please download manually from https://github.com/Netflix/conductor/releases"
+            print_status "Please download manually from https://github.com/conductor-oss/java-sdk/releases"
             return 1
         fi
     fi
     
     # Build Java project
-    dotnet restore SdkTestAutomation.Java/SdkTestAutomation.Java.csproj
-    dotnet build SdkTestAutomation.Java/SdkTestAutomation.Java.csproj
+    dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj
+    dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj
     
     print_success "Java SDK setup complete (IKVM.NET bridge)"
 }
@@ -183,9 +185,13 @@ setup_python_sdk() {
         fi
     fi
     
-    # Build Python project
-    dotnet restore SdkTestAutomation.Python/SdkTestAutomation.Python.csproj
-    dotnet build SdkTestAutomation.Python/SdkTestAutomation.Python.csproj
+    # Python SDK is integrated directly in SdkTestAutomation.Sdk project
+    # Just verify the pythonnet package is available
+    print_status "Verifying pythonnet package..."
+    
+    # Build the main SDK project to verify Python integration
+    dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj
+    dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj
     
     print_success "Python SDK setup complete (Python.NET bridge)"
 }

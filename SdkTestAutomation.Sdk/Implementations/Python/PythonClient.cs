@@ -23,7 +23,8 @@ public class PythonClient : ISdkClient
             
             using (Py.GIL())
             {
-                // Import required modules
+                // Import required modules using correct paths from conductor-python SDK
+                // Based on conductor-oss/python-sdk repository structure
                 dynamic conductor = Py.Import("conductor.client.http.conductor_client");
                 dynamic workflowClient = Py.Import("conductor.client.http.workflow_client");
                 dynamic eventClient = Py.Import("conductor.client.http.event_client");

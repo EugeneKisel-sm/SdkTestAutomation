@@ -80,8 +80,8 @@ public class PythonWorkflowAdapter : IWorkflowAdapter
             using (Py.GIL())
             {
                 _client.WorkflowApi.terminate(workflowId, reason);
-                return SdkResponse.CreateSuccess();
             }
+            return SdkResponse.CreateSuccess();
         }
         catch (Exception ex)
         {
@@ -91,16 +91,31 @@ public class PythonWorkflowAdapter : IWorkflowAdapter
     
     private dynamic CreateStartWorkflowRequest(string name, int version, string correlationId)
     {
-        var requestModule = Py.Import("conductor.common.run.start_workflow_request");
-        var startWorkflowRequest = requestModule.GetAttr("StartWorkflowRequest");
-        dynamic request = startWorkflowRequest.Invoke();
-        
-        request.name = name;
-        request.version = version;
-        if (!string.IsNullOrEmpty(correlationId))
-            request.correlation_id = correlationId;
-        
-        return request;
+        try
+        {
+            using (Py.GIL())
+            {
+                // Import the StartWorkflowRequest class using correct module path
+                // Based on conductor-oss/python-sdk repository structure
+                dynamic requestModule = Py.Import("conductor.common.run.start_workflow_request");
+                dynamic StartWorkflowRequest = requestModule.GetAttr("StartWorkflowRequest");
+                
+                // Create StartWorkflowRequest instance
+                dynamic request = StartWorkflowRequest.Invoke();
+                
+                // Set properties using Python attribute assignment
+                request.name = name;
+                request.version = version;
+                if (!string.IsNullOrEmpty(correlationId))
+                    request.correlation_id = correlationId;
+                
+                return request;
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create Python StartWorkflowRequest: {ex.Message}", ex);
+        }
     }
     
     public void Dispose()

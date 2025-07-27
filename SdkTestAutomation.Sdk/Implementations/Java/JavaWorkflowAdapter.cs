@@ -40,6 +40,7 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     {
         try
         {
+            // Get running workflows with empty strings for name and correlationId, limit 100, offset 0
             var workflows = _client.WorkflowApi.getRunningWorkflow("", "", 100, 0);
             return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(workflows));
         }
@@ -78,15 +79,29 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     
     private dynamic CreateStartWorkflowRequest(string name, int version, string correlationId)
     {
-        var request = Activator.CreateInstance(Type.GetType("com.netflix.conductor.common.run.StartWorkflowRequest, conductor-common"));
-        if (request != null)
+        try
         {
-            ((dynamic)request).setName(name);
-            ((dynamic)request).setVersion(version);
-            if (!string.IsNullOrEmpty(correlationId))
-                ((dynamic)request).setCorrelationId(correlationId);
+            // Based on conductor-oss/java-sdk repository structure
+            var requestType = Type.GetType("com.netflix.conductor.common.run.StartWorkflowRequest, conductor-common");
+            if (requestType == null)
+            {
+                throw new InvalidOperationException("StartWorkflowRequest type not found in conductor-common assembly");
+            }
+            
+            var request = Activator.CreateInstance(requestType);
+            if (request != null)
+            {
+                ((dynamic)request).setName(name);
+                ((dynamic)request).setVersion(version);
+                if (!string.IsNullOrEmpty(correlationId))
+                    ((dynamic)request).setCorrelationId(correlationId);
+            }
+            return request;
         }
-        return request;
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create StartWorkflowRequest: {ex.Message}", ex);
+        }
     }
     
     public void Dispose()

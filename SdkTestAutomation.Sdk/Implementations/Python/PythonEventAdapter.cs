@@ -112,7 +112,8 @@ public class PythonEventAdapter : IEventAdapter
         {
             using (Py.GIL())
             {
-                // Import the EventHandler class
+                // Import the EventHandler class using correct module path
+                // Based on conductor-oss/python-sdk repository structure
                 dynamic eventHandlerModule = Py.Import("conductor.common.metadata.events.event_handler");
                 dynamic EventHandler = eventHandlerModule.GetAttr("EventHandler");
                 

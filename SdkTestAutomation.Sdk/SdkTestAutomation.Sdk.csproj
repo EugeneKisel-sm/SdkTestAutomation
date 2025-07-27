@@ -18,14 +18,14 @@
     <ItemGroup>
         <IkvmReference Include="lib/conductor-client.jar">
             <AssemblyName>conductor-client</AssemblyName>
-            <AssemblyVersion>3.15.0.0</AssemblyVersion>
-            <AssemblyFileVersion>3.15.0.0</AssemblyFileVersion>
+            <AssemblyVersion>4.0.12.0</AssemblyVersion>
+            <AssemblyFileVersion>4.0.12.0</AssemblyFileVersion>
             <Debug>false</Debug>
         </IkvmReference>
         <IkvmReference Include="lib/conductor-common.jar">
             <AssemblyName>conductor-common</AssemblyName>
-            <AssemblyVersion>3.15.0.0</AssemblyVersion>
-            <AssemblyFileVersion>3.15.0.0</AssemblyFileVersion>
+            <AssemblyVersion>4.0.12.0</AssemblyVersion>
+            <AssemblyFileVersion>4.0.12.0</AssemblyFileVersion>
             <Debug>false</Debug>
         </IkvmReference>
     </ItemGroup>
