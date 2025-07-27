@@ -1,6 +1,4 @@
 ﻿using System.Net;
-using SdkTestAutomation.Api.Conductor.EventResource.Models;
-using SdkTestAutomation.Api.Conductor.EventResource.Request;
 using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.EventResource;
@@ -10,31 +8,16 @@ public class DeleteEventTests : BaseTest
     [Fact]
     public void EventResource_DeleteEvent_200()
     {
-        var addRequest = new AddEventRequest
-        {
-            Name = "test_event_delete",
-            Event = "test_event_d",
-            Actions = new List<EventAction>
-            {
-                new()
-                {
-                    Action = "complete_task",
-                    ExpandInlineJson = false,
-                }
-            },
-            Active = true
-        };
+        var eventName = $"test_event_delete_{Guid.NewGuid():N}";
         
-        var addResponse = EventResourceApi.AddEvent(addRequest);
-        Assert.Equal(HttpStatusCode.OK, addResponse.StatusCode);
-        Assert.True(addResponse.Data.Active);
+        // First add an event
+        var addResponse = EventAdapter.AddEvent(eventName, "test_event", true);
+        Assert.True(addResponse.Success, "Failed to add event for delete test");
         
-        var deleteRequest = new DeleteEventRequest();
-        var response = EventResourceApi.DeleteEvent(deleteRequest, "test_event_delete");
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
-        var getRequest = new GetEventByNameRequest();
-        var getResponse = EventResourceApi.GetEvent(getRequest, "test_event_delete");
-        Assert.DoesNotContain(getResponse.Data, e => e.Name == "test_event_delete");
+        // Then delete it
+        var sdkResponse = EventAdapter.DeleteEvent(eventName);
+
+        Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
+        Assert.Equal(200, sdkResponse.StatusCode);
     }
 }

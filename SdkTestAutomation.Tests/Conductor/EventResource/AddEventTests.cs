@@ -11,19 +11,14 @@ public class AddEventTests : BaseTest
     public void EventResource_AddEvent_200()
     {
         var eventName = $"test_event_sdk_{Guid.NewGuid():N}";
-        var request = new AddEventRequest
-        {
-            Name = eventName,
-            Event = "test_event",
-            Actions = new List<EventAction>(),
-            Active = true
-        };
-
-        var sdkResponse = EventResourceAdapter.AddEvent(request);
+        
+        // Test SDK call
+        var sdkResponse = EventAdapter.AddEvent(eventName, "test_event", true);
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
         Assert.Equal(200, sdkResponse.StatusCode);
         
+        // Test API call for comparison
         var apiRequest = new AddEventRequest
         {
             Name = "test_event_add",

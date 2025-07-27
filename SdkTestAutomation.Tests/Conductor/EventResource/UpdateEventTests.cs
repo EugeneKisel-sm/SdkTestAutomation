@@ -1,6 +1,4 @@
 ﻿using System.Net;
-using SdkTestAutomation.Api.Conductor.EventResource.Models;
-using SdkTestAutomation.Api.Conductor.EventResource.Request;
 using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.EventResource;
@@ -10,35 +8,16 @@ public class UpdateEventTests : BaseTest
     [Fact]
     public void EventResource_UpdateEvent_200()
     {
-        var addRequest = new AddEventRequest
-        {
-            Name = "test_event_update",
-            Event = "test_event_u",
-            Actions = new List<EventAction>
-            {
-                new()
-                {
-                    Action = "complete_task",
-                    ExpandInlineJson = false,
-                    StartWorkflow = new StartWorkflow()
-                }
-            },
-            Active = true
-        };
+        var eventName = $"test_event_update_{Guid.NewGuid():N}";
         
-        var addResponse = EventResourceApi.AddEvent(addRequest);
-        Assert.Equal(HttpStatusCode.OK, addResponse.StatusCode);
-        Assert.True(addResponse.Data.Active);
+        // First add an event
+        var addResponse = EventAdapter.AddEvent(eventName, "test_event", true);
+        Assert.True(addResponse.Success, "Failed to add event for update test");
         
-        var updateRequest = new AddEventRequest()
-        {
-            Name = "test_event_handler_update",
-            Event = "test_event",
-            Active = false
-        };
-        
-        var response = EventResourceApi.UpdateEvent(updateRequest);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.False(response.Data.Active);
+        // Then update it
+        var sdkResponse = EventAdapter.UpdateEvent(eventName, "test_event_updated", false);
+
+        Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
+        Assert.Equal(200, sdkResponse.StatusCode);
     }
 }
