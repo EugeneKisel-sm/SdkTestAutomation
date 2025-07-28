@@ -4,6 +4,11 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
+        <!-- Platform-specific defines for cross-platform Go SDK support -->
+        <DefineConstants Condition="'$(OS)' == 'Windows_NT'">$(DefineConstants);WINDOWS</DefineConstants>
+        <DefineConstants Condition="'$(OS)' != 'Windows_NT' And '$(OS)' != 'Unix'">$(DefineConstants);WINDOWS</DefineConstants>
+        <DefineConstants Condition="'$(OS)' == 'Unix' And Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">$(DefineConstants);OSX</DefineConstants>
+        <DefineConstants Condition="'$(OS)' == 'Unix' And !Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">$(DefineConstants);LINUX</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
@@ -32,6 +37,16 @@
 
     <ItemGroup>
         <None Include="Implementations/Go/go-server-template.go">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <!-- Platform-specific Go shared library files for cross-platform support -->
+        <None Include="Implementations/Go/conductor-go-bridge.dll" Condition="'$(OS)' == 'Windows_NT'">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="Implementations/Go/conductor-go-bridge.dylib" Condition="'$(OS)' == 'Unix' And Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="Implementations/Go/conductor-go-bridge.so" Condition="'$(OS)' == 'Unix' And !Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

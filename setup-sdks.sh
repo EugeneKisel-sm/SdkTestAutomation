@@ -503,9 +503,33 @@ setup_go_sdk() {
     local library_name=$(get_library_name "$platform")
     
     export GOOS="$platform"
-    export GOARCH=amd64
     
-    print_status "Building for platform: $platform ($library_name)"
+    # Set correct architecture based on platform
+    if [ "$platform" = "darwin" ]; then
+        # Check if we're on Apple Silicon (ARM64) or Intel (AMD64)
+        if [ "$(uname -m)" = "arm64" ]; then
+            export GOARCH=arm64
+            print_status "Detected Apple Silicon (ARM64) - building for arm64"
+        else
+            export GOARCH=amd64
+            print_status "Detected Intel Mac (AMD64) - building for amd64"
+        fi
+    elif [ "$platform" = "linux" ]; then
+        # Check if we're on ARM64 or AMD64 Linux
+        if [ "$(uname -m)" = "aarch64" ]; then
+            export GOARCH=arm64
+            print_status "Detected ARM64 Linux - building for arm64"
+        else
+            export GOARCH=amd64
+            print_status "Detected AMD64 Linux - building for amd64"
+        fi
+    else
+        # Windows or other platforms
+        export GOARCH=amd64
+        print_status "Building for amd64 (default)"
+    fi
+    
+    print_status "Building for platform: $platform ($library_name) with GOARCH=$GOARCH"
     
     # Build the shared library from the Go directory
     local shared_library_built=false
@@ -749,9 +773,33 @@ build_go_library() {
     local library_name=$(get_library_name "$platform")
     
     export GOOS="$platform"
-    export GOARCH=amd64
     
-    print_status "Building for platform: $platform ($library_name)"
+    # Set correct architecture based on platform
+    if [ "$platform" = "darwin" ]; then
+        # Check if we're on Apple Silicon (ARM64) or Intel (AMD64)
+        if [ "$(uname -m)" = "arm64" ]; then
+            export GOARCH=arm64
+            print_status "Detected Apple Silicon (ARM64) - building for arm64"
+        else
+            export GOARCH=amd64
+            print_status "Detected Intel Mac (AMD64) - building for amd64"
+        fi
+    elif [ "$platform" = "linux" ]; then
+        # Check if we're on ARM64 or AMD64 Linux
+        if [ "$(uname -m)" = "aarch64" ]; then
+            export GOARCH=arm64
+            print_status "Detected ARM64 Linux - building for arm64"
+        else
+            export GOARCH=amd64
+            print_status "Detected AMD64 Linux - building for amd64"
+        fi
+    else
+        # Windows or other platforms
+        export GOARCH=amd64
+        print_status "Building for amd64 (default)"
+    fi
+    
+    print_status "Building for platform: $platform ($library_name) with GOARCH=$GOARCH"
     
     # Change to the Go implementation directory
     if ! safe_cd "SdkTestAutomation.Sdk/Implementations/Go/"; then

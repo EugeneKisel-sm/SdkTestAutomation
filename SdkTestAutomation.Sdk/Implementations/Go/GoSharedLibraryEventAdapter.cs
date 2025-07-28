@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 
@@ -31,18 +32,23 @@ public class GoSharedLibraryEventAdapter : IEventAdapter
             var requestData = new { Name = name, Event = eventType, Active = active };
             var result = _client.ExecuteGoCall("AddEvent", requestData);
             
+            Console.WriteLine($"[C#] Raw Go response: {result}");
+            
             var response = JsonSerializer.Deserialize<GoResponse>(result);
+            Console.WriteLine($"[C#] Parsed response - Success: {response?.Success}, Error: {response?.Error}, Message: {response?.Message}");
+            
             if (response?.Success == true)
             {
                 return SdkResponse.CreateSuccess(result);
             }
             else
             {
-                return SdkResponse.CreateError(response?.Error ?? "Unknown error", 500);
+                return SdkResponse.CreateError(response?.Error ?? response?.Message ?? "Unknown error", 500);
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[C#] Exception in AddEvent: {ex.Message}");
             return SdkResponse.CreateError($"Failed to add event: {ex.Message}", 500);
         }
     }
@@ -88,7 +94,7 @@ public class GoSharedLibraryEventAdapter : IEventAdapter
             }
             else
             {
-                return SdkResponse.CreateError(response?.Error ?? "Unknown error", 500);
+                return SdkResponse.CreateError(response?.Error ?? response?.Message ?? "Unknown error", 500);
             }
         }
         catch (Exception ex)
@@ -127,6 +133,7 @@ public class GoSharedLibraryEventAdapter : IEventAdapter
     
     private class GoResponse
     {
+        [JsonPropertyName("success")]
         public bool Success { get; set; }
         public string Error { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;

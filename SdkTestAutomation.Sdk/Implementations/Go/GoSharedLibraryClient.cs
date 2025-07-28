@@ -9,59 +9,155 @@ public class GoSharedLibraryClient : ISdkClient
 {
     private bool _initialized;
     private string _serverUrl;
-    private IntPtr _clientHandle;
+    private int _clientHandle;
     
-    public bool IsInitialized => _initialized && _clientHandle != IntPtr.Zero;
+    public bool IsInitialized => _initialized && _clientHandle != 0;
     
     // P/Invoke declarations for Go functions
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr CreateConductorClient([MarshalAs(UnmanagedType.LPStr)] string serverUrl);
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern int CreateConductorClient([MarshalAs(UnmanagedType.LPStr)] string serverUrl);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void DestroyConductorClient(IntPtr client);
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern void DestroyConductorClient(int clientId);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr AddEventHandler(IntPtr client, 
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr AddEventHandler(int clientId, 
         [MarshalAs(UnmanagedType.LPStr)] string name,
         [MarshalAs(UnmanagedType.LPStr)] string eventType, 
         bool active);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr GetEvents(IntPtr client);
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr GetEvents(int clientId);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr GetEventByName(IntPtr client, 
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr GetEventByName(int clientId, 
         [MarshalAs(UnmanagedType.LPStr)] string eventName);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr UpdateEvent(IntPtr client,
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr UpdateEvent(int clientId,
         [MarshalAs(UnmanagedType.LPStr)] string name,
         [MarshalAs(UnmanagedType.LPStr)] string eventType, 
         bool active);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr DeleteEvent(IntPtr client, 
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr DeleteEvent(int clientId, 
         [MarshalAs(UnmanagedType.LPStr)] string name);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr StartWorkflow(IntPtr client,
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr StartWorkflow(int clientId,
         [MarshalAs(UnmanagedType.LPStr)] string name,
         int version,
         [MarshalAs(UnmanagedType.LPStr)] string correlationId);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr GetWorkflow(IntPtr client, 
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr GetWorkflow(int clientId, 
         [MarshalAs(UnmanagedType.LPStr)] string workflowId);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr GetWorkflows(IntPtr client);
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr GetWorkflows(int clientId);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr TerminateWorkflow(IntPtr client,
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
+    private static extern IntPtr TerminateWorkflow(int clientId,
         [MarshalAs(UnmanagedType.LPStr)] string workflowId,
         [MarshalAs(UnmanagedType.LPStr)] string reason);
     
-    [DllImport("conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl)]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl)]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
+#endif
     private static extern void FreeString(IntPtr ptr);
     
     public void Initialize(string serverUrl)
@@ -71,7 +167,7 @@ public class GoSharedLibraryClient : ISdkClient
             _serverUrl = serverUrl;
             _clientHandle = CreateConductorClient(serverUrl);
             
-            if (_clientHandle == IntPtr.Zero)
+            if (_clientHandle == 0)
             {
                 throw new InvalidOperationException("Failed to create Go conductor client");
             }
@@ -93,12 +189,14 @@ public class GoSharedLibraryClient : ISdkClient
         
         try
         {
+            Console.WriteLine($"[C#] ExecuteGoCall: {method} with client ID: {_clientHandle}");
             IntPtr resultPtr = IntPtr.Zero;
             
             switch (method)
             {
                 case "AddEvent":
                     var addEventData = JsonSerializer.Deserialize<AddEventRequest>(JsonSerializer.Serialize(requestData));
+                    Console.WriteLine($"[C#] Calling AddEventHandler with name: {addEventData.Name}, event: {addEventData.Event}, active: {addEventData.Active}");
                     resultPtr = AddEventHandler(_clientHandle, addEventData.Name, addEventData.Event, addEventData.Active);
                     break;
                     
@@ -146,10 +244,12 @@ public class GoSharedLibraryClient : ISdkClient
             
             if (resultPtr == IntPtr.Zero)
             {
+                Console.WriteLine($"[C#] ERROR: Go call returned null pointer for method: {method}");
                 throw new InvalidOperationException($"Go call failed for method: {method}");
             }
             
             var result = Marshal.PtrToStringAnsi(resultPtr);
+            Console.WriteLine($"[C#] Go call result: {result}");
             FreeString(resultPtr);
             
             return result ?? "{}";
@@ -162,15 +262,13 @@ public class GoSharedLibraryClient : ISdkClient
     
     public void Dispose()
     {
-        if (_clientHandle != IntPtr.Zero)
+        if (_clientHandle != 0)
         {
             DestroyConductorClient(_clientHandle);
-            _clientHandle = IntPtr.Zero;
+            _clientHandle = 0;
         }
-        _initialized = false;
     }
     
-    // Request models for type safety
     private class AddEventRequest
     {
         public string Name { get; set; } = string.Empty;

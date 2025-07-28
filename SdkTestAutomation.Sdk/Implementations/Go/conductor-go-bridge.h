@@ -82,17 +82,17 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern void* CreateConductorClient(char* serverUrl);
-extern void DestroyConductorClient(void* clientPtr);
-extern char* AddEventHandler(void* clientPtr, char* name, char* eventType, int active);
-extern char* GetEvents(void* clientPtr);
-extern char* GetEventByName(void* clientPtr, char* eventName);
-extern char* UpdateEvent(void* clientPtr, char* name, char* eventType, int active);
-extern char* DeleteEvent(void* clientPtr, char* name);
-extern char* StartWorkflow(void* clientPtr, char* name, int version, char* correlationId);
-extern char* GetWorkflow(void* clientPtr, char* workflowId);
-extern char* GetWorkflows(void* clientPtr);
-extern char* TerminateWorkflow(void* clientPtr, char* workflowId, char* reason);
+extern int CreateConductorClient(char* serverUrl);
+extern void DestroyConductorClient(int clientID);
+extern char* AddEventHandler(int clientID, char* name, char* eventType, int active);
+extern char* GetEvents(int clientID);
+extern char* GetEventByName(int clientID, char* eventName);
+extern char* UpdateEvent(int clientID, char* name, char* eventType, int active);
+extern char* DeleteEvent(int clientID, char* name);
+extern char* StartWorkflow(int clientID, char* name, int version, char* correlationId);
+extern char* GetWorkflow(int clientID, char* workflowId);
+extern char* GetWorkflows(int clientID);
+extern char* TerminateWorkflow(int clientID, char* workflowId, char* reason);
 extern void FreeString(char* ptr);
 
 #ifdef __cplusplus

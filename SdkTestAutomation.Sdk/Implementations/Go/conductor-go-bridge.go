@@ -11,6 +11,7 @@ import (
     "context"
     "encoding/json"
     "fmt"
+    "log"
     "os"
     "unsafe"
     
@@ -18,56 +19,89 @@ import (
     "github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// Global client storage
-var clients = make(map[unsafe.Pointer]*client.APIClient)
+// Global client storage with ID-based lookup
+var clients = make(map[int]*client.APIClient)
+var nextClientID = 1
 
 //export CreateConductorClient
-func CreateConductorClient(serverUrl *C.char) unsafe.Pointer {
+func CreateConductorClient(serverUrl *C.char) C.int {
     goServerUrl := C.GoString(serverUrl)
+    log.Printf("[GO] CreateConductorClient called with server URL: %s", goServerUrl)
     
     // Set environment variable for the client
     os.Setenv("CONDUCTOR_SERVER_URL", goServerUrl)
+    log.Printf("[GO] Set CONDUCTOR_SERVER_URL environment variable")
     
     // Create API client
+    log.Printf("[GO] Creating API client...")
     apiClient := client.NewAPIClientFromEnv()
+    log.Printf("[GO] API client created successfully")
     
-    // Store API client reference
-    clientPtr := unsafe.Pointer(apiClient)
-    clients[clientPtr] = apiClient
+    // Store API client reference with ID
+    clientID := nextClientID
+    nextClientID++
+    clients[clientID] = apiClient
+    log.Printf("[GO] Stored client with ID: %d", clientID)
     
-    return clientPtr
+    log.Printf("[GO] CreateConductorClient completed successfully, returning client ID: %d", clientID)
+    return C.int(clientID)
 }
 
 //export DestroyConductorClient
-func DestroyConductorClient(clientPtr unsafe.Pointer) {
-    if _, exists := clients[clientPtr]; exists {
+func DestroyConductorClient(clientID C.int) {
+    log.Printf("[GO] DestroyConductorClient called with client ID: %d", clientID)
+    if _, exists := clients[int(clientID)]; exists {
         // Clean up client
-        delete(clients, clientPtr)
+        delete(clients, int(clientID))
+        log.Printf("[GO] Successfully destroyed client with ID: %d", clientID)
         // Note: Go garbage collector will handle the rest 
+    } else {
+        log.Printf("[GO] WARNING: Client with ID %d not found for destruction", clientID)
     }
 }
 
 //export AddEventHandler
-func AddEventHandler(clientPtr unsafe.Pointer, name *C.char, eventType *C.char, active C.int) *C.char {
-    apiClient, exists := clients[clientPtr]
+func AddEventHandler(clientID C.int, name *C.char, eventType *C.char, active C.int) *C.char {
+    log.Printf("[GO] AddEventHandler called with client ID: %d, name: %s, eventType: %s, active: %d", 
+        clientID, C.GoString(name), C.GoString(eventType), active)
+    
+    apiClient, exists := clients[int(clientID)]
     if !exists {
+        log.Printf("[GO] ERROR: Client with ID %d not found", clientID)
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
+    log.Printf("[GO] Found client with ID: %d", clientID)
     
     goName := C.GoString(name)
     goEventType := C.GoString(eventType)
     goActive := active != 0
     
+    log.Printf("[GO] Creating event handler with name: %s, eventType: %s, active: %v", 
+        goName, goEventType, goActive)
+    
+    // Create a default action to satisfy Conductor's validation requirements
+    defaultAction := model.Action{
+        Action: "start_workflow",
+        StartWorkflow: &model.StartWorkflow{
+            Name:    "test_workflow",
+            Version: 1,
+        },
+    }
+    
     eventHandler := &model.EventHandler{
         Name:   goName,
         Event:  goEventType,
         Active: goActive,
-        Actions: []model.Action{},
+        Actions: []model.Action{defaultAction},
     }
     
+    log.Printf("[GO] Creating event handler client...")
     eventClient := client.NewEventHandlerClient(apiClient)
+    log.Printf("[GO] Calling AddEventHandler on conductor server...")
+    
     _, err := eventClient.AddEventHandler(context.Background(), *eventHandler)
     if err != nil {
+        log.Printf("[GO] ERROR: AddEventHandler failed: %v", err)
         response := map[string]interface{}{
             "success": false,
             "error":   err.Error(),
@@ -76,6 +110,7 @@ func AddEventHandler(clientPtr unsafe.Pointer, name *C.char, eventType *C.char, 
         return C.CString(string(jsonResponse))
     }
     
+    log.Printf("[GO] AddEventHandler completed successfully")
     response := map[string]interface{}{
         "success": true,
         "message": "Event handler registered successfully",
@@ -85,8 +120,8 @@ func AddEventHandler(clientPtr unsafe.Pointer, name *C.char, eventType *C.char, 
 }
 
 //export GetEvents
-func GetEvents(clientPtr unsafe.Pointer) *C.char {
-    apiClient, exists := clients[clientPtr]
+func GetEvents(clientID C.int) *C.char {
+    apiClient, exists := clients[int(clientID)]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -107,8 +142,8 @@ func GetEvents(clientPtr unsafe.Pointer) *C.char {
 }
 
 //export GetEventByName
-func GetEventByName(clientPtr unsafe.Pointer, eventName *C.char) *C.char {
-    apiClient, exists := clients[clientPtr]
+func GetEventByName(clientID C.int, eventName *C.char) *C.char {
+    apiClient, exists := clients[int(clientID)]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -130,8 +165,8 @@ func GetEventByName(clientPtr unsafe.Pointer, eventName *C.char) *C.char {
 }
 
 //export UpdateEvent
-func UpdateEvent(clientPtr unsafe.Pointer, name *C.char, eventType *C.char, active C.int) *C.char {
-    apiClient, exists := clients[clientPtr]
+func UpdateEvent(clientID C.int, name *C.char, eventType *C.char, active C.int) *C.char {
+    apiClient, exists := clients[int(clientID)]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -140,11 +175,20 @@ func UpdateEvent(clientPtr unsafe.Pointer, name *C.char, eventType *C.char, acti
     goEventType := C.GoString(eventType)
     goActive := active != 0
     
+    // Create a default action to satisfy Conductor's validation requirements
+    defaultAction := model.Action{
+        Action: "start_workflow",
+        StartWorkflow: &model.StartWorkflow{
+            Name:    "test_workflow",
+            Version: 1,
+        },
+    }
+    
     eventHandler := &model.EventHandler{
         Name:   goName,
         Event:  goEventType,
         Active: goActive,
-        Actions: []model.Action{},
+        Actions: []model.Action{defaultAction},
     }
     
     eventClient := client.NewEventHandlerClient(apiClient)
@@ -167,8 +211,8 @@ func UpdateEvent(clientPtr unsafe.Pointer, name *C.char, eventType *C.char, acti
 }
 
 //export DeleteEvent
-func DeleteEvent(clientPtr unsafe.Pointer, name *C.char) *C.char {
-    apiClient, exists := clients[clientPtr]
+func DeleteEvent(clientID C.int, name *C.char) *C.char {
+    apiClient, exists := clients[int(clientID)]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -194,8 +238,8 @@ func DeleteEvent(clientPtr unsafe.Pointer, name *C.char) *C.char {
 }
 
 //export StartWorkflow
-func StartWorkflow(clientPtr unsafe.Pointer, name *C.char, version C.int, correlationId *C.char) *C.char {
-    apiClient, exists := clients[clientPtr]
+func StartWorkflow(clientID C.int, name *C.char, version C.int, correlationId *C.char) *C.char {
+    apiClient, exists := clients[int(clientID)]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -230,8 +274,8 @@ func StartWorkflow(clientPtr unsafe.Pointer, name *C.char, version C.int, correl
 }
 
 //export GetWorkflow
-func GetWorkflow(clientPtr unsafe.Pointer, workflowId *C.char) *C.char {
-    apiClient, exists := clients[clientPtr]
+func GetWorkflow(clientID C.int, workflowId *C.char) *C.char {
+    apiClient, exists := clients[int(clientID)]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -253,8 +297,8 @@ func GetWorkflow(clientPtr unsafe.Pointer, workflowId *C.char) *C.char {
 }
 
 //export GetWorkflows
-func GetWorkflows(clientPtr unsafe.Pointer) *C.char {
-    apiClient, exists := clients[clientPtr]
+func GetWorkflows(clientID C.int) *C.char {
+    apiClient, exists := clients[int(clientID)]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -275,8 +319,8 @@ func GetWorkflows(clientPtr unsafe.Pointer) *C.char {
 }
 
 //export TerminateWorkflow
-func TerminateWorkflow(clientPtr unsafe.Pointer, workflowId *C.char, reason *C.char) *C.char {
-    apiClient, exists := clients[clientPtr]
+func TerminateWorkflow(clientID C.int, workflowId *C.char, reason *C.char) *C.char {
+    apiClient, exists := clients[int(clientID)]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
