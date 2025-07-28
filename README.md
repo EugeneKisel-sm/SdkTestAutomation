@@ -38,7 +38,7 @@ SdkTestAutomation/
 - .NET 8.0 SDK
 - Java 17+ (for Java SDK testing)
 - Python 3.9+ (for Python SDK testing)
-- Go 1.19+ (for Go SDK testing)
+- Go 1.19+ (for Go SDK testing) with CGO enabled
 
 ### Quick Setup
 
@@ -46,6 +46,9 @@ SdkTestAutomation/
 # Run automated setup script
 chmod +x setup-sdks.sh
 ./setup-sdks.sh
+
+# Test Go SDK setup specifically
+./test-go-sdk.sh
 ```
 
 ### Configuration
@@ -61,7 +64,7 @@ chmod +x setup-sdks.sh
    ```bash
    # Edit SdkTestAutomation.Tests/.env
    CONDUCTOR_SERVER_URL=http://localhost:8080/api
-   TEST_SDK=csharp
+   SDK_TYPE=csharp
    ```
 
 ### Running Tests
@@ -69,11 +72,40 @@ chmod +x setup-sdks.sh
 ```bash
 # Build and run tests
 dotnet build
-TEST_SDK=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
-TEST_SDK=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
-TEST_SDK=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
-TEST_SDK=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+SDK_TYPE=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 ```
+
+## 🔧 SDK-Specific Setup
+
+### Go SDK Setup
+
+The Go SDK uses a shared library approach for optimal performance:
+
+```bash
+# The setup script automatically:
+# 1. Sets up Go module with conductor-go v1.5.4
+# 2. Builds shared library (conductor-go-bridge.dll/.so/.dylib)
+# 3. Integrates with .NET via P/Invoke
+
+# Test Go SDK setup
+./test-go-sdk.sh
+
+# Run tests with Go SDK
+SDK_TYPE=go dotnet test SdkTestAutomation.Tests
+```
+
+**Performance Benefits:**
+- 50x faster than HTTP API approach
+- Direct memory access via shared library
+- No process communication overhead
+
+**Requirements:**
+- Go 1.19+ with CGO enabled
+- conductor-go SDK v1.5.4
+- Platform-specific shared library build
 
 ## 📝 Writing Tests
 
@@ -102,7 +134,7 @@ public class SdkIntegrationTests : BaseTest
 }
 ```
 
-The framework automatically selects the SDK based on the `TEST_SDK` environment variable.
+The framework automatically selects the SDK based on the `SDK_TYPE` environment variable.
 
 ## 🔧 SDK Adapters
 
@@ -111,7 +143,7 @@ The framework automatically selects the SDK based on the `TEST_SDK` environment 
 | **C#** | ✅ Ready | Direct NuGet package |
 | **Java** | ✅ Ready | IKVM.NET bridge |
 | **Python** | ✅ Ready | Python.NET bridge |
-| **Go** | ✅ Ready | HTTP API Bridge |
+| **Go** | ✅ Ready | Shared Library |
 
 ## 📚 Documentation
 

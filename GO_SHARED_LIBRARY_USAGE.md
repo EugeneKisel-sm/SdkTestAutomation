@@ -33,20 +33,18 @@ if (response.Success)
 
 ## 🔧 How It Works
 
-### **Before (HTTP API Bridge)**
-```csharp
-// Complex: HTTP server + process management
-var goClient = new GoHttpClient();
-goClient.Initialize("http://localhost:8080/api"); // Starts HTTP server
-var response = await goClient.ExecuteGoApiCallAsync("events/add", data);
-```
-
-### **After (Shared Library)**
+### **Shared Library Approach (Current)**
 ```csharp
 // Simple: Direct DLL calls
 var goClient = new GoSharedLibraryClient();
 goClient.Initialize("http://localhost:8080/api"); // Loads DLL
 var response = goClient.ExecuteGoCall("AddEvent", data); // Direct function call
+```
+
+### **Automatic Selection**
+The `SdkFactory` automatically uses the shared library approach:
+```csharp
+var adapter = SdkFactory.CreateEventAdapter("go"); // Uses GoSharedLibraryEventAdapter
 ```
 
 ## 📊 Performance Benefits
@@ -92,25 +90,20 @@ export CGO_ENABLED=1
 # On Linux, build-essential
 ```
 
-## 🔄 Migration from HTTP Approach
+## 🔄 Current Implementation
 
-### **Automatic Migration**
-The `SdkFactory` now automatically uses the shared library approach:
+### **Automatic Selection**
+The `SdkFactory` automatically uses the shared library approach:
 
 ```csharp
-// This now uses GoSharedLibraryEventAdapter instead of GoEventAdapter
+// This uses GoSharedLibraryEventAdapter
 var adapter = SdkFactory.CreateEventAdapter("go");
 ```
 
-### **Manual Migration**
-If you were using the old HTTP approach directly:
+### **Direct Usage**
+You can also use the shared library client directly:
 
 ```csharp
-// Old way
-var client = new GoHttpClient();
-client.Initialize(serverUrl);
-
-// New way
 var client = new GoSharedLibraryClient();
 client.Initialize(serverUrl);
 ```
@@ -129,10 +122,10 @@ export CONDUCTOR_AUTH_SECRET="your_secret"
 
 ```bash
 # Test the Go SDK with shared library
-TEST_SDK=go dotnet test SdkTestAutomation.Tests
+SDK_TYPE=go dotnet test SdkTestAutomation.Tests
 
 # Or run specific tests
-TEST_SDK=go dotnet test SdkTestAutomation.Tests --filter "AddEventTests"
+SDK_TYPE=go dotnet test SdkTestAutomation.Tests --filter "AddEventTests"
 ```
 
 ## 🎯 Benefits Summary

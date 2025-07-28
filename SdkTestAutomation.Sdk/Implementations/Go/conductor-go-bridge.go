@@ -5,25 +5,13 @@ package main
 #cgo LDFLAGS: -L${SRCDIR} -lstdc++
 #include <stdlib.h>
 #include <stdint.h>
-
-// C function declarations
-extern void* CreateConductorClient(const char* serverUrl);
-extern void DestroyConductorClient(void* client);
-extern char* AddEventHandler(void* client, const char* name, const char* eventType, int active);
-extern char* GetEvents(void* client);
-extern char* GetEventByName(void* client, const char* eventName);
-extern char* UpdateEvent(void* client, const char* name, const char* eventType, int active);
-extern char* DeleteEvent(void* client, const char* name);
-extern char* StartWorkflow(void* client, const char* name, int version, const char* correlationId);
-extern char* GetWorkflow(void* client, const char* workflowId);
-extern char* GetWorkflows(void* client);
-extern char* TerminateWorkflow(void* client, const char* workflowId, const char* reason);
-extern void FreeString(char* ptr);
 */
 import "C"
 import (
+    "context"
     "encoding/json"
     "fmt"
+    "os"
     "unsafe"
     
     "github.com/conductor-sdk/conductor-go/sdk/client"
@@ -37,10 +25,13 @@ var clients = make(map[unsafe.Pointer]*client.APIClient)
 func CreateConductorClient(serverUrl *C.char) unsafe.Pointer {
     goServerUrl := C.GoString(serverUrl)
     
+    // Set environment variable for the client
+    os.Setenv("CONDUCTOR_SERVER_URL", goServerUrl)
+    
     // Create API client
     apiClient := client.NewAPIClientFromEnv()
     
-    // Store client reference
+    // Store API client reference
     clientPtr := unsafe.Pointer(apiClient)
     clients[clientPtr] = apiClient
     
@@ -48,17 +39,17 @@ func CreateConductorClient(serverUrl *C.char) unsafe.Pointer {
 }
 
 //export DestroyConductorClient
-func DestroyConductorClient(client unsafe.Pointer) {
-    if apiClient, exists := clients[client]; exists {
+func DestroyConductorClient(clientPtr unsafe.Pointer) {
+    if _, exists := clients[clientPtr]; exists {
         // Clean up client
-        delete(clients, client)
-        // Note: Go garbage collector will handle the rest
+        delete(clients, clientPtr)
+        // Note: Go garbage collector will handle the rest 
     }
 }
 
 //export AddEventHandler
-func AddEventHandler(client unsafe.Pointer, name *C.char, eventType *C.char, active C.int) *C.char {
-    apiClient, exists := clients[client]
+func AddEventHandler(clientPtr unsafe.Pointer, name *C.char, eventType *C.char, active C.int) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -71,10 +62,11 @@ func AddEventHandler(client unsafe.Pointer, name *C.char, eventType *C.char, act
         Name:   goName,
         Event:  goEventType,
         Active: goActive,
-        Actions: []model.EventAction{},
+        Actions: []model.Action{},
     }
     
-    err := apiClient.EventResourceApi.RegisterEventHandler(eventHandler)
+    eventClient := client.NewEventHandlerClient(apiClient)
+    _, err := eventClient.AddEventHandler(context.Background(), *eventHandler)
     if err != nil {
         response := map[string]interface{}{
             "success": false,
@@ -93,13 +85,14 @@ func AddEventHandler(client unsafe.Pointer, name *C.char, eventType *C.char, act
 }
 
 //export GetEvents
-func GetEvents(client unsafe.Pointer) *C.char {
-    apiClient, exists := clients[client]
+func GetEvents(clientPtr unsafe.Pointer) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
     
-    events, err := apiClient.EventResourceApi.GetEventHandlers("", false)
+    eventClient := client.NewEventHandlerClient(apiClient)
+    events, _, err := eventClient.GetEventHandlers(context.Background())
     if err != nil {
         response := map[string]interface{}{
             "success": false,
@@ -114,14 +107,15 @@ func GetEvents(client unsafe.Pointer) *C.char {
 }
 
 //export GetEventByName
-func GetEventByName(client unsafe.Pointer, eventName *C.char) *C.char {
-    apiClient, exists := clients[client]
+func GetEventByName(clientPtr unsafe.Pointer, eventName *C.char) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
     
     goEventName := C.GoString(eventName)
-    events, err := apiClient.EventResourceApi.GetEventHandlers(goEventName, false)
+    eventClient := client.NewEventHandlerClient(apiClient)
+    events, _, err := eventClient.GetEventHandlersForEvent(context.Background(), goEventName, nil)
     if err != nil {
         response := map[string]interface{}{
             "success": false,
@@ -136,8 +130,8 @@ func GetEventByName(client unsafe.Pointer, eventName *C.char) *C.char {
 }
 
 //export UpdateEvent
-func UpdateEvent(client unsafe.Pointer, name *C.char, eventType *C.char, active C.int) *C.char {
-    apiClient, exists := clients[client]
+func UpdateEvent(clientPtr unsafe.Pointer, name *C.char, eventType *C.char, active C.int) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -150,10 +144,11 @@ func UpdateEvent(client unsafe.Pointer, name *C.char, eventType *C.char, active 
         Name:   goName,
         Event:  goEventType,
         Active: goActive,
-        Actions: []model.EventAction{},
+        Actions: []model.Action{},
     }
     
-    err := apiClient.EventResourceApi.UpdateEventHandler(eventHandler)
+    eventClient := client.NewEventHandlerClient(apiClient)
+    _, err := eventClient.UpdateEventHandler(context.Background(), *eventHandler)
     if err != nil {
         response := map[string]interface{}{
             "success": false,
@@ -172,14 +167,15 @@ func UpdateEvent(client unsafe.Pointer, name *C.char, eventType *C.char, active 
 }
 
 //export DeleteEvent
-func DeleteEvent(client unsafe.Pointer, name *C.char) *C.char {
-    apiClient, exists := clients[client]
+func DeleteEvent(clientPtr unsafe.Pointer, name *C.char) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
     
     goName := C.GoString(name)
-    err := apiClient.EventResourceApi.UnregisterEventHandler(goName)
+    eventClient := client.NewEventHandlerClient(apiClient)
+    _, err := eventClient.RemoveEventHandler(context.Background(), goName)
     if err != nil {
         response := map[string]interface{}{
             "success": false,
@@ -198,8 +194,8 @@ func DeleteEvent(client unsafe.Pointer, name *C.char) *C.char {
 }
 
 //export StartWorkflow
-func StartWorkflow(client unsafe.Pointer, name *C.char, version C.int, correlationId *C.char) *C.char {
-    apiClient, exists := clients[client]
+func StartWorkflow(clientPtr unsafe.Pointer, name *C.char, version C.int, correlationId *C.char) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
@@ -208,13 +204,14 @@ func StartWorkflow(client unsafe.Pointer, name *C.char, version C.int, correlati
     goVersion := int(version)
     goCorrelationId := C.GoString(correlationId)
     
-    startRequest := &model.StartWorkflowRequest{
-        Name:          goName,
-        Version:       goVersion,
-        CorrelationId: goCorrelationId,
+    startRequest := map[string]interface{}{
+        "name":          goName,
+        "version":       goVersion,
+        "correlationId": goCorrelationId,
     }
     
-    workflowId, err := apiClient.WorkflowResourceApi.StartWorkflow(startRequest)
+    workflowClient := client.NewWorkflowClient(apiClient)
+    workflowId, _, err := workflowClient.StartWorkflow(context.Background(), startRequest, goName, nil)
     if err != nil {
         response := map[string]interface{}{
             "success": false,
@@ -233,14 +230,15 @@ func StartWorkflow(client unsafe.Pointer, name *C.char, version C.int, correlati
 }
 
 //export GetWorkflow
-func GetWorkflow(client unsafe.Pointer, workflowId *C.char) *C.char {
-    apiClient, exists := clients[client]
+func GetWorkflow(clientPtr unsafe.Pointer, workflowId *C.char) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
     
     goWorkflowId := C.GoString(workflowId)
-    workflow, err := apiClient.WorkflowResourceApi.GetExecutionStatus(goWorkflowId)
+    workflowClient := client.NewWorkflowClient(apiClient)
+    workflow, _, err := workflowClient.GetExecutionStatus(context.Background(), goWorkflowId, nil)
     if err != nil {
         response := map[string]interface{}{
             "success": false,
@@ -255,13 +253,14 @@ func GetWorkflow(client unsafe.Pointer, workflowId *C.char) *C.char {
 }
 
 //export GetWorkflows
-func GetWorkflows(client unsafe.Pointer) *C.char {
-    apiClient, exists := clients[client]
+func GetWorkflows(clientPtr unsafe.Pointer) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
     
-    workflows, err := apiClient.WorkflowResourceApi.GetRunningWorkflow("", "", 100, 0)
+    workflowClient := client.NewWorkflowClient(apiClient)
+    workflows, _, err := workflowClient.GetRunningWorkflow(context.Background(), "", nil)
     if err != nil {
         response := map[string]interface{}{
             "success": false,
@@ -276,16 +275,17 @@ func GetWorkflows(client unsafe.Pointer) *C.char {
 }
 
 //export TerminateWorkflow
-func TerminateWorkflow(client unsafe.Pointer, workflowId *C.char, reason *C.char) *C.char {
-    apiClient, exists := clients[client]
+func TerminateWorkflow(clientPtr unsafe.Pointer, workflowId *C.char, reason *C.char) *C.char {
+    apiClient, exists := clients[clientPtr]
     if !exists {
         return C.CString(`{"success":false,"error":"Client not found"}`)
     }
     
     goWorkflowId := C.GoString(workflowId)
-    goReason := C.GoString(reason)
+    _ = C.GoString(reason) // Reason parameter is available but not used in current API
     
-    err := apiClient.WorkflowResourceApi.Terminate(goWorkflowId, goReason)
+    workflowClient := client.NewWorkflowClient(apiClient)
+    _, err := workflowClient.Terminate(context.Background(), goWorkflowId, nil)
     if err != nil {
         response := map[string]interface{}{
             "success": false,

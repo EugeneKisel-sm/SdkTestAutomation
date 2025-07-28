@@ -20,7 +20,7 @@ public static class TestConfig
         ApiUrl = GetRequired("CONDUCTOR_SERVER_URL");
         Key = GetOptional("CONDUCTOR_AUTH_KEY", "");
         Secret = GetOptional("CONDUCTOR_AUTH_SECRET", "");
-        SdkType = GetRequired("TEST_SDK");
+        SdkType = GetRequired("SDK_TYPE");
     }
 
     private static string GetRequired(string name)

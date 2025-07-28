@@ -7,7 +7,7 @@
 | **C#** | ✅ Ready | Direct NuGet | `conductor-csharp` v1.1.3 |
 | **Java** | ✅ Ready | IKVM.NET Bridge | `conductor-client.jar` + `conductor-common.jar` |
 | **Python** | ✅ Ready | Python.NET Bridge | `conductor-python` |
-| **Go** | ✅ Ready | Process Communication | `conductor-go` |
+| **Go** | ✅ Ready | Shared Library | `conductor-go` |
 
 ## 🚀 Quick Start
 
@@ -16,10 +16,10 @@
 ./setup-sdks.sh
 
 # Test each SDK
-TEST_SDK=csharp dotnet test SdkTestAutomation.Tests
-TEST_SDK=java dotnet test SdkTestAutomation.Tests
-TEST_SDK=python dotnet test SdkTestAutomation.Tests
-TEST_SDK=go dotnet test SdkTestAutomation.Tests
+SDK_TYPE=csharp dotnet test SdkTestAutomation.Tests
+SDK_TYPE=java dotnet test SdkTestAutomation.Tests
+SDK_TYPE=python dotnet test SdkTestAutomation.Tests
+SDK_TYPE=go dotnet test SdkTestAutomation.Tests
 ```
 
 ## 🔧 Detailed Setup
@@ -40,23 +40,23 @@ TEST_SDK=go dotnet test SdkTestAutomation.Tests
 - **Method**: Python.NET bridge for .NET ↔ Python communication
 
 ### Go SDK
-- **Prerequisites**: Go 1.19+, go modules
+- **Prerequisites**: Go 1.19+, go modules, CGO enabled
 - **Package**: `conductor-go` from GitHub
-- **Method**: HTTP API Bridge for .NET ↔ Go communication
-- **Dependencies**: `gorilla/mux` for HTTP routing
+- **Method**: Shared Library for direct .NET ↔ Go communication
+- **Dependencies**: `conductor-go`, `gorilla/mux` for shared library
 
 ## 🧪 Testing
 
 ```bash
 # Test individual SDKs
-TEST_SDK=csharp dotnet test SdkTestAutomation.Tests
-TEST_SDK=java dotnet test SdkTestAutomation.Tests
-TEST_SDK=python dotnet test SdkTestAutomation.Tests
-TEST_SDK=go dotnet test SdkTestAutomation.Tests
+SDK_TYPE=csharp dotnet test SdkTestAutomation.Tests
+SDK_TYPE=java dotnet test SdkTestAutomation.Tests
+SDK_TYPE=python dotnet test SdkTestAutomation.Tests
+SDK_TYPE=go dotnet test SdkTestAutomation.Tests
 
 # Test all SDKs
 for sdk in csharp java python go; do
-    TEST_SDK=$sdk dotnet test SdkTestAutomation.Tests
+    SDK_TYPE=$sdk dotnet test SdkTestAutomation.Tests
 done
 ```
 
