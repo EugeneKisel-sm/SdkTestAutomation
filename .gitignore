@@ -8,6 +8,19 @@
 # .NET build output
 bin/
 obj/
+*.dll
+*.exe
+*.pdb
+*.cache
+
+# Test results and reports
+TestResults/
+*.trx
+*.html
+*.xml
+coverage/
+*.coverage
+*.coveragexml
 
 # IDE files
 .idea/
@@ -32,3 +45,49 @@ obj/
 
 # macOS
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+conductor-python-env/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.coverage
+.coverage.*
+
+# Go
+go.mod
+go.sum
+conductor-go-bridge.dll
+conductor-go-bridge.so
+conductor-go-bridge.dylib
+
+# Java
+*.class
+*.jar
+!SdkTestAutomation.Sdk/lib/*.jar
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+*.swp
+*.swo
+*~
+
+# Node.js (for test reporting)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+.dockerignore
