@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "log"
     "net/http"
+    "os"
     
     "github.com/conductor-sdk/conductor-go/sdk/client"
     "github.com/conductor-sdk/conductor-go/sdk/model"
@@ -35,9 +36,15 @@ func main() {
     r.HandleFunc("/workflows/start", startWorkflowHandler).Methods("POST")
     r.HandleFunc("/workflows/terminate", terminateWorkflowHandler).Methods("POST")
     
+    // Get port from environment or use default
+    port := os.Getenv("GO_API_SERVER_PORT")
+    if port == "" {
+        port = "8081"
+    }
+    
     // Start server
-    log.Println("Starting Go API server on :8081")
-    log.Fatal(http.ListenAndServe(":8081", r))
+    log.Printf("Starting Go API server on :%s", port)
+    log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

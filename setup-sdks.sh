@@ -861,7 +861,7 @@ create_env_file() {
     if [ ! -f "$env_file" ]; then
         cat > "$env_file" << EOF
 # Conductor Server Configuration
-CONDUCTOR_SERVER_URL=http://localhost:8080/api
+CONDUCTOR_SERVER_URL=\${CONDUCTOR_SERVER_URL:-http://localhost:8080/api}
 
 # SDK Selection (csharp, java, python, go)
 SDK_TYPE=csharp

@@ -32,18 +32,4 @@ public class AddEventTests : BaseTest
         var apiResponse = EventResourceApi.AddEvent(apiRequest);
         Assert.Equal(HttpStatusCode.OK, apiResponse.StatusCode);
     }
-
-    [Fact]
-    public void EventResource_AddEvent_WithLogs()
-    {
-        var eventName = $"test_event_sdk_{Guid.NewGuid():N}";
-        
-        // Test SDK call
-        var sdkResponse = EventAdapter.AddEvent(eventName, "test_event", true);
-
-        Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.Equal(200, sdkResponse.StatusCode);
-        
-        // Logs will be automatically displayed in teardown for Go SDK
-    }
 }

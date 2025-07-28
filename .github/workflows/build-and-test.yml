@@ -11,7 +11,7 @@ concurrency:
 env:
   DOTNET_VERSION: '8.0.x'
   CONFIGURATION: Release
-  CONDUCTOR_SERVER_URL: "http://localhost:8080/api"
+  CONDUCTOR_SERVER_URL: ${{ vars.CONDUCTOR_SERVER_URL || 'http://localhost:8080/api' }}
   CONDUCTOR_COMPOSE_FILE: conductor/docker/docker-compose.yaml
   CONDUCTOR_TIMEOUT: 200
   CONDUCTOR_CHECK_INTERVAL: 30

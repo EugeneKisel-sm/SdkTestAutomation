@@ -84,11 +84,21 @@ The setup script automatically:
 
 1. **Environment File**: The script creates `SdkTestAutomation.Tests/.env` with:
    ```bash
+   # Conductor Server Configuration (configurable)
    CONDUCTOR_SERVER_URL=http://localhost:8080/api
+   
+   # SDK Selection (csharp, java, python, go)
    SDK_TYPE=csharp
+   
+   # Go SDK Configuration (optional)
+   GO_API_SERVER_PORT=8081
    ```
 
-2. **Start Conductor Server**: Ensure your Conductor server is running
+2. **Configurable URLs**: All URLs are configurable via environment variables:
+   - `CONDUCTOR_SERVER_URL`: Main Conductor server URL (default: `http://localhost:8080/api`)
+   - `GO_API_SERVER_PORT`: Go HTTP API server port (default: `8081`)
+
+3. **Start Conductor Server**: Ensure your Conductor server is running
 
 ### Running Tests
 
@@ -104,6 +114,10 @@ SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 
 # Run specific test methods
 SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests -method "*AddEventTests*"
+
+# Run tests with different Conductor server URLs
+CONDUCTOR_SERVER_URL=http://my-server:8080/api SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+CONDUCTOR_SERVER_URL=https://conductor.example.com/api SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 ```
 
 ## 🔧 SDK Integration Details

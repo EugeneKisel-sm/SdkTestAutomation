@@ -48,6 +48,8 @@ func (l logCapture) Write(p []byte) (n int, err error) {
 
 // Initialize custom logger
 func init() {
+    // Configure logger to not include timestamps (we'll add our own)
+    log.SetFlags(0)
     log.SetOutput(logCapture{})
 }
 

@@ -25,13 +25,16 @@ public class GoHttpClient : ISdkClient
         {
             _serverUrl = serverUrl;
             
+            // Get Go API server port from environment or use default
+            var goApiPort = Environment.GetEnvironmentVariable("GO_API_SERVER_PORT") ?? "8081";
+            _goApiUrl = $"http://localhost:{goApiPort}";
+            
             // Start Go API server if not running
             if (!IsGoApiServerRunning())
             {
                 StartGoApiServer();
             }
             
-            _goApiUrl = "http://localhost:8081"; // Go API server port
             _initialized = true;
         }
         catch (Exception ex)
@@ -73,7 +76,7 @@ public class GoHttpClient : ISdkClient
     {
         try
         {
-            var response = _httpClient.GetAsync("http://localhost:8081/health").Result;
+            var response = _httpClient.GetAsync($"{_goApiUrl}/health").Result;
             return response.IsSuccessStatusCode;
         }
         catch
@@ -110,6 +113,11 @@ public class GoHttpClient : ISdkClient
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
+        
+        // Pass environment variables to the Go server
+        var goApiPort = Environment.GetEnvironmentVariable("GO_API_SERVER_PORT") ?? "8081";
+        startInfo.EnvironmentVariables["GO_API_SERVER_PORT"] = goApiPort;
+        startInfo.EnvironmentVariables["CONDUCTOR_SERVER_URL"] = _serverUrl;
         
         var process = System.Diagnostics.Process.Start(startInfo);
         if (process == null)
