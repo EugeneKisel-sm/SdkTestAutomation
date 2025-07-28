@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SdkTestAutomation - CLI Wrappers Build Script
-# Builds C#, Java, and Python CLI wrappers for testing
+# Builds C#, Java, Python, and Go CLI wrappers for testing
 
 set -e
 
@@ -41,6 +41,7 @@ show_help() {
     echo "  -c, --csharp        Build only C# wrapper"
     echo "  -j, --java          Build only Java wrapper"
     echo "  -p, --python        Build only Python wrapper"
+    echo "  -g, --go            Build only Go wrapper"
     echo "  -v, --verbose       Enable verbose output"
     echo "  --clean             Clean build artifacts before building"
     echo ""
@@ -48,6 +49,7 @@ show_help() {
     echo "  $0                  # Build all wrappers"
     echo "  $0 --csharp         # Build only C# wrapper"
     echo "  $0 --java --python  # Build Java and Python wrappers"
+    echo "  $0 --go             # Build only Go wrapper"
     echo "  $0 --clean          # Clean and build all wrappers"
 }
 
@@ -56,6 +58,7 @@ BUILD_ALL=true
 BUILD_CSHARP=false
 BUILD_JAVA=false
 BUILD_PYTHON=false
+BUILD_GO=false
 VERBOSE=false
 CLEAN=false
 
@@ -85,6 +88,11 @@ while [[ $# -gt 0 ]]; do
             BUILD_PYTHON=true
             shift
             ;;
+        -g|--go)
+            BUILD_ALL=false
+            BUILD_GO=true
+            shift
+            ;;
         -v|--verbose)
             VERBOSE=true
             shift
@@ -106,6 +114,7 @@ if [[ "$BUILD_ALL" == true ]]; then
     BUILD_CSHARP=true
     BUILD_JAVA=true
     BUILD_PYTHON=true
+    BUILD_GO=true
 fi
 
 # Get script directory and project root
@@ -241,6 +250,46 @@ build_python() {
     deactivate
 }
 
+# Function to build Go wrapper
+build_go() {
+    log_info "Building Go CLI wrapper..."
+    
+    local go_dir="$PROJECT_ROOT/SdkTestAutomation.CliWrappers/SdkTestAutomation.Go"
+    
+    if [[ ! -d "$go_dir" ]]; then
+        log_error "Go wrapper directory not found: $go_dir"
+        return 1
+    fi
+    
+    cd "$go_dir"
+    
+    if [[ "$CLEAN" == true ]]; then
+        log_info "Cleaning Go build artifacts..."
+        go clean
+        rm -f go-sdk-wrapper
+    fi
+    
+    log_info "Downloading Go dependencies..."
+    go mod download
+    
+    log_info "Building Go wrapper..."
+    if [[ "$VERBOSE" == true ]]; then
+        go build -o go-sdk-wrapper -v
+    else
+        go build -o go-sdk-wrapper
+    fi
+    
+    # Check if build was successful
+    local executable="$go_dir/go-sdk-wrapper"
+    if [[ -f "$executable" ]]; then
+        log_success "Go wrapper built successfully"
+        log_info "Output location: $executable"
+    else
+        log_error "Go wrapper build failed - executable not found"
+        return 1
+    fi
+}
+
 # Check prerequisites
 check_prerequisites() {
     log_info "Checking build prerequisites..."
@@ -277,6 +326,14 @@ check_prerequisites() {
     else
         local python_version=$(python3 --version)
         log_info "Found Python: $python_version"
+    fi
+    
+    # Check for Go
+    if ! command_exists go; then
+        missing_deps+=("Go")
+    else
+        local go_version=$(go version)
+        log_info "Found Go: $go_version"
     fi
     
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
@@ -323,6 +380,16 @@ main() {
             log_success "Python wrapper build completed"
         else
             log_error "Python wrapper build failed"
+            ((build_errors++))
+        fi
+    fi
+    
+    # Build Go wrapper
+    if [[ "$BUILD_GO" == true ]]; then
+        if build_go; then
+            log_success "Go wrapper build completed"
+        else
+            log_error "Go wrapper build failed"
             ((build_errors++))
         fi
     fi

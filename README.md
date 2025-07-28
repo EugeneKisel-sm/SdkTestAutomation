@@ -3,11 +3,11 @@
 [![Build and Test](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml)
 [![Build](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build.yml)
 
-A .NET test automation framework for validating multiple Conductor SDKs (C#, Java, Python) through CLI wrappers. Ensures SDK correctness by comparing responses with direct REST API calls.
+A .NET test automation framework for validating multiple Conductor SDKs (C#, Java, Python, Go) through CLI wrappers. Ensures SDK correctness by comparing responses with direct REST API calls.
 
 ## 🎯 Key Features
 
-- **Multi-SDK Support**: Test C#, Java, and Python SDKs with single test codebase
+- **Multi-SDK Support**: Test C#, Java, Python, and Go SDKs with single test codebase
 - **CLI-First Architecture**: Language-agnostic approach using command-line wrappers
 - **Deep Validation**: Compare SDK responses with direct REST API calls
 - **Extensible Design**: Easy to add new SDKs with minimal changes
@@ -18,6 +18,7 @@ A .NET test automation framework for validating multiple Conductor SDKs (C#, Jav
 - .NET 8.0 SDK
 - Java 17+ and Maven (for Java SDK)
 - Python 3.9+ and pip (for Python SDK)
+- Go 1.21+ (for Go SDK)
 - Docker
 
 ### Setup & Run
@@ -35,6 +36,7 @@ docker run -d -p 8080:8080 conductoross/conductor-server:latest
 ./scripts/run-tests.sh csharp
 ./scripts/run-tests.sh java
 ./scripts/run-tests.sh python
+./scripts/run-tests.sh go
 ```
 
 > **📖 For detailed script documentation**: See **[Shell Scripts Reference](SCRIPTS_README.md)** for comprehensive explanations of all scripts, their options, and troubleshooting.
@@ -49,7 +51,8 @@ SdkTestAutomation/
 ├── SdkTestAutomation.CliWrappers/    # CLI wrappers for each SDK
 │   ├── SdkTestAutomation.CSharp/     # C# wrapper
 │   ├── SdkTestAutomation.Java/       # Java wrapper
-│   └── SdkTestAutomation.Python/     # Python wrapper
+│   ├── SdkTestAutomation.Python/     # Python wrapper
+│   └── SdkTestAutomation.Go/         # Go wrapper
 ├── SdkTestAutomation.Tests/          # Test implementations
 ├── SdkTestAutomation.Utils/          # Configuration and logging
 └── scripts/                          # Build and test scripts
@@ -86,13 +89,14 @@ All wrappers follow the same architecture pattern. See individual wrapper README
 - **[C# CLI Wrapper](SdkTestAutomation.CliWrappers/SdkTestAutomation.CSharp/README.md)**
 - **[Java CLI Wrapper](SdkTestAutomation.CliWrappers/SdkTestAutomation.Java/README.md)**
 - **[Python CLI Wrapper](SdkTestAutomation.CliWrappers/SdkTestAutomation.Python/README.md)**
+- **[Go CLI Wrapper](SdkTestAutomation.CliWrappers/SdkTestAutomation.Go/README.md)**
 
 ## 🔧 Environment Variables
 
 Essential variables (see `env.template` for all options):
 ```bash
 export CONDUCTOR_SERVER_URL=http://localhost:8080/api
-export SDK_TYPE=csharp  # or java, python
+export SDK_TYPE=csharp  # or java, python, go
 ```
 
 ## 📚 Documentation
@@ -101,6 +105,7 @@ export SDK_TYPE=csharp  # or java, python
 - **[SDK Integration Guide](SDK_INTEGRATION_GUIDE.md)** - Detailed architecture and implementation guide
 - **[Adding Operations Guide](ADDING_OPERATIONS_GUIDE.md)** - Universal guide for adding new operations
 - **[Adding New SDK](SDK_INTEGRATION_GUIDE.md#🔄-adding-new-sdk)** - Instructions for adding new SDKs
+- **[Go SDK Integration Summary](GO_SDK_INTEGRATION_SUMMARY.md)** - Complete overview of Go SDK integration
 
 ## 📊 Test Reports
 

@@ -10,6 +10,7 @@
 #   ./scripts/run-tests.sh csharp             # Run tests with C# SDK only
 #   ./scripts/run-tests.sh java               # Run tests with Java SDK only
 #   ./scripts/run-tests.sh python             # Run tests with Python SDK only
+#   ./scripts/run-tests.sh go                 # Run tests with Go SDK only
 #   ./scripts/run-tests.sh --help             # Show this help message
 #   ./scripts/run-tests.sh --validate         # Validate environment and dependencies
 
@@ -49,17 +50,19 @@ Usage:
   $0 csharp             # Run tests with C# SDK only
   $0 java               # Run tests with Java SDK only
   $0 python             # Run tests with Python SDK only
+  $0 go                 # Run tests with Go SDK only
   $0 --help             # Show this help message
   $0 --validate         # Validate environment and dependencies
 
 Environment Variables:
   CONDUCTOR_SERVER_URL  Conductor server URL (default: http://localhost:8080/api)
-  SDK_TYPE              SDK to test (csharp, java, python)
+  SDK_TYPE              SDK to test (csharp, java, python, go)
 
 Prerequisites:
   - .NET 8.0 SDK
   - Java 17+ and Maven (for Java SDK)
   - Python 3.9+ and pip (for Python SDK)
+  - Go 1.21+ (for Go SDK)
   - Conductor server running at CONDUCTOR_SERVER_URL
 
 Examples:
@@ -105,6 +108,14 @@ validate_environment() {
         echo -e "${GREEN}✅ Python found: $python_version${NC}"
     else
         echo -e "${YELLOW}⚠️  Python3 not found - Python SDK tests will be skipped${NC}"
+    fi
+    
+    # Check Go (optional)
+    if command -v go &> /dev/null; then
+        local go_version=$(go version)
+        echo -e "${GREEN}✅ Go found: $go_version${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Go not found - Go SDK tests will be skipped${NC}"
     fi
     
     # Check Conductor server
@@ -160,6 +171,10 @@ check_wrapper_exists() {
             local python_exe="$python_venv/bin/python"
             [ -d "$python_venv" ] && [ -f "$python_exe" ]
             ;;
+        "go")
+            local go_exe="$PROJECT_ROOT/SdkTestAutomation.CliWrappers/SdkTestAutomation.Go/go-sdk-wrapper"
+            [ -f "$go_exe" ]
+            ;;
         *)
             return 1
             ;;
@@ -193,6 +208,12 @@ setup_wrapper() {
                 ;;
             "python")
                 if "$SCRIPT_DIR/build-wrappers.sh" --python; then
+                    echo -e "${GREEN}✅ $sdk_type wrapper built successfully${NC}"
+                    return 0
+                fi
+                ;;
+            "go")
+                if "$SCRIPT_DIR/build-wrappers.sh" --go; then
                     echo -e "${GREEN}✅ $sdk_type wrapper built successfully${NC}"
                     return 0
                 fi
@@ -235,10 +256,10 @@ main() {
         exit 1
     fi
     
-    # Run specific SDK or all SDKs
-    if [ $# -eq 1 ]; then
-        case $1 in
-            "csharp"|"java"|"python")
+            # Run specific SDK or all SDKs
+        if [ $# -eq 1 ]; then
+            case $1 in
+                "csharp"|"java"|"python"|"go")
                 if ! setup_wrapper "$1"; then
                     echo -e "${RED}❌ Failed to setup $1 wrapper${NC}"
                     exit 1
@@ -247,7 +268,7 @@ main() {
                 ;;
             *)
                 echo -e "${RED}❌ Invalid SDK type: $1${NC}"
-                echo "Usage: $0 [csharp|java|python|--help|--validate]"
+                echo "Usage: $0 [csharp|java|python|go|--help|--validate]"
                 exit 1
                 ;;
         esac
@@ -279,6 +300,14 @@ main() {
             echo -e "${GREEN}✅ Python SDK tests passed${NC}"
         else
             failed_sdks+=("python")
+        fi
+        echo ""
+        
+        # Go SDK
+        if setup_wrapper "go" && run_tests_with_sdk "go"; then
+            echo -e "${GREEN}✅ Go SDK tests passed${NC}"
+        else
+            failed_sdks+=("go")
         fi
         echo ""
         
