@@ -130,6 +130,16 @@ public class GoSharedLibraryEventAdapter : IEventAdapter
     {
         _client?.Dispose();
     }
+
+    public string GetLogs()
+    {
+        return _client?.GetLogs() ?? string.Empty;
+    }
+
+    public void ClearLogs()
+    {
+        _client?.ClearLogs();
+    }
     
     private class GoResponse
     {

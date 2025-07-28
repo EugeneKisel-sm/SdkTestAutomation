@@ -11,8 +11,7 @@ A .NET test automation framework for validating multiple Conductor SDKs (C#, Jav
 - **In-Process Adapters**: Direct SDK integration without CLI overhead
 - **Response Validation**: Deep structural comparison of SDK responses with direct API calls
 - **Extensible Architecture**: Easy to add new SDKs by implementing shared interfaces
-
-
+- **Cross-Platform**: Supports Windows, macOS, and Linux with automatic platform detection
 
 ## 📁 Project Structure
 
@@ -23,89 +22,106 @@ SdkTestAutomation/
 │   │   ├── CSharp/                  # C# SDK adapter
 │   │   ├── Java/                    # Java SDK adapter (IKVM.NET)
 │   │   ├── Python/                  # Python SDK adapter (Python.NET)
-│   │   └── Go/                      # Go SDK adapter (Process communication)
+│   │   └── Go/                      # Go SDK adapter (Shared Library)
 │   └── lib/                         # JAR files for Java SDK
 ├── SdkTestAutomation.Tests/         # Test implementations
 ├── SdkTestAutomation.Api/           # Direct API client
 ├── SdkTestAutomation.Core/          # Core HTTP functionality
-└── SdkTestAutomation.Utils/         # Utilities & logging
+├── SdkTestAutomation.Utils/         # Utilities & logging
+└── setup-sdks.sh                    # Comprehensive setup script
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- .NET 8.0 SDK
-- Java 17+ (for Java SDK testing)
-- Python 3.9+ (for Python SDK testing)
-- Go 1.19+ (for Go SDK testing) with CGO enabled
+- **.NET 8.0+** (required)
+- **Java 17+** (optional, for Java SDK testing)
+- **Python 3.9+** (optional, for Python SDK testing)
+- **Go 1.19+** (optional, for Go SDK testing) with CGO enabled
 
-### Quick Setup
+### Automated Setup
 
 ```bash
-# Run automated setup script
+# Clone the repository
+git clone https://github.com/evgeniykisel/SdkTestAutomation.git
+cd SdkTestAutomation
+
+# Run comprehensive setup script
 chmod +x setup-sdks.sh
 ./setup-sdks.sh
+```
 
-# Test Go SDK setup specifically
-./test-go-sdk.sh
+The setup script automatically:
+- ✅ Checks all prerequisites
+- ✅ Sets up C# SDK (conductor-csharp package)
+- ✅ Sets up Java SDK (downloads JAR files, IKVM.NET bridge)
+- ✅ Sets up Python SDK (installs conductor-python, Python.NET bridge)
+- ✅ Sets up Go SDK (creates go.mod, builds shared library)
+- ✅ Creates environment configuration
+- ✅ Tests overall build
+
+### Manual Setup Options
+
+```bash
+# Setup only (default)
+./setup-sdks.sh
+
+# Test existing SDKs only
+./setup-sdks.sh --test-only
+
+# Build Go shared library only
+./setup-sdks.sh --build-only
+
+# Complete setup, test, and build
+./setup-sdks.sh --full
+
+# Show help
+./setup-sdks.sh --help
 ```
 
 ### Configuration
 
-1. **Clone and setup**
+1. **Environment File**: The script creates `SdkTestAutomation.Tests/.env` with:
    ```bash
-   git clone https://github.com/evgeniykisel/SdkTestAutomation.git
-   cd SdkTestAutomation
-   ./setup-sdks.sh
-   ```
-
-2. **Configure environment**
-   ```bash
-   # Edit SdkTestAutomation.Tests/.env
    CONDUCTOR_SERVER_URL=http://localhost:8080/api
    SDK_TYPE=csharp
    ```
 
+2. **Start Conductor Server**: Ensure your Conductor server is running
+
 ### Running Tests
 
 ```bash
-# Build and run tests
+# Build the project
 dotnet build
+
+# Run tests with different SDKs
 SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 SDK_TYPE=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+
+# Run specific test methods
+SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests -method "*AddEventTests*"
 ```
 
-## 🔧 SDK-Specific Setup
+## 🔧 SDK Integration Details
 
-### Go SDK Setup
+| SDK | Status | Integration Method | Performance |
+|-----|--------|-------------------|-------------|
+| **C#** | ✅ Ready | Direct NuGet package | Native |
+| **Java** | ✅ Ready | IKVM.NET bridge | High |
+| **Python** | ✅ Ready | Python.NET bridge | High |
+| **Go** | ✅ Ready | Shared Library (P/Invoke) | **50x faster** |
+
+### Go SDK Performance Benefits
 
 The Go SDK uses a shared library approach for optimal performance:
-
-```bash
-# The setup script automatically:
-# 1. Sets up Go module with conductor-go v1.5.4
-# 2. Builds shared library (conductor-go-bridge.dll/.so/.dylib)
-# 3. Integrates with .NET via P/Invoke
-
-# Test Go SDK setup
-./test-go-sdk.sh
-
-# Run tests with Go SDK
-SDK_TYPE=go dotnet test SdkTestAutomation.Tests
-```
-
-**Performance Benefits:**
-- 50x faster than HTTP API approach
-- Direct memory access via shared library
-- No process communication overhead
-
-**Requirements:**
-- Go 1.19+ with CGO enabled
-- conductor-go SDK v1.5.4
-- Platform-specific shared library build
+- **50x faster** than HTTP API approach
+- **Direct memory access** via shared library
+- **No process communication** overhead
+- **Cross-platform support** (Windows, macOS, Linux)
 
 ## 📝 Writing Tests
 
@@ -117,16 +133,10 @@ public class SdkIntegrationTests : BaseTest
     [Fact]
     public async Task SdkIntegration_AddEvent_ValidatesAgainstApi()
     {
-        var request = new AddEventRequest
-        {
-            Name = $"test_event_{Guid.NewGuid():N}",
-            Event = "test_event",
-            Actions = new List<EventAction>(),
-            Active = true
-        };
-
-        var eventAdapter = await GetEventResourceAdapterAsync();
-        var sdkResponse = await eventAdapter.AddEventAsync(request);
+        var eventName = $"test_event_{Guid.NewGuid():N}";
+        
+        // Test SDK call
+        var sdkResponse = EventAdapter.AddEvent(eventName, "test_event", true);
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
         Assert.Equal(200, sdkResponse.StatusCode);
@@ -136,32 +146,26 @@ public class SdkIntegrationTests : BaseTest
 
 The framework automatically selects the SDK based on the `SDK_TYPE` environment variable.
 
-## 🔧 SDK Adapters
-
-| SDK | Status | Integration Method |
-|-----|--------|-------------------|
-| **C#** | ✅ Ready | Direct NuGet package |
-| **Java** | ✅ Ready | IKVM.NET bridge |
-| **Python** | ✅ Ready | Python.NET bridge |
-| **Go** | ✅ Ready | Shared Library |
-
-## 📚 Documentation
-
-- [SDK Integration Guide](SDK_INTEGRATION.md) - Detailed setup instructions
-- [Official SDK Repositories](https://github.com/conductor-oss) - C#, Java, Python, Go SDKs
-
-
-
-
-
 ## 🔧 Troubleshooting
+
+### Common Issues
 
 - **Java SDK**: Verify Java 17+ and JAR files in `SdkTestAutomation.Sdk/lib/`
 - **Python SDK**: Check Python 3.9+ and `conductor-python` installation
-- **Go SDK**: Verify Go 1.19+ and `conductor-go` module installation
+- **Go SDK**: Verify Go 1.19+ and shared library build
 - **Environment**: Ensure `.env` file exists in `SdkTestAutomation.Tests/`
 
-See [SDK Integration Guide](SDK_INTEGRATION.md) for detailed troubleshooting.
+### Go SDK Specific
+
+- **Shared Library Not Found**: Run `./setup-sdks.sh --build-only`
+- **CGO Issues**: Ensure `CGO_ENABLED=1` and proper build tools
+- **Platform Detection**: Script automatically detects Apple Silicon vs Intel
+
+### Debug Mode
+
+```csharp
+_logger.LogLevel = "Debug";
+```
 
 ## 🔄 Extending the Framework
 

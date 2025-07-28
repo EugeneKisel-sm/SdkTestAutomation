@@ -3,6 +3,7 @@ using SdkTestAutomation.Api.Conductor.WorkflowResource;
 using SdkTestAutomation.Sdk.Core;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
+using SdkTestAutomation.Sdk.Implementations.Go;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 using RestSharp;
@@ -57,8 +58,48 @@ public abstract class BaseTest : IDisposable
     
     public virtual void Dispose()
     {
+        // Log Go SDK details if using Go SDK
+        if (TestConfig.SdkType == "go")
+        {
+            LogGoSdkDetails();
+        }
+        
         EventAdapter?.Dispose();
         WorkflowAdapter?.Dispose();
         _logger.Log($"Test '{TestContext.Current.TestCase?.TestCaseDisplayName}' completed.");
+    }
+    
+    private void LogGoSdkDetails()
+    {
+        try
+        {
+            if (EventAdapter is GoSharedLibraryEventAdapter goEventAdapter)
+            {
+                var eventLogs = goEventAdapter.GetLogs();
+                if (!string.IsNullOrEmpty(eventLogs))
+                {
+                    _logger.Log("=== GO SDK EVENT ADAPTER LOGS ===");
+                    _logger.Log(eventLogs);
+                    _logger.Log("=== END GO SDK EVENT ADAPTER LOGS ===");
+                    goEventAdapter.ClearLogs();
+                }
+            }
+            
+            if (WorkflowAdapter is GoSharedLibraryWorkflowAdapter goWorkflowAdapter)
+            {
+                var workflowLogs = goWorkflowAdapter.GetLogs();
+                if (!string.IsNullOrEmpty(workflowLogs))
+                {
+                    _logger.Log("=== GO SDK WORKFLOW ADAPTER LOGS ===");
+                    _logger.Log(workflowLogs);
+                    _logger.Log("=== END GO SDK WORKFLOW ADAPTER LOGS ===");
+                    goWorkflowAdapter.ClearLogs();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log($"Error retrieving Go SDK logs: {ex.Message}");
+        }
     }
 } 

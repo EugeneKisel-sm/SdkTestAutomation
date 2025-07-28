@@ -93,6 +93,8 @@ extern char* StartWorkflow(int clientID, char* name, int version, char* correlat
 extern char* GetWorkflow(int clientID, char* workflowId);
 extern char* GetWorkflows(int clientID);
 extern char* TerminateWorkflow(int clientID, char* workflowId, char* reason);
+extern char* GetLogs();
+extern void ClearLogs();
 extern void FreeString(char* ptr);
 
 #ifdef __cplusplus

@@ -13,6 +13,9 @@ import (
     "fmt"
     "log"
     "os"
+    "strings"
+    "sync"
+    "time"
     "unsafe"
     
     "github.com/conductor-sdk/conductor-go/sdk/client"
@@ -22,6 +25,31 @@ import (
 // Global client storage with ID-based lookup
 var clients = make(map[int]*client.APIClient)
 var nextClientID = 1
+
+// Log buffer for capturing logs
+var logBuffer []string
+var logMutex sync.Mutex
+
+// Custom logger that captures logs
+type logCapture struct{}
+
+func (l logCapture) Write(p []byte) (n int, err error) {
+    logMutex.Lock()
+    defer logMutex.Unlock()
+    
+    timestamp := time.Now().Format("2006-01-02 15:04:05.000")
+    logEntry := fmt.Sprintf("[%s] %s", timestamp, strings.TrimSpace(string(p)))
+    logBuffer = append(logBuffer, logEntry)
+    
+    // Also write to console for immediate visibility
+    fmt.Print(logEntry + "\n")
+    return len(p), nil
+}
+
+// Initialize custom logger
+func init() {
+    log.SetOutput(logCapture{})
+}
 
 //export CreateConductorClient
 func CreateConductorClient(serverUrl *C.char) C.int {
@@ -345,6 +373,23 @@ func TerminateWorkflow(clientID C.int, workflowId *C.char, reason *C.char) *C.ch
     }
     jsonResponse, _ := json.Marshal(response)
     return C.CString(string(jsonResponse))
+}
+
+//export GetLogs
+func GetLogs() *C.char {
+    logMutex.Lock()
+    defer logMutex.Unlock()
+    
+    logs := strings.Join(logBuffer, "\n")
+    return C.CString(logs)
+}
+
+//export ClearLogs
+func ClearLogs() {
+    logMutex.Lock()
+    defer logMutex.Unlock()
+    
+    logBuffer = nil
 }
 
 //export FreeString

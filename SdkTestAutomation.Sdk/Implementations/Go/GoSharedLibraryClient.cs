@@ -159,6 +159,28 @@ public class GoSharedLibraryClient : ISdkClient
     [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl)]
 #endif
     private static extern void FreeString(IntPtr ptr);
+
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "GetLogs")]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl, EntryPoint = "GetLogs")]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl, EntryPoint = "GetLogs")]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "GetLogs")]
+#endif
+    private static extern IntPtr GetLogsInternal();
+
+#if WINDOWS
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ClearLogs")]
+#elif OSX
+    [DllImport("Implementations/Go/conductor-go-bridge.dylib", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ClearLogs")]
+#elif LINUX
+    [DllImport("Implementations/Go/conductor-go-bridge.so", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ClearLogs")]
+#else
+    [DllImport("Implementations/Go/conductor-go-bridge.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ClearLogs")]
+#endif
+    private static extern void ClearLogsInternal();
     
     public void Initialize(string serverUrl)
     {
@@ -266,6 +288,39 @@ public class GoSharedLibraryClient : ISdkClient
         {
             DestroyConductorClient(_clientHandle);
             _clientHandle = 0;
+        }
+    }
+
+    public string GetLogs()
+    {
+        try
+        {
+            IntPtr logsPtr = GetLogsInternal();
+            if (logsPtr == IntPtr.Zero)
+            {
+                return string.Empty;
+            }
+            
+            var logs = Marshal.PtrToStringAnsi(logsPtr);
+            FreeString(logsPtr);
+            return logs ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[C#] Error getting logs: {ex.Message}");
+            return string.Empty;
+        }
+    }
+
+    public void ClearLogs()
+    {
+        try
+        {
+            ClearLogsInternal();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[C#] Error clearing logs: {ex.Message}");
         }
     }
     
