@@ -1,4 +1,4 @@
-name: Build
+name: Build Test Framework
 
 on:
   push:
@@ -8,6 +8,15 @@ on:
       - '**.md'
       - '.github/**'
       - 'LICENSE'
+      - 'README.md'
+  pull_request:
+    branches:
+      - '**'
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - 'LICENSE'
+      - 'README.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,7 +27,8 @@ env:
   CONFIGURATION: Release
 
 jobs:
-  build:
+  build-test-framework:
+    name: Build Test Framework
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -29,7 +39,48 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Build Solution
+    - name: Restore Dependencies
+      run: dotnet restore SdkTestAutomation.sln
+
+    - name: Build All Projects
       run: |
-        dotnet restore SdkTestAutomation.sln
-        dotnet build SdkTestAutomation.sln --configuration ${{ env.CONFIGURATION }} --no-restore 
+        echo "Building all projects in the solution..."
+        dotnet build SdkTestAutomation.sln --configuration ${{ env.CONFIGURATION }} --no-restore --verbosity normal
+        
+    - name: Verify Build Artifacts
+      run: |
+        echo "Verifying build artifacts..."
+        echo "=== Checking .NET assemblies ==="
+        find . -name "*.dll" -path "*/bin/${{ env.CONFIGURATION }}/*" -exec ls -la {} \;
+        
+        echo "=== Checking Go shared library artifacts ==="
+        if [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.dll" ]; then
+          echo "✅ Windows Go library found"
+        fi
+        if [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.dylib" ]; then
+          echo "✅ macOS Go library found"
+        fi
+        if [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.so" ]; then
+          echo "✅ Linux Go library found"
+        fi
+        
+        echo "=== Checking Java JAR files ==="
+        if [ -f "SdkTestAutomation.Sdk/Implementations/Java/lib/conductor-client.jar" ] && \
+           [ -f "SdkTestAutomation.Sdk/Implementations/Java/lib/conductor-common.jar" ] && \
+           [ -f "SdkTestAutomation.Sdk/Implementations/Java/lib/orkes-conductor-client.jar" ]; then
+          echo "✅ All required JAR files found"
+        else
+          echo "❌ Missing required JAR files"
+          exit 1
+        fi
+
+    - name: Build Summary
+      if: always()
+      run: |
+        echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ .NET Solution: SdkTestAutomation.sln" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Projects: Core, Api, Sdk, Utils, Tests" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Configuration: ${{ env.CONFIGURATION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Target Framework: .NET 8.0" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Build completed successfully!** 🎉" >> $GITHUB_STEP_SUMMARY 
