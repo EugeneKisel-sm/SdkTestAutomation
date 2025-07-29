@@ -643,9 +643,6 @@ main() {
     echo "1. Start your Conductor server"
     echo "2. Update SdkTestAutomation.Tests/.env with your server URL"
     echo "3. Run tests: SDK_TYPE=csharp dotnet test SdkTestAutomation.Tests"
-    if [ "$GO_SHARED_LIBRARY" = true ]; then
-        echo "4. Go SDK: Run tests with: SDK_TYPE=go dotnet test SdkTestAutomation.Tests"
-    fi
     echo ""
     print_success "Operation complete! 🎉"
 }

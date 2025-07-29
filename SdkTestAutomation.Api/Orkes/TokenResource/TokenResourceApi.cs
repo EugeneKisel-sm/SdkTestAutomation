@@ -10,6 +10,6 @@ public class TokenResourceApi(ILogger logger) : HttpClient(logger)
 {
     public RestResponse<GetTokenResponse> GetToken(GetTokenRequest request)
     {
-        return SendGetRequest<GetTokenResponse>(ApiUrl.TokenResource.TokenUrl, request);
+        return SendPostRequest<GetTokenResponse>(ApiUrl.TokenResource.TokenUrl, request);
     }
 }

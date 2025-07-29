@@ -6,6 +6,11 @@ namespace SdkTestAutomation.Utils.Utilities
     {
         public static TAttribute GetAttribute<TAttribute>(MemberInfo memberInfo) where TAttribute : Attribute
         {
+            if (memberInfo == null)
+            {
+                return null;
+            }
+            
             return (TAttribute)memberInfo
                 .GetCustomAttributes(typeof(TAttribute), false)
                 .SingleOrDefault();

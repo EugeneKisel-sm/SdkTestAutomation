@@ -28,11 +28,7 @@ public class CSharpTokenAdapter : ITokenAdapter
     {
         try
         {
-            var generateTokenRequest = new Conductor.Client.Models.GenerateTokenRequest
-            {
-                KeyId = keyId,
-                KeySecret = keySecret
-            };
+            var generateTokenRequest = new Conductor.Client.Models.GenerateTokenRequest(keyId, keySecret);
             
             var token = _client.TokenApi.GenerateToken(generateTokenRequest);
             return SdkResponse.CreateSuccess(JsonSerializer.Serialize(token));

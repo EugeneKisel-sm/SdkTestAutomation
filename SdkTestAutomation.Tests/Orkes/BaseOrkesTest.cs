@@ -1,6 +1,5 @@
 using SdkTestAutomation.Sdk.Core;
 using SdkTestAutomation.Sdk.Core.Interfaces;
-using SdkTestAutomation.Sdk.Implementations.Go;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 using SdkTestAutomation.Api.Orkes.TokenResource;
@@ -14,8 +13,7 @@ public abstract class BaseOrkesTest : IDisposable
 
     #region Sdk
 
-    protected IEventAdapter EventAdapter { get; }
-    protected IWorkflowAdapter WorkflowAdapter { get; }
+    protected ITokenAdapter TokenAdapter { get; }
 
     #endregion
 
@@ -31,12 +29,10 @@ public abstract class BaseOrkesTest : IDisposable
         _logger = new ConsoleLogger(testContext);
         _logger.Log($"Using SDK type: {TestConfig.SdkType}");
         
-        EventAdapter = SdkFactory.CreateEventAdapter(TestConfig.SdkType);
-        WorkflowAdapter = SdkFactory.CreateWorkflowAdapter(TestConfig.SdkType);
+        TokenAdapter = SdkFactory.CreateTokenAdapter(TestConfig.SdkType);
         
         var serverUrl = TestConfig.ApiUrl;
-        EventAdapter.Initialize(serverUrl);
-        WorkflowAdapter.Initialize(serverUrl);
+        TokenAdapter.Initialize(serverUrl);
         
         TokenResourceApi = new TokenResourceApi(_logger);
         
@@ -50,8 +46,7 @@ public abstract class BaseOrkesTest : IDisposable
             LogGoSdkDetails();
         }
         
-        EventAdapter?.Dispose();
-        WorkflowAdapter?.Dispose();
+        TokenAdapter?.Dispose();
         _logger.Log($"Test '{TestContext.Current.TestCase?.TestCaseDisplayName}' completed.");
     }
     
@@ -59,29 +54,7 @@ public abstract class BaseOrkesTest : IDisposable
     {
         try
         {
-            if (EventAdapter is GoEventAdapter goEventAdapter)
-            {
-                var eventLogs = goEventAdapter.GetLogs();
-                if (!string.IsNullOrEmpty(eventLogs))
-                {
-                    _logger.Log("=== GO SDK EVENT ADAPTER LOGS ===");
-                    _logger.Log(eventLogs);
-                    _logger.Log("=== END GO SDK EVENT ADAPTER LOGS ===");
-                    goEventAdapter.ClearLogs();
-                }
-            }
             
-            if (WorkflowAdapter is GoWorkflowAdapter goWorkflowAdapter)
-            {
-                var workflowLogs = goWorkflowAdapter.GetLogs();
-                if (!string.IsNullOrEmpty(workflowLogs))
-                {
-                    _logger.Log("=== GO SDK WORKFLOW ADAPTER LOGS ===");
-                    _logger.Log(workflowLogs);
-                    _logger.Log("=== END GO SDK WORKFLOW ADAPTER LOGS ===");
-                    goWorkflowAdapter.ClearLogs();
-                }
-            }
         }
         catch (Exception ex)
         {
