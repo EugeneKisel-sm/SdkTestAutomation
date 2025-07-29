@@ -26,7 +26,7 @@ public static class SdkFactory
             "csharp" => new CSharpEventAdapter(),
             "java" => new JavaEventAdapter(),
             "python" => new PythonEventAdapter(),
-            "go" => new GoSharedLibraryEventAdapter(),
+            "go" => new GoEventAdapter(),
             _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
         };
     }
@@ -38,7 +38,7 @@ public static class SdkFactory
             "csharp" => new CSharpWorkflowAdapter(),
             "java" => new JavaWorkflowAdapter(),
             "python" => new PythonWorkflowAdapter(),
-            "go" => new GoSharedLibraryWorkflowAdapter(),
+            "go" => new GoWorkflowAdapter(),
             _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
         };
     }

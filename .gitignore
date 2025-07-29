@@ -63,11 +63,14 @@ venv.bak/
 .coverage.*
 
 # Go
-go.mod
-go.sum
-conductor-go-bridge.dll
-conductor-go-bridge.so
-conductor-go-bridge.dylib
+# Ignore Go build artifacts and compiled binaries
+SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/
+# Go build cache and temporary files
+*.test
+*.out
+go.work
+# Keep Go source files in go-src/ directory
+!SdkTestAutomation.Sdk/Implementations/Go/go-src/
 
 # Java
 *.class

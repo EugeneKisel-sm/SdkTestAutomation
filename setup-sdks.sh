@@ -112,14 +112,15 @@ check_go_installation_simple() {
 # Check if shared library exists
 check_shared_library() {
     local go_dir="SdkTestAutomation.Sdk/Implementations/Go"
+    local build_artifacts_dir="$go_dir/build-artifacts"
     local platform=$(detect_platform)
     local library_name=$(get_library_name "$platform")
     
-    if [ -f "$go_dir/$library_name" ]; then
-        print_success "Shared library found: $library_name"
+    if [ -f "$build_artifacts_dir/$library_name" ]; then
+        print_success "Shared library found: $build_artifacts_dir/$library_name"
         return 0
     else
-        print_warning "Shared library not found: $library_name"
+        print_warning "Shared library not found: $build_artifacts_dir/$library_name"
         return 1
     fi
 }
@@ -211,14 +212,19 @@ get_pip_command() {
 # Clean up Go artifacts
 cleanup_go_artifacts() {
     local go_dir="SdkTestAutomation.Sdk/Implementations/Go"
+    local build_artifacts_dir="$go_dir/build-artifacts"
     
-    # Remove old shared libraries
+    # Remove build artifacts directory
+    if [ -d "$build_artifacts_dir" ]; then
+        rm -rf "$build_artifacts_dir"
+        print_status "Removed build artifacts directory: $build_artifacts_dir"
+    fi
+    
+    # Remove any temporary build artifacts from root Go directory (legacy cleanup)
     rm -f "$go_dir/conductor-go-bridge.dll"
     rm -f "$go_dir/conductor-go-bridge.so"
     rm -f "$go_dir/conductor-go-bridge.dylib"
-    
-    # Remove any temporary build artifacts
-    rm -f "$go_dir/conductor-go-bridge.h"
+    rm -f "$go_dir/conductor-go-bridge"
     
     print_status "Cleaned up Go artifacts"
 }
@@ -531,40 +537,64 @@ setup_go_sdk() {
     
     print_status "Building for platform: $platform ($library_name) with GOARCH=$GOARCH"
     
-    # Build the shared library from the Go directory
+    # Build the shared library using the build script
     local shared_library_built=false
-    if go build -buildmode=c-shared -o "$library_name" "$go_dir/conductor-go-bridge.go"; then
-        print_success "✅ Successfully built $library_name"
-        
-        # Copy to the appropriate location
-        cp "$library_name" "$go_dir/"
-        print_success "📋 Copied to $go_dir/"
-        
-        # Show file info
-        ls -la "$library_name"
-        
-        # Clean up the root directory copy
-        rm -f "$library_name"
-        
-        shared_library_built=true
-        print_success "Go shared library build complete!"
-    else
-        print_warning "Failed to build Go shared library"
-        print_status "Trying alternative build approach..."
-        
-        # Try building from the Go directory directly
-        if safe_cd "$go_dir"; then
-            if go build -buildmode=c-shared -o "$library_name" conductor-go-bridge.go; then
-                print_success "✅ Successfully built $library_name (alternative method)"
-                shared_library_built=true
-            else
-                print_error "Failed to build Go shared library with both methods"
-                return_to_root
-                return 1
-            fi
+    local build_script="$go_dir/go-src/build.sh"
+    
+    if [ -f "$build_script" ]; then
+        print_status "Using build script: $build_script"
+        if safe_cd "$go_dir/go-src" && chmod +x build.sh && ./build.sh; then
+            print_success "✅ Successfully built shared library using build script"
+            shared_library_built=true
             return_to_root
         else
-            return 1
+            print_warning "Build script failed, trying manual build..."
+            return_to_root
+        fi
+    else
+        print_warning "Build script not found, using manual build..."
+    fi
+    
+    # Fallback to manual build if build script fails or doesn't exist
+    if [ "$shared_library_built" = false ]; then
+        # Build the shared library from the Go directory
+        if go build -buildmode=c-shared -o "$library_name" "$go_dir/go-src/conductor-go-bridge.go"; then
+            print_success "✅ Successfully built $library_name"
+            
+            # Create build-artifacts directory and copy to it
+            mkdir -p "$go_dir/build-artifacts"
+            cp "$library_name" "$go_dir/build-artifacts/"
+            print_success "📋 Copied to $go_dir/build-artifacts/"
+            
+            # Show file info
+            ls -la "$library_name"
+            
+            # Clean up the root directory copy
+            rm -f "$library_name"
+            
+            shared_library_built=true
+            print_success "Go shared library build complete!"
+        else
+            print_warning "Failed to build Go shared library"
+            print_status "Trying alternative build approach..."
+            
+            # Try building from the Go source directory directly
+            if safe_cd "$go_dir/go-src"; then
+                if go build -buildmode=c-shared -o "$library_name" conductor-go-bridge.go; then
+                    print_success "✅ Successfully built $library_name (alternative method)"
+                    # Create build-artifacts directory and copy to it
+                    mkdir -p "../build-artifacts"
+                    cp "$library_name" "../build-artifacts/"
+                    shared_library_built=true
+                else
+                    print_error "Failed to build Go shared library with both methods"
+                    return_to_root
+                    return 1
+                fi
+                return_to_root
+            else
+                return 1
+            fi
         fi
     fi
     
@@ -577,7 +607,7 @@ setup_go_sdk() {
         
         # Check if the library can be loaded (basic test)
         if check_shared_library; then
-            local library_path="$go_dir/$library_name"
+            local library_path="$go_dir/build-artifacts/$library_name"
             print_status "Library size: $(ls -lh "$library_path" | awk '{print $5}')"
         fi
     fi
@@ -801,8 +831,8 @@ build_go_library() {
     
     print_status "Building for platform: $platform ($library_name) with GOARCH=$GOARCH"
     
-    # Change to the Go implementation directory
-    if ! safe_cd "SdkTestAutomation.Sdk/Implementations/Go/"; then
+    # Change to the Go source directory
+    if ! safe_cd "SdkTestAutomation.Sdk/Implementations/Go/go-src"; then
         return 1
     fi
     
@@ -825,22 +855,29 @@ build_go_library() {
         return 1
     fi
     
-    # Build the shared library
-    print_status "Compiling $library_name..."
-    if go build -buildmode=c-shared -o "$library_name" conductor-go-bridge.go; then
-        print_success "✅ Successfully built $library_name"
-        print_status "📁 Library location: $(pwd)/$library_name"
-        
-        # Show file info
-        ls -la "$library_name"
-        
-        # Return to original directory
-        return_to_root
-        
-        print_status "📋 Library is ready for use in SdkTestAutomation.Sdk/Implementations/Go/"
-        return 0
+    # Build the shared library using the build script
+    print_status "Compiling $library_name using build script..."
+    if [ -f "build.sh" ]; then
+        chmod +x build.sh
+        if ./build.sh; then
+            print_success "✅ Successfully built $library_name using build script"
+            print_status "📁 Library location: ../build-artifacts/$library_name"
+            
+            # Show file info
+            ls -la "../build-artifacts/$library_name"
+            
+            # Return to original directory
+            return_to_root
+            
+            print_status "📋 Library is ready for use in SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/"
+            return 0
+        else
+            print_error "❌ Failed to build Go shared library using build script"
+            return_to_root
+            return 1
+        fi
     else
-        print_error "❌ Failed to build Go shared library"
+        print_error "❌ Build script not found: build.sh"
         return_to_root
         return 1
     fi
@@ -879,6 +916,7 @@ JAVA_CLASSPATH=\${JAVA_CLASSPATH:-""}
 GOPATH=\${GOPATH:-$(go env GOPATH 2>/dev/null || echo "$HOME/go")}
 GOROOT=\${GOROOT:-$(go env GOROOT 2>/dev/null || echo "/usr/local/go")}
 # Go Shared Library: conductor-go-bridge.dll/.so/.dylib (auto-built during setup)
+# Location: SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/
 EOF
         print_success "Environment file created: $env_file"
     else

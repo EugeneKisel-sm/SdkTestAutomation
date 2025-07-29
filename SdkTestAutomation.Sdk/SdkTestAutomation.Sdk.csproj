@@ -37,13 +37,13 @@
 
     <ItemGroup>
         <!-- Platform-specific Go shared library files for cross-platform support -->
-        <None Include="Implementations/Go/conductor-go-bridge.dll" Condition="'$(OS)' == 'Windows_NT'">
+        <None Include="Implementations/Go/build-artifacts/conductor-go-bridge.dll" Condition="'$(OS)' == 'Windows_NT'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Include="Implementations/Go/conductor-go-bridge.dylib" Condition="'$(OS)' == 'Unix' And Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">
+        <None Include="Implementations/Go/build-artifacts/conductor-go-bridge.dylib" Condition="'$(OS)' == 'Unix' And Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Include="Implementations/Go/conductor-go-bridge.so" Condition="'$(OS)' == 'Unix' And !Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">
+        <None Include="Implementations/Go/build-artifacts/conductor-go-bridge.so" Condition="'$(OS)' == 'Unix' And !Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

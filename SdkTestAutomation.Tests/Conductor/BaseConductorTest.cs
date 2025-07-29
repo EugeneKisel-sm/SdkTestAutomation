@@ -73,7 +73,7 @@ public abstract class BaseConductorTest : IDisposable
     {
         try
         {
-            if (EventAdapter is GoSharedLibraryEventAdapter goEventAdapter)
+            if (EventAdapter is GoEventAdapter goEventAdapter)
             {
                 var eventLogs = goEventAdapter.GetLogs();
                 if (!string.IsNullOrEmpty(eventLogs))
@@ -85,7 +85,7 @@ public abstract class BaseConductorTest : IDisposable
                 }
             }
             
-            if (WorkflowAdapter is GoSharedLibraryWorkflowAdapter goWorkflowAdapter)
+            if (WorkflowAdapter is GoWorkflowAdapter goWorkflowAdapter)
             {
                 var workflowLogs = goWorkflowAdapter.GetLogs();
                 if (!string.IsNullOrEmpty(workflowLogs))
