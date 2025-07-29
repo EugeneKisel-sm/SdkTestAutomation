@@ -153,7 +153,7 @@ public class SdkIntegrationTests : BaseTest
         var sdkResponse = EventAdapter.AddEvent(eventName, "test_event", true);
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.Equal(200, sdkResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sdkResponse.StatusCode);
     }
 }
 ```

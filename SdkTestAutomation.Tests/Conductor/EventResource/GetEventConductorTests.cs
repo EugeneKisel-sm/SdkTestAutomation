@@ -11,7 +11,7 @@ public class GetEventConductorTests : BaseConductorTest
         var sdkResponse = EventAdapter.GetEvents();
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.Equal(200, sdkResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sdkResponse.StatusCode);
     }
 
     [Fact]

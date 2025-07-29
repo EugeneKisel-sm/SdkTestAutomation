@@ -16,7 +16,7 @@ public class AddEventConductorTests : BaseConductorTest
         var sdkResponse = EventAdapter.AddEvent(eventName, "test_event", true);
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.Equal(200, sdkResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sdkResponse.StatusCode);
         
         // Test API call for comparison
         var apiRequest = new AddEventRequest

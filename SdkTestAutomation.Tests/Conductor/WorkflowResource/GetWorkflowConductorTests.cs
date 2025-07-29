@@ -20,6 +20,6 @@ public class GetWorkflowConductorTests : BaseConductorTest
         var sdkResponse = WorkflowAdapter.GetWorkflows();
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.Equal(200, sdkResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sdkResponse.StatusCode);
     }
 }

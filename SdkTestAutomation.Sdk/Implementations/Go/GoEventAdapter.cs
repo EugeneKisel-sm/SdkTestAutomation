@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SdkTestAutomation.Sdk.Core.Interfaces;
@@ -43,13 +44,13 @@ public class GoEventAdapter : IEventAdapter
             }
             else
             {
-                return SdkResponse.CreateError(response?.Error ?? response?.Message ?? "Unknown error", 500);
+                return SdkResponse.CreateError(response?.Error ?? response?.Message ?? "Unknown error", HttpStatusCode.InternalServerError);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[C#] Exception in AddEvent: {ex.Message}");
-            return SdkResponse.CreateError($"Failed to add event: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to add event: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     
@@ -62,7 +63,7 @@ public class GoEventAdapter : IEventAdapter
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError($"Failed to get events: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to get events: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     
@@ -76,7 +77,7 @@ public class GoEventAdapter : IEventAdapter
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError($"Failed to get event by name: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to get event by name: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     
@@ -94,12 +95,12 @@ public class GoEventAdapter : IEventAdapter
             }
             else
             {
-                return SdkResponse.CreateError(response?.Error ?? response?.Message ?? "Unknown error", 500);
+                return SdkResponse.CreateError(response?.Error ?? response?.Message ?? "Unknown error", HttpStatusCode.InternalServerError);
             }
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError($"Failed to update event: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to update event: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     
@@ -117,12 +118,12 @@ public class GoEventAdapter : IEventAdapter
             }
             else
             {
-                return SdkResponse.CreateError(response?.Error ?? "Unknown error", 500);
+                return SdkResponse.CreateError(response?.Error ?? "Unknown error", HttpStatusCode.InternalServerError);
             }
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError($"Failed to delete event: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to delete event: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     

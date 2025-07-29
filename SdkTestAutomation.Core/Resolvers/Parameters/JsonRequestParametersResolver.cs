@@ -12,17 +12,29 @@ namespace SdkTestAutomation.Core.Resolvers.Parameters
 
         public override string RequestBodyToString()
         {
-            var bodyPropNames = HttpRequestItemsToDictionary<BodyAttribute>()
-                .Select(pair => pair.Key)
-                .ToArray();
+            var bodyProps = HttpRequestItemsToDictionary<BodyAttribute>();
+            var bodyPropNames = bodyProps.Select(pair => pair.Key).ToArray();
 
             if (bodyPropNames.Length == 0)
             {
                 return null;
             }
 
+            // Get the JSON property names that correspond to the C# property names
+            var jsonPropertyNames = new List<string>();
+            foreach (var propName in bodyPropNames)
+            {
+                var property = _request.GetType().GetProperty(propName);
+                if (property != null)
+                {
+                    var jsonPropertyAttr = property.GetCustomAttributes(typeof(JsonPropertyAttribute), false).FirstOrDefault() as JsonPropertyAttribute;
+                    var jsonName = jsonPropertyAttr?.PropertyName ?? propName;
+                    jsonPropertyNames.Add(jsonName);
+                }
+            }
+
             return JsonConvert.SerializeObject(_request, Formatting.None, 
-                new JsonSerializerSettings { ContractResolver = new DynamicContractResolver(_request.GetType(), bodyPropNames) });
+                new JsonSerializerSettings { ContractResolver = new DynamicContractResolver(_request.GetType(), jsonPropertyNames.ToArray()) });
         }
 
         private class DynamicContractResolver : DefaultContractResolver
@@ -48,19 +60,29 @@ namespace SdkTestAutomation.Core.Resolvers.Parameters
                 var filteredProperties = new List<JsonProperty>();
                 foreach (var property in allProperties)
                 {
+                    // Check if this property should be included based on the target property names
+                    bool shouldInclude = false;
+                    
+                    // Check if the property name matches any target property
                     if (_targetProps.Contains(property.PropertyName))
-                        {
-                        filteredProperties.Add(property);
-                            continue;
-                        }
-
-                    var assignedName = HttpRequestItemAttribute.ConvertRealPropNameToAssigned(type, property.PropertyName);
+                    {
+                        shouldInclude = true;
+                    }
+                    else
+                    {
+                        // Check if the assigned name (from HttpRequestItemAttribute) matches any target property
+                        var assignedName = HttpRequestItemAttribute.ConvertRealPropNameToAssigned(type, property.PropertyName);
                         if (_targetProps.Contains(assignedName))
                         {
-                        property.PropertyName = assignedName;
-                        filteredProperties.Add(property);
+                            shouldInclude = true;
                         }
                     }
+                    
+                    if (shouldInclude)
+                    {
+                        filteredProperties.Add(property);
+                    }
+                }
 
                 return filteredProperties;
             }

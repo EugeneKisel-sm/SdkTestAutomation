@@ -18,6 +18,6 @@ public class DeleteEventConductorTests : BaseConductorTest
         var sdkResponse = EventAdapter.DeleteEvent(eventName);
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.Equal(200, sdkResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sdkResponse.StatusCode);
     }
 }

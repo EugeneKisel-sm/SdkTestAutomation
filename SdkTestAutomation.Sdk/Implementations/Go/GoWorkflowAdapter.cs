@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
@@ -34,7 +35,7 @@ public class GoWorkflowAdapter : IWorkflowAdapter
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError($"Failed to get workflow: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to get workflow: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     
@@ -47,7 +48,7 @@ public class GoWorkflowAdapter : IWorkflowAdapter
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError($"Failed to get workflows: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to get workflows: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     
@@ -65,12 +66,12 @@ public class GoWorkflowAdapter : IWorkflowAdapter
             }
             else
             {
-                return SdkResponse.CreateError(response?.Error ?? "Unknown error", 500);
+                return SdkResponse.CreateError(response?.Error ?? "Unknown error", HttpStatusCode.InternalServerError);
             }
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError($"Failed to start workflow: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to start workflow: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     
@@ -88,12 +89,12 @@ public class GoWorkflowAdapter : IWorkflowAdapter
             }
             else
             {
-                return SdkResponse.CreateError(response?.Error ?? "Unknown error", 500);
+                return SdkResponse.CreateError(response?.Error ?? "Unknown error", HttpStatusCode.InternalServerError);
             }
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError($"Failed to terminate workflow: {ex.Message}", 500);
+            return SdkResponse.CreateError($"Failed to terminate workflow: {ex.Message}", HttpStatusCode.InternalServerError);
         }
     }
     

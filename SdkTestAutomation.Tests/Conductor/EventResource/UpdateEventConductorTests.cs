@@ -18,6 +18,6 @@ public class UpdateEventConductorTests : BaseConductorTest
         var sdkResponse = EventAdapter.UpdateEvent(eventName, "test_event_updated", false);
 
         Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.Equal(200, sdkResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sdkResponse.StatusCode);
     }
 }

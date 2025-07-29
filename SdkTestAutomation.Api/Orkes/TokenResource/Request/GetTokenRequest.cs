@@ -1,5 +1,4 @@
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using SdkTestAutomation.Core;
 using SdkTestAutomation.Core.Attributes;
 
