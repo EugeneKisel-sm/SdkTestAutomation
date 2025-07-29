@@ -6,7 +6,6 @@ on:
       - '**'
     paths-ignore:
       - '**.md'
-      - '.github/**'
       - 'LICENSE'
       - 'README.md'
       - 'docs/**'
@@ -16,11 +15,11 @@ on:
       - '**'
     paths-ignore:
       - '**.md'
-      - '.github/**'
       - 'LICENSE'
       - 'README.md'
       - 'docs/**'
       - '*.txt'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
