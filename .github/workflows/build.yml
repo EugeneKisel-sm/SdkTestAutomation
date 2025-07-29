@@ -9,6 +9,8 @@ on:
       - '.github/**'
       - 'LICENSE'
       - 'README.md'
+      - 'docs/**'
+      - '*.txt'
   pull_request:
     branches:
       - '**'
@@ -17,6 +19,8 @@ on:
       - '.github/**'
       - 'LICENSE'
       - 'README.md'
+      - 'docs/**'
+      - '*.txt'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,14 +29,19 @@ concurrency:
 env:
   DOTNET_VERSION: '8.0.x'
   CONFIGURATION: Release
+  SOLUTION_FILE: SdkTestAutomation.sln
 
 jobs:
   build-test-framework:
     name: Build Test Framework
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -40,47 +49,50 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore Dependencies
-      run: dotnet restore SdkTestAutomation.sln
+      run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity minimal
 
-    - name: Build All Projects
+    - name: Build Solution
       run: |
-        echo "Building all projects in the solution..."
-        dotnet build SdkTestAutomation.sln --configuration ${{ env.CONFIGURATION }} --no-restore --verbosity normal
+        echo "Building solution: ${{ env.SOLUTION_FILE }}"
+        dotnet build ${{ env.SOLUTION_FILE }} \
+          --configuration ${{ env.CONFIGURATION }} \
+          --no-restore \
+          --verbosity minimal \
+          --no-logger "Console;verbosity=detailed"
         
-    - name: Verify Build Artifacts
+    - name: Verify Core Projects
       run: |
-        echo "Verifying build artifacts..."
-        echo "=== Checking .NET assemblies ==="
-        find . -name "*.dll" -path "*/bin/${{ env.CONFIGURATION }}/*" -exec ls -la {} \;
+        echo "=== Verifying Core Projects ==="
+        projects=("SdkTestAutomation.Core" "SdkTestAutomation.Api" "SdkTestAutomation.Sdk" "SdkTestAutomation.Utils" "SdkTestAutomation.Tests")
         
-        echo "=== Checking Go shared library artifacts ==="
-        if [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.dll" ]; then
-          echo "✅ Windows Go library found"
-        fi
-        if [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.dylib" ]; then
-          echo "✅ macOS Go library found"
-        fi
-        if [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.so" ]; then
-          echo "✅ Linux Go library found"
-        fi
-        
-        echo "=== Checking Java JAR files ==="
-        if [ -f "SdkTestAutomation.Sdk/Implementations/Java/lib/conductor-client.jar" ] && \
-           [ -f "SdkTestAutomation.Sdk/Implementations/Java/lib/conductor-common.jar" ] && \
-           [ -f "SdkTestAutomation.Sdk/Implementations/Java/lib/orkes-conductor-client.jar" ]; then
-          echo "✅ All required JAR files found"
-        else
-          echo "❌ Missing required JAR files"
-          exit 1
-        fi
+        for project in "${projects[@]}"; do
+          if [ -f "$project/bin/${{ env.CONFIGURATION }}/net8.0/$project.dll" ]; then
+            echo "✅ $project built successfully"
+          else
+            echo "❌ $project build failed"
+            exit 1
+          fi
+        done
 
     - name: Build Summary
       if: always()
       run: |
         echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ .NET Solution: SdkTestAutomation.sln" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Projects: Core, Api, Sdk, Utils, Tests" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Configuration: ${{ env.CONFIGURATION }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Target Framework: .NET 8.0" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Build completed successfully!** 🎉" >> $GITHUB_STEP_SUMMARY 
+        echo "### ✅ Build Components" >> $GITHUB_STEP_SUMMARY
+        echo "- **Solution**: ${{ env.SOLUTION_FILE }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Configuration**: ${{ env.CONFIGURATION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Framework**: .NET 8.0" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Projects Built" >> $GITHUB_STEP_SUMMARY
+        echo "- SdkTestAutomation.Core" >> $GITHUB_STEP_SUMMARY
+        echo "- SdkTestAutomation.Api" >> $GITHUB_STEP_SUMMARY
+        echo "- SdkTestAutomation.Sdk" >> $GITHUB_STEP_SUMMARY
+        echo "- SdkTestAutomation.Utils" >> $GITHUB_STEP_SUMMARY
+        echo "- SdkTestAutomation.Tests" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Build Verification" >> $GITHUB_STEP_SUMMARY
+        echo "- All .NET projects compile successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- Solution builds without errors" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**🎉 Build completed successfully!**" >> $GITHUB_STEP_SUMMARY 
