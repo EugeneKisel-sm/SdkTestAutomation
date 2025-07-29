@@ -21,14 +21,20 @@
     </ItemGroup>
 
     <ItemGroup>
-        <IkvmReference Include="lib/conductor-client.jar">
+        <IkvmReference Include="Implementations/Java/lib/conductor-client.jar">
             <AssemblyName>conductor-client</AssemblyName>
             <AssemblyVersion>4.0.12.0</AssemblyVersion>
             <AssemblyFileVersion>4.0.12.0</AssemblyFileVersion>
             <Debug>false</Debug>
         </IkvmReference>
-        <IkvmReference Include="lib/conductor-common.jar">
+        <IkvmReference Include="Implementations/Java/lib/conductor-common.jar">
             <AssemblyName>conductor-common</AssemblyName>
+            <AssemblyVersion>4.0.12.0</AssemblyVersion>
+            <AssemblyFileVersion>4.0.12.0</AssemblyFileVersion>
+            <Debug>false</Debug>
+        </IkvmReference>
+        <IkvmReference Include="Implementations/Java/lib/orkes-conductor-client.jar">
+            <AssemblyName>orkes-conductor-client</AssemblyName>
             <AssemblyVersion>4.0.12.0</AssemblyVersion>
             <AssemblyFileVersion>4.0.12.0</AssemblyFileVersion>
             <Debug>false</Debug>

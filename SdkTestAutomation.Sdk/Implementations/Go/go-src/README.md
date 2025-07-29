@@ -5,9 +5,10 @@ This folder contains the Go source code for the Conductor Go SDK bridge that ena
 ## Files
 
 - `conductor-go-bridge.go` - Main Go source file containing CGO exports for .NET interop
-- `conductor-go-bridge.h` - C header file with function declarations
 - `go.mod` - Go module definition and dependencies
 - `go.sum` - Go module checksums
+- `README.md` - This documentation file
+- `build.sh` - Cross-platform build script
 
 ## Building
 
@@ -62,9 +63,17 @@ The bridge maintains client state and provides thread-safe operations for concur
 
 ## Build Artifacts
 
-Compiled shared libraries are output to the `../build-artifacts/` directory:
+Compiled shared libraries and generated files are output to the `../build-artifacts/` directory:
 - `conductor-go-bridge.dylib` - macOS shared library
 - `conductor-go-bridge.so` - Linux shared library
 - `conductor-go-bridge.dll` - Windows shared library
+- `conductor-go-bridge.h` - Generated C header file
+- `conductor-go-bridge` - Compiled executable
 
 These files are automatically copied to the .NET output directory during build and used by the Go SDK adapters (`GoClient`, `GoEventAdapter`, `GoWorkflowAdapter`).
+
+## File Organization
+
+- **Source files** (this directory): Go source code, module files, build script
+- **Build artifacts** (`../build-artifacts/`): Compiled libraries and generated files
+- **C# adapters** (`../`): .NET adapter implementations
