@@ -57,8 +57,7 @@ jobs:
         dotnet build ${{ env.SOLUTION_FILE }} \
           --configuration ${{ env.CONFIGURATION }} \
           --no-restore \
-          --verbosity minimal \
-          --no-logger "Console;verbosity=detailed"
+          --verbosity minimal
         
     - name: Verify Core Projects
       run: |
