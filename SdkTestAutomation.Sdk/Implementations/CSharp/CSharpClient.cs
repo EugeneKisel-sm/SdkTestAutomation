@@ -8,6 +8,8 @@ public class CSharpClient : ISdkClient
 {
     public WorkflowResourceApi WorkflowApi { get; set; }
     public EventResourceApi EventApi { get; set; }
+    public TokenResourceApi TokenApi { get; set; }
+    
     private bool _initialized;
     
     public bool IsInitialized => _initialized && WorkflowApi != null && EventApi != null;
@@ -17,6 +19,7 @@ public class CSharpClient : ISdkClient
         var configuration = new Configuration { BasePath = serverUrl };
         WorkflowApi = new WorkflowResourceApi(configuration);
         EventApi = new EventResourceApi(configuration);
+        TokenApi = new TokenResourceApi(configuration);
         _initialized = true;
     }
 
@@ -24,6 +27,7 @@ public class CSharpClient : ISdkClient
     {
         WorkflowApi = null;
         EventApi = null;
+        TokenApi = null;
         _initialized = false;
     }
 } 

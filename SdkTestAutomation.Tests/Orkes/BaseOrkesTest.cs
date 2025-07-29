@@ -1,17 +1,14 @@
-using SdkTestAutomation.Api.Conductor.EventResource;
-using SdkTestAutomation.Api.Conductor.WorkflowResource;
 using SdkTestAutomation.Sdk.Core;
 using SdkTestAutomation.Sdk.Core.Interfaces;
-using SdkTestAutomation.Sdk.Core.Models;
 using SdkTestAutomation.Sdk.Implementations.Go;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
-using RestSharp;
+using SdkTestAutomation.Api.Orkes.TokenResource;
 using Xunit;
 
-namespace SdkTestAutomation.Tests.Conductor;
+namespace SdkTestAutomation.Tests.Orkes;
 
-public abstract class BaseTest : IDisposable
+public abstract class BaseOrkesTest : IDisposable
 {
     private readonly ILogger _logger;
 
@@ -22,43 +19,32 @@ public abstract class BaseTest : IDisposable
 
     #endregion
 
-    #region ConductorApi
+    #region OrkesApi
 
-    protected EventResourceApi EventResourceApi { get; }
-    protected WorkflowResourceApi WorkflowResourceApi { get; }
+    protected TokenResourceApi TokenResourceApi { get; }
 
     #endregion
     
-    protected BaseTest()
+    protected BaseOrkesTest()
     {
         var testContext = TestContext.Current;
         _logger = new ConsoleLogger(testContext);
         _logger.Log($"Using SDK type: {TestConfig.SdkType}");
         
-        // Initialize SDK adapters
         EventAdapter = SdkFactory.CreateEventAdapter(TestConfig.SdkType);
         WorkflowAdapter = SdkFactory.CreateWorkflowAdapter(TestConfig.SdkType);
         
-        // Initialize SDK adapters with server URL
         var serverUrl = TestConfig.ApiUrl;
         EventAdapter.Initialize(serverUrl);
         WorkflowAdapter.Initialize(serverUrl);
         
-        EventResourceApi = new EventResourceApi(_logger);
-        WorkflowResourceApi = new WorkflowResourceApi(_logger);
+        TokenResourceApi = new TokenResourceApi(_logger);
         
         _logger.Log($"Test '{testContext.TestCase?.TestCaseDisplayName}' execution started.");
     }
     
-    protected bool ValidateSdkResponse(SdkResponse sdkResponse, RestResponse apiResponse)
-    {
-        // Simple validation - check if SDK call was successful
-        return sdkResponse.Success && apiResponse.IsSuccessful;
-    }
-    
     public virtual void Dispose()
     {
-        // Log Go SDK details if using Go SDK
         if (TestConfig.SdkType == "go")
         {
             LogGoSdkDetails();

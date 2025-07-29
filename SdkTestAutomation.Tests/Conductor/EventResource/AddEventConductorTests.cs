@@ -5,7 +5,7 @@ using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.EventResource;
 
-public class AddEventTests : BaseTest
+public class AddEventConductorTests : BaseConductorTest
 {
     [Fact]
     public void EventResource_AddEvent_200()

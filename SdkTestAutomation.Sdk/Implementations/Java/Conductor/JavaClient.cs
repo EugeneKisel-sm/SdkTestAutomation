@@ -1,6 +1,6 @@
 using SdkTestAutomation.Sdk.Core.Interfaces;
 
-namespace SdkTestAutomation.Sdk.Implementations.Java;
+namespace SdkTestAutomation.Sdk.Implementations.Java.Conductor;
 
 public class JavaClient : ISdkClient
 {
@@ -15,8 +15,6 @@ public class JavaClient : ISdkClient
     {
         try
         {
-            // Use proper IKVM.NET type resolution for Conductor v4.x
-            // Based on conductor-oss/java-sdk repository structure
             var conductorClientType = Type.GetType("com.netflix.conductor.client.http.ConductorClient, conductor-client");
             var workflowClientType = Type.GetType("com.netflix.conductor.client.http.WorkflowClient, conductor-client");
             var eventClientType = Type.GetType("com.netflix.conductor.client.http.EventClient, conductor-client");
@@ -26,10 +24,7 @@ public class JavaClient : ISdkClient
                 throw new InvalidOperationException("Required Java types not found. Ensure JAR files are properly referenced.");
             }
             
-            // Create ConductorClient with server URL
             _conductorClient = Activator.CreateInstance(conductorClientType, serverUrl);
-            
-            // Create API clients using the conductor client instance
             WorkflowApi = Activator.CreateInstance(workflowClientType, _conductorClient);
             EventApi = Activator.CreateInstance(eventClientType, _conductorClient);
             

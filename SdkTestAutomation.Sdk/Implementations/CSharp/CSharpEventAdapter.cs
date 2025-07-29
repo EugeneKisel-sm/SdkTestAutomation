@@ -1,4 +1,3 @@
-using Conductor.Client.Models;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 

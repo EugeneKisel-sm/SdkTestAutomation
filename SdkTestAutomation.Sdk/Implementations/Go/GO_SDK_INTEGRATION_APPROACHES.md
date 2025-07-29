@@ -1,4 +1,4 @@
-# Go SDK Integration Approaches - Complete Guide
+git# Go SDK Integration Approaches - Complete Guide
 
 ## Overview
 

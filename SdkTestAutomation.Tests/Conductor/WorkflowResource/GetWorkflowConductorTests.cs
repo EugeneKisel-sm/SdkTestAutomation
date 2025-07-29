@@ -3,7 +3,7 @@ using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.WorkflowResource;
 
-public class GetWorkflowTests : BaseTest
+public class GetWorkflowConductorTests : BaseConductorTest
 {
     [Fact]
     public void WorkflowResource_GetWorkflow_EmptyName_404()

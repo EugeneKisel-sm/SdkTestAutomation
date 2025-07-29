@@ -3,7 +3,7 @@ using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.EventResource;
 
-public class DeleteEventTests : BaseTest
+public class DeleteEventConductorTests : BaseConductorTest
 {
     [Fact]
     public void EventResource_DeleteEvent_200()

@@ -36,9 +36,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="Implementations/Go/go-server-template.go">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
         <!-- Platform-specific Go shared library files for cross-platform support -->
         <None Include="Implementations/Go/conductor-go-bridge.dll" Condition="'$(OS)' == 'Windows_NT'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

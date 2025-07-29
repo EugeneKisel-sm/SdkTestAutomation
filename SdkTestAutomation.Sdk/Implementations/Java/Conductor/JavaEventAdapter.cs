@@ -1,7 +1,7 @@
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 
-namespace SdkTestAutomation.Sdk.Implementations.Java;
+namespace SdkTestAutomation.Sdk.Implementations.Java.Conductor;
 
 public class JavaEventAdapter : IEventAdapter
 {
@@ -41,7 +41,6 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            // Get all event handlers with empty string and false for activeOnly
             var events = _client.EventApi.getEventHandlers("", false);
             return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(events));
         }
@@ -55,7 +54,6 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            // Get event handlers for specific event name
             var events = _client.EventApi.getEventHandlers(eventName, false);
             return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(events));
         }
@@ -96,7 +94,6 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            // Based on conductor-oss/java-sdk repository structure
             var eventHandlerType = Type.GetType("com.netflix.conductor.common.metadata.events.EventHandler, conductor-common");
             if (eventHandlerType == null)
             {
@@ -106,12 +103,10 @@ public class JavaEventAdapter : IEventAdapter
             var eventHandler = Activator.CreateInstance(eventHandlerType);
             if (eventHandler != null)
             {
-                // Use proper Java setter methods for Conductor v4.x
                 ((dynamic)eventHandler).setName(name);
                 ((dynamic)eventHandler).setEvent(eventType);
                 ((dynamic)eventHandler).setActive(active);
                 
-                // Initialize actions list if needed
                 var actionsList = Activator.CreateInstance(Type.GetType("java.util.ArrayList, IKVM.OpenJDK.Core"));
                 ((dynamic)eventHandler).setActions(actionsList);
             }

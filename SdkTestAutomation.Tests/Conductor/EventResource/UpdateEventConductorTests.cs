@@ -3,7 +3,7 @@ using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.EventResource;
 
-public class UpdateEventTests : BaseTest
+public class UpdateEventConductorTests : BaseConductorTest
 {
     [Fact]
     public void EventResource_UpdateEvent_200()

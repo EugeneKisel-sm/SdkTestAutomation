@@ -1,7 +1,7 @@
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 
-namespace SdkTestAutomation.Sdk.Implementations.Java;
+namespace SdkTestAutomation.Sdk.Implementations.Java.Conductor;
 
 public class JavaWorkflowAdapter : IWorkflowAdapter
 {
@@ -40,7 +40,6 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     {
         try
         {
-            // Get running workflows with empty strings for name and correlationId, limit 100, offset 0
             var workflows = _client.WorkflowApi.getRunningWorkflow("", "", 100, 0);
             return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(workflows));
         }
@@ -81,7 +80,6 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     {
         try
         {
-            // Based on conductor-oss/java-sdk repository structure
             var requestType = Type.GetType("com.netflix.conductor.common.run.StartWorkflowRequest, conductor-common");
             if (requestType == null)
             {
