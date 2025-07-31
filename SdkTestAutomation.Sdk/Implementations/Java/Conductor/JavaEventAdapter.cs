@@ -94,7 +94,7 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            var eventHandlerType = Type.GetType("com.netflix.conductor.common.metadata.events.EventHandler, conductor-client");
+            var eventHandlerType = Type.GetType("com.netflix.conductor.common.metadata.events.EventHandler, conductor.client");
             if (eventHandlerType == null)
             {
                 throw new InvalidOperationException("EventHandler type not found in conductor-common assembly");

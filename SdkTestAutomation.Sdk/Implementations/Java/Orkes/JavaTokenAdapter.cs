@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
@@ -28,7 +29,15 @@ public class JavaTokenAdapter : ITokenAdapter
     {
         try
         {
-            var generateTokenRequestType = Type.GetType("io.orkes.conductor.client.model.GenerateTokenRequest, orkes-client");
+            var path = Directory.GetCurrentDirectory();
+            // Load the assemblies
+            var conductorCommon = Assembly.LoadFrom(path + "/conductor.common.dll");
+            var conductorClient = Assembly.LoadFrom(path + "/conductor.client.dll");
+            var orkesConductorClient = Assembly.LoadFrom(path + "/orkes.conductor.client.dll");
+
+            var d = orkesConductorClient.GetTypes();
+            
+            var generateTokenRequestType = Type.GetType("io.orkes.conductor.client.model.GenerateTokenRequest, orkes.conductor.client");
             if (generateTokenRequestType == null)
             {
                 throw new InvalidOperationException("GenerateTokenRequest type not found in orkes-client assembly");

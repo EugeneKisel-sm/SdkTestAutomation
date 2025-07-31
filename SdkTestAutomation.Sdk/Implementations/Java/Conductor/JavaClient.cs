@@ -15,9 +15,9 @@ public class JavaClient : ISdkClient
     {
         try
         {
-            var conductorClientType = Type.GetType("com.netflix.conductor.client.http.ConductorClient, conductor-client");
-            var workflowClientType = Type.GetType("com.netflix.conductor.client.http.WorkflowClient, conductor-client");
-            var eventClientType = Type.GetType("com.netflix.conductor.client.http.EventClient, conductor-client");
+            var conductorClientType = Type.GetType("com.netflix.conductor.client.http.ConductorClient, conductor.client");
+            var workflowClientType = Type.GetType("com.netflix.conductor.client.http.WorkflowClient, conductor.client");
+            var eventClientType = Type.GetType("com.netflix.conductor.client.http.EventClient, conductor.client");
             
             if (conductorClientType == null || workflowClientType == null || eventClientType == null)
             {

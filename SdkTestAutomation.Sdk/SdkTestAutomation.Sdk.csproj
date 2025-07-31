@@ -4,6 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <!-- Platform-specific defines for cross-platform Go SDK support -->
         <DefineConstants Condition="'$(OS)' == 'Windows_NT'">$(DefineConstants);WINDOWS</DefineConstants>
         <DefineConstants Condition="'$(OS)' != 'Windows_NT' And '$(OS)' != 'Unix'">$(DefineConstants);WINDOWS</DefineConstants>
@@ -15,30 +16,28 @@
         <PackageReference Include="conductor-csharp" Version="1.1.3"/>
         <PackageReference Include="IKVM" Version="8.12.0"/>
         <PackageReference Include="IKVM.Image.JRE" Version="8.12.0"/>
+        <PackageReference Include="IKVM.Maven.Sdk" Version="1.9.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="pythonnet" Version="3.0.3"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
         <PackageReference Include="RestSharp" Version="112.1.0"/>
     </ItemGroup>
 
     <ItemGroup>
-        <IkvmReference Include="Implementations/Java/lib/conductor-client.jar">
-            <AssemblyName>conductor-client</AssemblyName>
-            <AssemblyVersion>4.0.12.0</AssemblyVersion>
-            <AssemblyFileVersion>4.0.12.0</AssemblyFileVersion>
-            <Debug>false</Debug>
-        </IkvmReference>
-        <IkvmReference Include="Implementations/Java/lib/conductor-common.jar">
-            <AssemblyName>conductor-common</AssemblyName>
-            <AssemblyVersion>4.0.12.0</AssemblyVersion>
-            <AssemblyFileVersion>4.0.12.0</AssemblyFileVersion>
-            <Debug>false</Debug>
-        </IkvmReference>
-        <IkvmReference Include="Implementations/Java/lib/orkes-conductor-client.jar">
-            <AssemblyName>orkes-conductor-client</AssemblyName>
-            <AssemblyVersion>4.0.12.0</AssemblyVersion>
-            <AssemblyFileVersion>4.0.12.0</AssemblyFileVersion>
-            <Debug>false</Debug>
-        </IkvmReference>
+        <!-- Maven Dependencies for Conductor Libraries -->
+        <!-- conductor-common is the base library -->
+        <MavenReference Include="org.conductoross:conductor-common:3.21.18">
+        </MavenReference>
+        
+        <!-- conductor-client depends on conductor-common -->
+        <MavenReference Include="org.conductoross:conductor-client:4.0.14">
+        </MavenReference>
+        
+        <!-- orkes-conductor-client depends on both conductor-client and conductor-common -->
+        <MavenReference Include="io.orkes.conductor:orkes-conductor-client:4.0.14">
+        </MavenReference>
     </ItemGroup>
 
     <ItemGroup>

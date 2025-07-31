@@ -80,7 +80,7 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     {
         try
         {
-            var requestType = Type.GetType("com.netflix.conductor.common.run.StartWorkflowRequest, conductor-common");
+            var requestType = Type.GetType("com.netflix.conductor.common.run.StartWorkflowRequest, conductor.common");
             if (requestType == null)
             {
                 throw new InvalidOperationException("StartWorkflowRequest type not found in conductor-common assembly");
