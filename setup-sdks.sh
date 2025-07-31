@@ -258,21 +258,43 @@ setup_java_sdk() {
         return 1
     fi
     
-    local jar_dir="SdkTestAutomation.Sdk/Implementations/Java/lib"
-    if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/conductor-common.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
-        print_success "JAR files found"
+    # Check if Maven is installed
+    if ! command -v mvn &> /dev/null; then
+        print_error "Maven is not installed. Please install Maven for Java SDK support."
+        print_status "Install with: brew install maven (macOS) or download from maven.apache.org"
+        return 1
+    fi
+    
+    local java_cli_dir="SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk"
+    local jar_dir="SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
+    
+    # Check if JAR files already exist
+    if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
+        print_success "Java CLI JAR files found"
     else
-        print_warning "JAR files not found"
-        print_status "Downloading JAR files..."
-        mkdir -p "$jar_dir"
-        if curl -L -o "$jar_dir/conductor-client.jar" "https://repo1.maven.org/maven2/com/netflix/conductor/conductor-client/4.0.12/conductor-client-4.0.12.jar" && \
-           curl -L -o "$jar_dir/conductor-common.jar" "https://repo1.maven.org/maven2/com/netflix/conductor/conductor-common/4.0.12/conductor-common-4.0.12.jar" && \
-           curl -L -o "$jar_dir/orkes-conductor-client.jar" "https://repo1.maven.org/maven2/io/orkes/conductor/orkes-conductor-client/4.0.12/orkes-conductor-client-4.0.12.jar"; then
-            print_success "JAR files downloaded"
-        else
-            print_warning "Failed to download JAR files"
+        print_warning "Java CLI JAR files not found"
+        print_status "Building Java CLI applications..."
+        
+        if [ ! -d "$java_cli_dir" ]; then
+            print_error "Java CLI directory not found: $java_cli_dir"
             return 1
         fi
+        
+        cd "$java_cli_dir"
+        
+        # Make build script executable
+        chmod +x build.sh
+        
+        # Build Java CLI applications
+        if ./build.sh; then
+            print_success "Java CLI applications built successfully"
+        else
+            print_error "Failed to build Java CLI applications"
+            cd - > /dev/null
+            return 1
+        fi
+        
+        cd - > /dev/null
     fi
     
     if dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj; then

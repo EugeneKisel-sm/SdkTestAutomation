@@ -1,3 +1,4 @@
+using System.Text.Json;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 
@@ -27,8 +28,22 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     {
         try
         {
-            var workflow = _client.WorkflowApi.getExecutionStatus(workflowId);
-            return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(workflow));
+            var requestData = new
+            {
+                workflowId = workflowId
+            };
+            
+            var response = _client.ExecuteJavaCall("workflow", "get-workflow", requestData);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -40,8 +55,17 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     {
         try
         {
-            var workflows = _client.WorkflowApi.getRunningWorkflow("", "", 100, 0);
-            return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(workflows));
+            var response = _client.ExecuteJavaCall("workflow", "get-workflows", null);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -53,9 +77,24 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     {
         try
         {
-            var startWorkflowRequest = CreateStartWorkflowRequest(name, version, correlationId);
-            var workflowId = _client.WorkflowApi.startWorkflow(startWorkflowRequest);
-            return SdkResponse.CreateSuccess(workflowId);
+            var requestData = new
+            {
+                name = name,
+                version = version,
+                correlationId = correlationId
+            };
+            
+            var response = _client.ExecuteJavaCall("workflow", "start-workflow", requestData);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -67,8 +106,23 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
     {
         try
         {
-            _client.WorkflowApi.terminate(workflowId, reason);
-            return SdkResponse.CreateSuccess();
+            var requestData = new
+            {
+                workflowId = workflowId,
+                reason = reason
+            };
+            
+            var response = _client.ExecuteJavaCall("workflow", "terminate-workflow", requestData);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -76,34 +130,15 @@ public class JavaWorkflowAdapter : IWorkflowAdapter
         }
     }
     
-    private dynamic CreateStartWorkflowRequest(string name, int version, string correlationId)
-    {
-        try
-        {
-            var requestType = Type.GetType("com.netflix.conductor.common.run.StartWorkflowRequest, conductor.common");
-            if (requestType == null)
-            {
-                throw new InvalidOperationException("StartWorkflowRequest type not found in conductor-common assembly");
-            }
-            
-            var request = Activator.CreateInstance(requestType);
-            if (request != null)
-            {
-                ((dynamic)request).setName(name);
-                ((dynamic)request).setVersion(version);
-                if (!string.IsNullOrEmpty(correlationId))
-                    ((dynamic)request).setCorrelationId(correlationId);
-            }
-            return request;
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Failed to create StartWorkflowRequest: {ex.Message}", ex);
-        }
-    }
-    
     public void Dispose()
     {
         _client?.Dispose();
+    }
+    
+    private class JavaResponse
+    {
+        public bool Success { get; set; }
+        public string Data { get; set; } = string.Empty;
+        public string Error { get; set; } = string.Empty;
     }
 } 

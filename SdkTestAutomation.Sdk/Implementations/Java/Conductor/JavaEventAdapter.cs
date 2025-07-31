@@ -1,3 +1,4 @@
+using System.Text.Json;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 
@@ -27,9 +28,24 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            var eventHandler = CreateEventHandler(name, eventType, active);
-            _client.EventApi.registerEventHandler(eventHandler);
-            return SdkResponse.CreateSuccess();
+            var requestData = new
+            {
+                name = name,
+                eventType = eventType,
+                active = active
+            };
+            
+            var response = _client.ExecuteJavaCall("event", "add-event", requestData);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -41,8 +57,17 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            var events = _client.EventApi.getEventHandlers("", false);
-            return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(events));
+            var response = _client.ExecuteJavaCall("event", "get-event", null);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -54,8 +79,22 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            var events = _client.EventApi.getEventHandlers(eventName, false);
-            return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(events));
+            var requestData = new
+            {
+                eventName = eventName
+            };
+            
+            var response = _client.ExecuteJavaCall("event", "get-event-by-name", requestData);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -67,9 +106,24 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            var eventHandler = CreateEventHandler(name, eventType, active);
-            _client.EventApi.updateEventHandler(eventHandler);
-            return SdkResponse.CreateSuccess();
+            var requestData = new
+            {
+                name = name,
+                eventType = eventType,
+                active = active
+            };
+            
+            var response = _client.ExecuteJavaCall("event", "update-event", requestData);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -81,8 +135,22 @@ public class JavaEventAdapter : IEventAdapter
     {
         try
         {
-            _client.EventApi.unregisterEventHandler(name);
-            return SdkResponse.CreateSuccess();
+            var requestData = new
+            {
+                name = name
+            };
+            
+            var response = _client.ExecuteJavaCall("event", "delete-event", requestData);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -90,36 +158,15 @@ public class JavaEventAdapter : IEventAdapter
         }
     }
     
-    private dynamic CreateEventHandler(string name, string eventType, bool active)
-    {
-        try
-        {
-            var eventHandlerType = Type.GetType("com.netflix.conductor.common.metadata.events.EventHandler, conductor.client");
-            if (eventHandlerType == null)
-            {
-                throw new InvalidOperationException("EventHandler type not found in conductor-common assembly");
-            }
-            
-            var eventHandler = Activator.CreateInstance(eventHandlerType);
-            if (eventHandler != null)
-            {
-                ((dynamic)eventHandler).setName(name);
-                ((dynamic)eventHandler).setEvent(eventType);
-                ((dynamic)eventHandler).setActive(active);
-                
-                var actionsList = Activator.CreateInstance(Type.GetType("java.util.ArrayList, IKVM.OpenJDK.Core"));
-                ((dynamic)eventHandler).setActions(actionsList);
-            }
-            return eventHandler;
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Failed to create EventHandler: {ex.Message}", ex);
-        }
-    }
-    
     public void Dispose()
     {
         _client?.Dispose();
+    }
+    
+    private class JavaResponse
+    {
+        public bool Success { get; set; }
+        public string Data { get; set; } = string.Empty;
+        public string Error { get; set; } = string.Empty;
     }
 } 

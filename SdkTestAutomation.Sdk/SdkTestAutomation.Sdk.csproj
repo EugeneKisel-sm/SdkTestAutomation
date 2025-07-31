@@ -14,30 +14,9 @@
 
     <ItemGroup>
         <PackageReference Include="conductor-csharp" Version="1.1.3"/>
-        <PackageReference Include="IKVM" Version="8.12.0"/>
-        <PackageReference Include="IKVM.Image.JRE" Version="8.12.0"/>
-        <PackageReference Include="IKVM.Maven.Sdk" Version="1.9.3">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-        </PackageReference>
         <PackageReference Include="pythonnet" Version="3.0.3"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
         <PackageReference Include="RestSharp" Version="112.1.0"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <!-- Maven Dependencies for Conductor Libraries -->
-        <!-- conductor-common is the base library -->
-        <MavenReference Include="org.conductoross:conductor-common:3.21.18">
-        </MavenReference>
-        
-        <!-- conductor-client depends on conductor-common -->
-        <MavenReference Include="org.conductoross:conductor-client:4.0.14">
-        </MavenReference>
-        
-        <!-- orkes-conductor-client depends on both conductor-client and conductor-common -->
-        <MavenReference Include="io.orkes.conductor:orkes-conductor-client:4.0.14">
-        </MavenReference>
     </ItemGroup>
 
     <ItemGroup>
@@ -49,6 +28,14 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="Implementations/Go/build-artifacts/conductor-go-bridge.so" Condition="'$(OS)' == 'Unix' And !Exists('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        
+        <!-- Java CLI JAR files -->
+        <None Include="bin/Debug/net8.0/lib/conductor-client.jar" Condition="Exists('bin/Debug/net8.0/lib/conductor-client.jar')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="bin/Debug/net8.0/lib/orkes-conductor-client.jar" Condition="Exists('bin/Debug/net8.0/lib/orkes-conductor-client.jar')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

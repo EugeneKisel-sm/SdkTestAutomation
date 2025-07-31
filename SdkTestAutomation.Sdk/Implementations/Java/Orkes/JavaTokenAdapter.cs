@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text.Json;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
@@ -29,23 +28,23 @@ public class JavaTokenAdapter : ITokenAdapter
     {
         try
         {
-            var path = Directory.GetCurrentDirectory();
-            // Load the assemblies
-            var conductorCommon = Assembly.LoadFrom(path + "/conductor.common.dll");
-            var conductorClient = Assembly.LoadFrom(path + "/conductor.client.dll");
-            var orkesConductorClient = Assembly.LoadFrom(path + "/orkes.conductor.client.dll");
-
-            var d = orkesConductorClient.GetTypes();
-            
-            var generateTokenRequestType = Type.GetType("io.orkes.conductor.client.model.GenerateTokenRequest, orkes.conductor.client");
-            if (generateTokenRequestType == null)
+            var requestData = new
             {
-                throw new InvalidOperationException("GenerateTokenRequest type not found in orkes-client assembly");
-            }
+                keyId = keyId,
+                keySecret = keySecret
+            };
             
-            var generateTokenRequest = Activator.CreateInstance(generateTokenRequestType, keyId, keySecret);
-            var token = _client.TokenApi.generateToken(generateTokenRequest);
-            return SdkResponse.CreateSuccess(JsonSerializer.Serialize(token));
+            var response = _client.ExecuteJavaCall("token", "generate-token", requestData);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -55,11 +54,35 @@ public class JavaTokenAdapter : ITokenAdapter
 
     public SdkResponse GetUserInfo()
     {
-        throw new NotImplementedException();
+        try
+        {
+            var response = _client.ExecuteJavaCall("token", "get-user-info", null);
+            var result = JsonSerializer.Deserialize<JavaResponse>(response);
+            
+            if (result.Success)
+            {
+                return SdkResponse.CreateSuccess(result.Data);
+            }
+            else
+            {
+                return SdkResponse.CreateError(result.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            return SdkResponse.CreateError(ex.Message);
+        }
     }
     
     public void Dispose()
     {
         _client?.Dispose();
+    }
+    
+    private class JavaResponse
+    {
+        public bool Success { get; set; }
+        public string Data { get; set; } = string.Empty;
+        public string Error { get; set; } = string.Empty;
     }
 } 
