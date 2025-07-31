@@ -10,7 +10,7 @@ public class GetTokenTests : BaseOrkesTest
     [Fact]
     [Trait(TraitName.Category, TestType.Orkes)]
     public void TokenResource_GetToken_200()
-    {
+    { 
         var sdkResponse = TokenAdapter.GenerateToken(TestConfig.Key, TestConfig.Secret);
 
         var apiResponse = TokenResourceApi.GetToken(new GetTokenRequest()

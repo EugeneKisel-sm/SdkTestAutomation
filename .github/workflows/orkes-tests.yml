@@ -1,4 +1,4 @@
-name: Build and Test
+name: Orkes Tests
 
 on:
   pull_request:
@@ -12,17 +12,17 @@ env:
   DOTNET_VERSION: '8.0.x'
   CONFIGURATION: Release
   SOLUTION_FILE: SdkTestAutomation.sln
-  CONDUCTOR_SERVER_URL: 'http://localhost:8080/api'
-  CONDUCTOR_COMPOSE_FILE: conductor/docker/docker-compose.yaml
-  CONDUCTOR_TIMEOUT: 200
-  CONDUCTOR_CHECK_INTERVAL: 30
+  CONDUCTOR_SERVER_URL: ${{ secrets.CONDUCTOR_SERVER_URL }}
+  CONDUCTOR_AUTH_KEY: ${{ secrets.CONDUCTOR_AUTH_KEY }}
+  CONDUCTOR_AUTH_SECRET: ${{ secrets.CONDUCTOR_AUTH_SECRET }}
+  SDK_TYPE: ${{ vars.SDK_TYPE }}
 
 permissions:
   contents: read
   checks: write
 
 jobs:
-  build-and-test:
+  orkes-tests:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -79,53 +79,35 @@ jobs:
         dotnet restore ${{ env.SOLUTION_FILE }} --verbosity minimal
         dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.CONFIGURATION }} --no-restore --verbosity minimal
 
-    - name: Checkout Conductor Repository
-      uses: actions/checkout@v4
-      with:
-        repository: conductor-oss/conductor
-        ref: main
-        path: conductor
-
-    - name: Start Conductor Services
+    - name: Validate Environment Variables
       run: |
-        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} up -d
-        
-        echo "Waiting for services to initialize..."
-        timeout=${{ env.CONDUCTOR_TIMEOUT }}
-        check_interval=${{ env.CONDUCTOR_CHECK_INTERVAL }}
-        
-        while [ $timeout -gt 0 ]; do
-          # Check container health
-          if docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps | grep -q "healthy"; then
-            # Check API health
-            if curl -s ${{ env.CONDUCTOR_SERVER_URL }}/health > /dev/null 2>&1; then
-              echo "SUCCESS: Conductor API is ready!"
-              exit 0
-            fi
-          fi
-          
-          # Log status periodically
-          if [ $((timeout % check_interval)) -eq 0 ]; then
-            echo "Services status (${timeout}s remaining):"
-            docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps
-            docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} logs --tail=20 conductor-server
-          fi
-          
-          echo "Waiting for API... (${timeout}s remaining)"
-          sleep 10
-          timeout=$((timeout-10))
-        done
-        
-        echo "ERROR: Conductor API failed to become healthy"
-        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} ps
-        docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} logs conductor-server
-        exit 1
+        echo "Validating required environment variables..."
+        if [ -z "$CONDUCTOR_SERVER_URL" ]; then
+          echo "ERROR: CONDUCTOR_SERVER_URL is not set"
+          exit 1
+        fi
+        if [ -z "$CONDUCTOR_AUTH_KEY" ]; then
+          echo "ERROR: CONDUCTOR_AUTH_KEY is not set"
+          exit 1
+        fi
+        if [ -z "$CONDUCTOR_AUTH_SECRET" ]; then
+          echo "ERROR: CONDUCTOR_AUTH_SECRET is not set"
+          exit 1
+        fi
+        if [ -z "$SDK_TYPE" ]; then
+          echo "WARNING: SDK_TYPE is not set, will use default"
+          export SDK_TYPE=csharp
+        fi
+        echo "✅ Environment variables validated"
+        echo "Server URL: $CONDUCTOR_SERVER_URL"
+        echo "SDK Type: $SDK_TYPE"
 
     - name: Run Tests
       id: test-run
       run: |
         mkdir -p TestResults
-        ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests \
+        SDK_TYPE=${{ env.SDK_TYPE }} ./SdkTestAutomation.Tests/bin/${{ env.CONFIGURATION }}/net8.0/SdkTestAutomation.Tests \
+          -trait "Category=Orkes" \
           -html TestResults/test-results.html \
           -trx TestResults/test-results.trx \
           -jUnit TestResults/test-results.xml 2>&1
@@ -185,7 +167,7 @@ jobs:
 
         const markdown = turndownService.turndown(testResults);
         const summary = [
-          '# Test Results',
+          '# Orkes Test Results',
           '',
           '## Detailed Test Report',
           '',
@@ -205,7 +187,7 @@ jobs:
       if: always()
       uses: dorny/test-reporter@v1
       with:
-        name: Test Results (TRX)
+        name: Orkes Test Results (TRX)
         path: TestResults/test-results.trx
         reporter: dotnet-trx
         fail-on-error: false
@@ -218,10 +200,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results
+        name: orkes-test-results
         path: TestResults
-        if-no-files-found: warn
-
-    - name: Cleanup Conductor
-      if: always()
-      run: docker compose -f ${{ env.CONDUCTOR_COMPOSE_FILE }} down
+        if-no-files-found: warn 
