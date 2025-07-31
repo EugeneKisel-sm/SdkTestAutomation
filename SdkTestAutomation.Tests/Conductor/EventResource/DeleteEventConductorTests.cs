@@ -6,6 +6,7 @@ namespace SdkTestAutomation.Tests.Conductor.EventResource;
 public class DeleteEventConductorTests : BaseConductorTest
 {
     [Fact]
+    [Trait(TraitName.Category, TestType.Conductor)]
     public void EventResource_DeleteEvent_200()
     {
         var eventName = $"test_event_delete_{Guid.NewGuid():N}";

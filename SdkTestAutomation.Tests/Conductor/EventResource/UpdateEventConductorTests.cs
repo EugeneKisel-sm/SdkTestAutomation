@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using SdkTestAutomation.Api.Conductor.EventResource.Models;
+using SdkTestAutomation.Api.Conductor.EventResource.Request;
 using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.EventResource;
@@ -6,6 +8,7 @@ namespace SdkTestAutomation.Tests.Conductor.EventResource;
 public class UpdateEventConductorTests : BaseConductorTest
 {
     [Fact]
+    [Trait(TraitName.Category, TestType.Conductor)]
     public void EventResource_UpdateEvent_200()
     {
         var eventName = $"test_event_update_{Guid.NewGuid():N}";

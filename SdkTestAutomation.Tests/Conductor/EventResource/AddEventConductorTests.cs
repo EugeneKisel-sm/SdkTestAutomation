@@ -8,6 +8,7 @@ namespace SdkTestAutomation.Tests.Conductor.EventResource;
 public class AddEventConductorTests : BaseConductorTest
 {
     [Fact]
+    [Trait(TraitName.Category, TestType.Conductor)]
     public void EventResource_AddEvent_200()
     {
         var eventName = $"test_event_sdk_{Guid.NewGuid():N}";

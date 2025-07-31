@@ -6,6 +6,7 @@ namespace SdkTestAutomation.Tests.Conductor.EventResource;
 public class GetEventConductorTests : BaseConductorTest
 {
     [Fact]
+    [Trait(TraitName.Category, TestType.Conductor)]
     public void EventResource_GetEvent_200()
     {
         var sdkResponse = EventAdapter.GetEvents();
@@ -15,11 +16,11 @@ public class GetEventConductorTests : BaseConductorTest
     }
 
     [Fact]
+    [Trait(TraitName.Category, TestType.Conductor)]
     public void EventResource_GetEvent_EmptyName_404()
     {
         var sdkResponse = EventAdapter.GetEventByName("");
 
-        // This might fail or return empty results, but should not throw
         Assert.NotNull(sdkResponse);
     }
 }
