@@ -268,33 +268,60 @@ setup_java_sdk() {
     local java_cli_dir="SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk"
     local jar_dir="SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
     
-    # Check if JAR files already exist
-    if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
-        print_success "Java CLI JAR files found"
-    else
-        print_warning "Java CLI JAR files not found"
-        print_status "Building Java CLI applications..."
+    # Always build Java CLI applications to ensure they're up to date
+    print_status "Building Java CLI applications..."
+    
+    if [ ! -d "$java_cli_dir" ]; then
+        print_error "Java CLI directory not found: $java_cli_dir"
+        return 1
+    fi
+    
+    cd "$java_cli_dir"
+    
+    # Make build script executable
+    chmod +x build.sh
+    
+    # Clean previous builds
+    print_status "Cleaning previous builds..."
+    if ! mvn clean &> /dev/null; then
+        print_warning "Failed to clean previous builds, continuing..."
+    fi
+    
+    # Build Java CLI applications
+    print_status "Building Java CLI applications with Maven..."
+    if ./build.sh; then
+        print_success "Java CLI applications built successfully"
         
-        if [ ! -d "$java_cli_dir" ]; then
-            print_error "Java CLI directory not found: $java_cli_dir"
-            return 1
-        fi
-        
-        cd "$java_cli_dir"
-        
-        # Make build script executable
-        chmod +x build.sh
-        
-        # Build Java CLI applications
-        if ./build.sh; then
-            print_success "Java CLI applications built successfully"
+        # Verify JAR files were created
+        if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
+            print_success "Java CLI JAR files verified:"
+            print_status "  • conductor-client.jar ($(ls -lh "$jar_dir/conductor-client.jar" | awk '{print $5}'))"
+            print_status "  • orkes-conductor-client.jar ($(ls -lh "$jar_dir/orkes-conductor-client.jar" | awk '{print $5}'))"
         else
-            print_error "Failed to build Java CLI applications"
+            print_error "JAR files not found in expected location: $jar_dir"
             cd - > /dev/null
             return 1
         fi
-        
+    else
+        print_error "Failed to build Java CLI applications"
         cd - > /dev/null
+        return 1
+    fi
+    
+    cd - > /dev/null
+    
+    # Test the built JAR files
+    print_status "Testing Java CLI applications..."
+    if java -jar "$jar_dir/conductor-client.jar" --help &> /dev/null; then
+        print_success "Conductor CLI application test passed"
+    else
+        print_warning "Conductor CLI application test failed"
+    fi
+    
+    if java -jar "$jar_dir/orkes-conductor-client.jar" --help &> /dev/null; then
+        print_success "Orkes CLI application test passed"
+    else
+        print_warning "Orkes CLI application test failed"
     fi
     
     if dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj; then
@@ -394,11 +421,34 @@ test_java_sdk() {
         return 1
     fi
     
-    local jar_dir="SdkTestAutomation.Sdk/Implementations/Java/lib"
-    if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/conductor-common.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
-        print_success "Java JAR files found"
+    local jar_dir="SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
+    if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
+        print_success "Java CLI JAR files found"
+        
+        # Test JAR file sizes
+        local conductor_size=$(ls -lh "$jar_dir/conductor-client.jar" | awk '{print $5}')
+        local orkes_size=$(ls -lh "$jar_dir/orkes-conductor-client.jar" | awk '{print $5}')
+        print_status "  • conductor-client.jar: $conductor_size"
+        print_status "  • orkes-conductor-client.jar: $orkes_size"
+        
+        # Test JAR file execution
+        print_status "Testing JAR file execution..."
+        if java -jar "$jar_dir/conductor-client.jar" --help &> /dev/null; then
+            print_success "Conductor CLI application test passed"
+        else
+            print_warning "Conductor CLI application test failed"
+        fi
+        
+        if java -jar "$jar_dir/orkes-conductor-client.jar" --help &> /dev/null; then
+            print_success "Orkes CLI application test passed"
+        else
+            print_warning "Orkes CLI application test failed"
+        fi
     else
-        print_warning "Java JAR files not found"
+        print_warning "Java CLI JAR files not found"
+        print_status "Expected files:"
+        print_status "  • $jar_dir/conductor-client.jar"
+        print_status "  • $jar_dir/orkes-conductor-client.jar"
         return 1
     fi
     
@@ -582,6 +632,66 @@ print_summary() {
     fi
 }
 
+# Rebuild Java CLI applications
+rebuild_java_cli() {
+    print_status "Rebuilding Java CLI applications..."
+    
+    if ! check_java; then
+        print_error "Java not installed. Cannot rebuild Java CLI applications."
+        return 1
+    fi
+    
+    if ! command -v mvn &> /dev/null; then
+        print_error "Maven not installed. Cannot rebuild Java CLI applications."
+        return 1
+    fi
+    
+    local java_cli_dir="SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk"
+    local jar_dir="SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
+    local original_dir=$(pwd)
+    
+    if [ ! -d "$java_cli_dir" ]; then
+        print_error "Java CLI directory not found: $java_cli_dir"
+        return 1
+    fi
+    
+    cd "$java_cli_dir"
+    
+    # Make build script executable
+    chmod +x build.sh
+    
+    # Clean and rebuild
+    print_status "Cleaning previous builds..."
+    mvn clean
+    
+    print_status "Building Java CLI applications..."
+    if ./build.sh; then
+        print_success "Java CLI applications rebuilt successfully"
+        
+        # Return to original directory for verification
+        cd "$original_dir"
+        
+        # Verify JAR files
+        if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
+            print_success "JAR files verified:"
+            print_status "  • conductor-client.jar ($(ls -lh "$jar_dir/conductor-client.jar" | awk '{print $5}'))"
+            print_status "  • orkes-conductor-client.jar ($(ls -lh "$jar_dir/orkes-conductor-client.jar" | awk '{print $5}'))"
+        else
+            print_error "JAR files not found after rebuild"
+            print_status "Expected files:"
+            print_status "  • $jar_dir/conductor-client.jar"
+            print_status "  • $jar_dir/orkes-conductor-client.jar"
+            return 1
+        fi
+    else
+        print_error "Failed to rebuild Java CLI applications"
+        cd "$original_dir"
+        return 1
+    fi
+    
+    return 0
+}
+
 # Show usage
 show_usage() {
     echo "Usage: $0 [OPTIONS]"
@@ -590,6 +700,7 @@ show_usage() {
     echo "  --setup-only      Setup SDKs (default)"
     echo "  --test-only       Test existing SDKs"
     echo "  --build-only      Build Go shared library only"
+    echo "  --rebuild-java    Rebuild Java CLI applications only"
     echo "  --full            Setup, test, and build everything"
     echo "  --help            Show this help message"
 }
@@ -601,6 +712,7 @@ while [[ $# -gt 0 ]]; do
         --setup-only) MODE="setup"; shift ;;
         --test-only) MODE="test"; shift ;;
         --build-only) MODE="build"; shift ;;
+        --rebuild-java) MODE="rebuild_java"; shift ;;
         --full) MODE="full"; shift ;;
         --help) show_usage; exit 0 ;;
         *) print_error "Unknown option: $1"; show_usage; exit 1 ;;
@@ -622,6 +734,16 @@ main() {
                 print_success "✅ Go shared library build completed!"
             else
                 print_error "❌ Go shared library build failed"
+                exit 1
+            fi
+            ;;
+            
+        "rebuild_java")
+            print_status "Rebuilding Java CLI applications..."
+            if rebuild_java_cli; then
+                print_success "✅ Java CLI applications rebuilt successfully!"
+            else
+                print_error "❌ Failed to rebuild Java CLI applications"
                 exit 1
             fi
             ;;
@@ -664,7 +786,11 @@ main() {
     print_status "Next steps:"
     echo "1. Start your Conductor server"
     echo "2. Update SdkTestAutomation.Tests/.env with your server URL"
-    echo "3. Run tests: SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+    echo "3. Run tests with different SDKs:"
+    echo "   • C# SDK: SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+    echo "   • Java SDK: SDK_TYPE=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+    echo "   • Python SDK: SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+    echo "   • Go SDK: SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
     echo ""
     print_success "Operation complete! 🎉"
 }

@@ -34,7 +34,7 @@ jobs:
   build-test-framework:
     name: Build Test Framework
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     
     steps:
     - name: Checkout Repository
@@ -46,6 +46,62 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.19'
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build Go Shared Library
+      run: |
+        echo "Building Go shared library..."
+        cd SdkTestAutomation.Sdk/Implementations/Go/go-src
+        
+        # Initialize Go module if needed
+        if [ ! -f "go.mod" ]; then
+          go mod init conductor-go-bridge
+        fi
+        
+        # Add conductor-go SDK dependency
+        go get github.com/conductor-sdk/conductor-go@latest
+        go mod tidy
+        
+        # Set build environment for Linux
+        export CGO_ENABLED=1
+        export GOOS=linux
+        export GOARCH=amd64
+        
+        # Create build-artifacts directory
+        mkdir -p ../build-artifacts
+        
+        # Build shared library
+        go build -buildmode=c-shared -o "../build-artifacts/conductor-go-bridge.so" conductor-go-bridge.go
+        
+        echo "✅ Go shared library built successfully"
+        ls -la ../build-artifacts/
+
+    - name: Build Java CLI Applications
+      run: |
+        echo "Building Java CLI applications..."
+        cd SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk
+        
+        # Make build script executable
+        chmod +x build.sh
+        
+        # Build Java CLI applications
+        ./build.sh
+        
+        echo "✅ Java CLI applications built successfully"
+        echo "Debug directory contents:"
+        ls -la ../../../bin/Debug/net8.0/lib/
+        echo "Release directory contents:"
+        ls -la ../../../bin/Release/net8.0/lib/
 
     - name: Restore Dependencies
       run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity minimal
@@ -72,6 +128,26 @@ jobs:
           fi
         done
 
+    - name: Verify Dependencies
+      run: |
+        echo "=== Verifying Dependencies ==="
+        
+        # Check Go shared library
+        if [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.so" ]; then
+          echo "✅ Go shared library found"
+        else
+          echo "❌ Go shared library missing"
+          exit 1
+        fi
+        
+        # Check Java CLI JARs (Release configuration)
+        if [ -f "SdkTestAutomation.Sdk/bin/Release/net8.0/lib/conductor-client.jar" ] && [ -f "SdkTestAutomation.Sdk/bin/Release/net8.0/lib/orkes-conductor-client.jar" ]; then
+          echo "✅ Java CLI JARs found (Release)"
+        else
+          echo "❌ Java CLI JARs missing (Release)"
+          exit 1
+        fi
+
     - name: Build Summary
       if: always()
       run: |
@@ -89,8 +165,13 @@ jobs:
         echo "- SdkTestAutomation.Utils" >> $GITHUB_STEP_SUMMARY
         echo "- SdkTestAutomation.Tests" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Dependencies Built" >> $GITHUB_STEP_SUMMARY
+        echo "- Go shared library (conductor-go-bridge.so)" >> $GITHUB_STEP_SUMMARY
+        echo "- Java CLI applications (conductor-client.jar, orkes-conductor-client.jar)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔧 Build Verification" >> $GITHUB_STEP_SUMMARY
         echo "- All .NET projects compile successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- All SDK dependencies built successfully" >> $GITHUB_STEP_SUMMARY
         echo "- Solution builds without errors" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**🎉 Build completed successfully!**" >> $GITHUB_STEP_SUMMARY 
