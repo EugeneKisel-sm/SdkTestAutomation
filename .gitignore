@@ -75,15 +75,23 @@ go.work
 
 # Java
 *.class
+# JAR files (all JAR files are generated during build)
 *.jar
-!SdkTestAutomation.Sdk/bin/Debug/net8.0/lib/*.jar
 
 # Maven (Java CLI)
 SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/target/
+SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/build/
 SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/dependency-reduced-pom.xml
 SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/.mvn/
 SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/mvnw
 SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/mvnw.cmd
+
+# Gradle (if used in the future)
+.gradle/
+build/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
 
 # Temporary files
 *.tmp
@@ -102,3 +110,14 @@ yarn-error.log*
 
 # Docker
 .dockerignore
+
+# Build artifacts that should be generated during CI/CD
+# These are excluded from version control but included in project files
+# Go shared libraries (platform-specific)
+SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/*.dylib
+SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/*.so
+SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/*.dll
+SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/*.h
+
+# Java CLI JARs (generated from Maven build)
+SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/target/*.jar
