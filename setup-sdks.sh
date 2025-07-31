@@ -664,7 +664,7 @@ main() {
     print_status "Next steps:"
     echo "1. Start your Conductor server"
     echo "2. Update SdkTestAutomation.Tests/.env with your server URL"
-    echo "3. Run tests: SDK_TYPE=csharp dotnet test SdkTestAutomation.Tests"
+    echo "3. Run tests: SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
     echo ""
     print_success "Operation complete! 🎉"
 }

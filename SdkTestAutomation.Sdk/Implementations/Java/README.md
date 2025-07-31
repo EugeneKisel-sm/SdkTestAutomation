@@ -1,21 +1,33 @@
-# Java SDK Integration - CLI Approach
+# Java SDK Integration
 
-This directory contains the Java SDK integration using a CLI-based approach instead of IKVM.NET.
+This directory contains the Java SDK integration for the SdkTestAutomation framework.
 
-## Overview
+## 🎯 What is the Java SDK Integration?
 
-The Java SDK integration has been updated to use a CLI-based approach that:
+The Java SDK integration allows you to test Conductor Java SDKs using the SdkTestAutomation framework. It provides a bridge between the .NET test framework and Java Conductor SDKs, enabling you to validate Java SDK behavior alongside other language SDKs.
 
-1. **Eliminates IKVM.NET dependency** - No longer requires IKVM.NET which doesn't support Java 17+
-2. **Uses Java 17+** - Supports modern Java versions
-3. **Process-based communication** - C# code invokes Java CLI applications via Process.Start
-4. **JSON-based communication** - Requests and responses are exchanged via JSON
-5. **Separated CLI applications** - Separate JAR files for Conductor and Orkes operations
+## 🚀 Why Was It Created?
 
-## Architecture
+### The Challenge
+When testing Conductor SDKs across multiple languages, Java presents unique challenges:
+- **Language Barrier**: .NET and Java are different ecosystems
+- **Runtime Isolation**: Java runs in JVM, .NET in CLR
+- **Dependency Management**: Java uses Maven/Gradle, .NET uses NuGet
+- **Cross-Platform Compatibility**: Need to work on Windows, macOS, and Linux
+
+### The Solution
+The Java integration uses a CLI-based approach:
+- **Process Communication**: .NET invokes Java applications via command line
+- **JSON Protocol**: Standardized data exchange between languages
+- **Maven Build System**: Clean dependency management for Java components
+- **Separated Applications**: Dedicated CLI apps for Conductor and Orkes operations
+
+## 🔧 How It Works
+
+### Architecture Overview
 
 ```
-C# Application
+.NET Test Framework
     ↓ (Process.Start)
 Java CLI Applications
     ├── conductor-java-cli.jar (Conductor operations)
@@ -24,71 +36,113 @@ Java CLI Applications
 Conductor/Orkes Server
 ```
 
-## Components
+### Communication Flow
 
-### Java CLI Applications
+1. **Test Execution**: .NET test calls Java adapter
+2. **Process Launch**: Adapter starts Java CLI application
+3. **JSON Request**: Parameters sent as JSON string
+4. **Java Processing**: CLI app executes Conductor SDK operations
+5. **JSON Response**: Results returned as JSON string
+6. **Response Parsing**: .NET adapter converts JSON to unified format
 
-- **ConductorCli.java** - Main entry point for Conductor operations (events, workflows)
-- **OrkesCli.java** - Main entry point for Orkes-specific operations (tokens)
+## 📁 Directory Structure
 
-### Operation Classes
+```
+Java/
+├── cli-java-sdk/                    # Java CLI applications
+│   ├── src/main/java/
+│   │   └── com/sdktestautomation/
+│   │       ├── ConductorCli.java    # Conductor operations CLI
+│   │       ├── OrkesCli.java        # Orkes operations CLI
+│   │       ├── BaseCli.java         # Shared CLI functionality
+│   │       ├── models/
+│   │       │   └── SdkResponse.java # Response model
+│   │       ├── operations/
+│   │       │   ├── conductor/       # Conductor operations
+│   │       │   └── orkes/           # Orkes operations
+│   │       └── utils/
+│   │           └── OperationUtils.java
+│   ├── pom.xml                      # Maven configuration
+│   └── build.sh                     # Build script
+├── Conductor/                       # Conductor adapters
+├── Orkes/                           # Orkes adapters
+├── BaseJavaClient.cs                # Shared client functionality
+├── BaseJavaAdapter.cs               # Shared adapter functionality
+└── README.md                        # This documentation
+```
 
-The operations are organized into separate packages:
-
-#### Conductor Operations (`operations/conductor/`)
-- **EventOperations.java** - Handles Conductor event operations
-- **WorkflowOperations.java** - Handles Conductor workflow operations
-
-#### Orkes Operations (`operations/orkes/`)
-- **TokenOperations.java** - Handles Orkes token operations
-
-### Shared Components
-
-- **SdkResponse.java** - Response model for all operations
-- **OperationUtils.java** - Utility functions for error handling and client configuration
-
-### C# Adapters
-
-- **JavaClient.cs** - Base client for Java CLI communication
-- **JavaEventAdapter.cs** - Event operations adapter
-- **JavaWorkflowAdapter.cs** - Workflow operations adapter
-- **JavaTokenAdapter.cs** - Token operations adapter (Orkes)
-
-## Setup
+## 🚀 Getting Started
 
 ### Prerequisites
 
-1. **Java 17+** installed and in PATH
-2. **Maven** installed for building Java CLI applications
+- **Java 17+** installed and in PATH
+- **Maven** installed for building Java applications
+- **.NET 8.0+** (handled by main framework)
 
-### Building Java CLI Applications
+### 1. Build Java CLI Applications
 
 ```bash
 cd SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk
-chmod +x build.sh
 ./build.sh
 ```
 
-This will:
-- Build both Java CLI applications using Maven
-- Create separate shaded JAR files for Conductor and Orkes
-- Copy JAR files to the appropriate output directory
+This creates:
+- `conductor-java-cli.jar` - For Conductor operations
+- `orkes-java-cli.jar` - For Orkes operations
 
-### JAR File Locations
+### 2. Verify Installation
 
-The build script copies JAR files to:
-- `SdkTestAutomation.Sdk/bin/Debug/net8.0/lib/conductor-client.jar`
-- `SdkTestAutomation.Sdk/bin/Debug/net8.0/lib/orkes-conductor-client.jar`
+```bash
+# Test Conductor CLI
+java -jar conductor-java-cli.jar --help
 
-## Communication Protocol
+# Test Orkes CLI
+java -jar orkes-java-cli.jar --help
+```
+
+### 3. Run Tests
+
+```bash
+# From project root
+SDK_TYPE=java ../../SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+```
+
+## 📝 How to Use
+
+### Basic Usage
+
+The Java integration works automatically when you set `SDK_TYPE=java`:
+
+```csharp
+public class EventTests : BaseConductorTest
+{
+    [Fact]
+    public void AddEvent_ShouldSucceed()
+    {
+        // This will use Java SDK when SDK_TYPE=java
+        var response = EventAdapter.AddEvent("test_event", "test_type", true);
+        Assert.True(response.Success);
+    }
+}
+```
+
+### What Happens Behind the Scenes
+
+1. **SDK Selection**: Framework detects `SDK_TYPE=java`
+2. **Adapter Creation**: Creates `JavaEventAdapter` instance
+3. **CLI Invocation**: Adapter calls `java -jar conductor-java-cli.jar`
+4. **JSON Communication**: Request/response exchanged via JSON
+5. **Response Processing**: JSON converted to `SdkResponse` object
+
+## 📊 Request/Response Format
 
 ### Request Format
 
 ```json
 {
-  "method": "addEvent",
-  "serverUrl": "http://localhost:8080/api",
-  "data": {
+  "resource": "event",
+  "operation": "add-event",
+  "parameters": {
     "name": "test_event",
     "eventType": "test_event_type",
     "active": true
@@ -101,97 +155,122 @@ The build script copies JAR files to:
 ```json
 {
   "success": true,
-  "data": "Event added successfully"
+  "data": "Event added successfully",
+  "content": "Event added successfully",
+  "statusCode": 200
 }
 ```
 
-### Error Response
+## 🔧 Configuration
 
-```json
-{
-  "success": false,
-  "error": "Error message"
-}
-```
+### Environment Variables
 
-## Supported Operations
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CONDUCTOR_SERVER_URL` | Conductor server URL | `http://localhost:8080/api` |
+| `JAVA_HOME` | Java installation path | Auto-detected |
 
-### Conductor Operations (conductor-java-cli.jar)
+### JAR File Locations
 
-- `add-event` - Register a new event handler
-- `get-event` - Get all event handlers
-- `get-event-by-name` - Get event handlers by name
-- `update-event` - Update an existing event handler
-- `delete-event` - Delete an event handler
-- `get-workflow` - Get workflow execution status
-- `get-workflows` - Get running workflows
-- `start-workflow` - Start a new workflow
-- `terminate-workflow` - Terminate a workflow
+The build script copies JAR files to:
+- `SdkTestAutomation.Sdk/bin/Debug/net8.0/lib/conductor-client.jar`
+- `SdkTestAutomation.Sdk/bin/Debug/net8.0/lib/orkes-conductor-client.jar`
 
-### Orkes Operations (orkes-java-cli.jar)
+## 🎯 Use Cases
 
-- `generate-token` - Generate authentication token
-- `get-user-info` - Get user information (not implemented)
+### For Java Developers
+- Test your Java Conductor SDK implementation
+- Validate SDK behavior against official API
+- Ensure compatibility with different Conductor versions
 
-## CLI Usage
+### For Cross-Language Teams
+- Compare Java SDK behavior with other language SDKs
+- Ensure consistent API responses across languages
+- Validate multi-language application compatibility
 
-### Conductor CLI
+### For DevOps Teams
+- Automated testing of Java SDK deployments
+- Integration testing with Java microservices
+- Performance validation of Java SDK operations
 
-```bash
-java -jar conductor-client.jar --resource event --operation get-event --parameters '{}'
-java -jar conductor-client.jar --resource workflow --operation get-workflow --parameters '{"workflowId":"123"}'
-```
-
-### Orkes CLI
-
-```bash
-java -jar orkes-conductor-client.jar --resource token --operation generate-token --parameters '{"keyId":"test","keySecret":"test"}'
-```
-
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
-1. **Java not found**
-   - Ensure Java 17+ is installed and in PATH
-   - Run `java -version` to verify
+**Java Not Found:**
+```bash
+# Check Java installation
+java -version
 
-2. **JAR files not found**
-   - Run the build script: `./build.sh`
-   - Check JAR files exist in the expected locations
+# Set JAVA_HOME if needed
+export JAVA_HOME=/path/to/java
+```
 
-3. **Maven not found**
-   - Install Maven: `brew install maven` (macOS) or download from maven.apache.org
+**Maven Not Found:**
+```bash
+# Install Maven (macOS)
+brew install maven
 
-4. **Permission denied**
-   - Make build script executable: `chmod +x build.sh`
+# Install Maven (Linux)
+sudo apt-get install maven
+
+# Check Maven installation
+mvn -version
+```
+
+**JAR Files Missing:**
+```bash
+# Rebuild Java applications
+cd SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk
+./build.sh
+
+# Verify JAR files exist
+ls -la SdkTestAutomation.Sdk/bin/Debug/net8.0/lib/*.jar
+```
 
 ### Debug Mode
 
-Enable debug logging in the C# application to see detailed communication:
+Enable debug logging to see detailed communication:
 
 ```csharp
+// In your test setup
 _logger.LogLevel = "Debug";
 ```
 
-## Migration from IKVM.NET
+This will show:
+- CLI commands being executed
+- JSON requests and responses
+- Process start/stop information
 
-The migration from IKVM.NET to CLI approach involved:
+## 🔄 Extending Java Integration
 
-1. **Removed IKVM dependencies** from project file
-2. **Replaced dynamic Java calls** with Process.Start invocations
-3. **Created separate Java CLI applications** for Conductor and Orkes operations
-4. **Organized operations** into conductor and orkes packages
-5. **Updated C# adapters** to use JSON communication
-6. **Added build scripts** for Java CLI compilation
+### Adding New Operations
 
-## Performance Considerations
+1. **Add Java Operation**: Create new method in appropriate `Operations.java`
+2. **Update CLI**: Add operation handling in `ConductorCli.java` or `OrkesCli.java`
+3. **Update C# Adapter**: Add corresponding method in adapter class
+4. **Add Tests**: Create tests for the new operation
 
-- **Process startup overhead** - Each Java call starts a new process
-- **JSON serialization** - Additional overhead for request/response serialization
-- **Memory usage** - JVM startup for each operation
+## 📊 Performance Considerations
 
-For high-performance scenarios, consider:
-- Process pooling
-- Batch operations
-- Caching strategies 
+### Advantages
+- **Language Independence**: No runtime dependencies between .NET and Java
+- **Clean Separation**: Java and .NET code are completely isolated
+- **Flexible Deployment**: JAR files can be deployed independently
+- **Version Compatibility**: Supports any Java version 17+
+
+### Trade-offs
+- **Process Overhead**: Each operation starts a new Java process
+- **Serialization Cost**: JSON serialization/deserialization overhead
+- **Memory Usage**: JVM startup for each operation
+
+### Optimization Tips
+- **Batch Operations**: Group multiple operations when possible
+- **Connection Reuse**: Java SDK maintains HTTP connections internally
+- **Error Handling**: Implement proper error handling to avoid hanging processes
+
+## 🔗 Related Documentation
+
+- [Main Framework README](../../../README.md) - Overview of the entire framework
+- [Conductor Documentation](https://conductor.netflix.com/) - Official Conductor docs
+- [Orkes Documentation](https://orkes.io/) - Orkes platform documentation 

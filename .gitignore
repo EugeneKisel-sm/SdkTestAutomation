@@ -75,7 +75,14 @@ go.work
 # Java
 *.class
 *.jar
-!SdkTestAutomation.Sdk/lib/*.jar
+!SdkTestAutomation.Sdk/bin/Debug/net8.0/lib/*.jar
+
+# Maven (Java CLI)
+SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/target/
+SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/dependency-reduced-pom.xml
+SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/.mvn/
+SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/mvnw
+SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk/mvnw.cmd
 
 # Temporary files
 *.tmp

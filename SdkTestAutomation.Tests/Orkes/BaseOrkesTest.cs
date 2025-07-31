@@ -1,5 +1,6 @@
 using SdkTestAutomation.Sdk.Core;
 using SdkTestAutomation.Sdk.Core.Interfaces;
+using SdkTestAutomation.Sdk.Implementations.Java.Orkes;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 using SdkTestAutomation.Api.Orkes.TokenResource;
@@ -41,9 +42,15 @@ public abstract class BaseOrkesTest : IDisposable
     
     public virtual void Dispose()
     {
-        if (TestConfig.SdkType == "go")
+        // Log SDK details based on type
+        switch (TestConfig.SdkType)
         {
-            LogGoSdkDetails();
+            case "go":
+                LogGoSdkDetails();
+                break;
+            case "java":
+                LogJavaSdkDetails();
+                break;
         }
         
         TokenAdapter?.Dispose();
@@ -54,11 +61,26 @@ public abstract class BaseOrkesTest : IDisposable
     {
         try
         {
-            
+            // Go SDK logging would go here if needed
         }
         catch (Exception ex)
         {
             _logger.Log($"Error retrieving Go SDK logs: {ex.Message}");
+        }
+    }
+    
+    private void LogJavaSdkDetails()
+    {
+        try
+        {
+            _logger.Log("=== JAVA SDK DETAILS ===");
+            _logger.Log($"Token Adapter Type: {TokenAdapter.GetType().Name}");
+            _logger.Log($"Token Adapter SDK Type: {TokenAdapter.SdkType}");
+            _logger.Log("=== END JAVA SDK DETAILS ===");
+        }
+        catch (Exception ex)
+        {
+            _logger.Log($"Error retrieving Java SDK details: {ex.Message}");
         }
     }
 } 

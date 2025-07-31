@@ -39,7 +39,6 @@ public class EventOperations {
     }
     
     private static SdkResponse getEvent(EventClient eventApi) throws Exception {
-        // Try to get events with a wildcard or empty string
         List<EventHandler> events = eventApi.getEventHandlers("*", false);
         return SdkResponse.createSuccess(events);
     }

@@ -4,6 +4,7 @@ using SdkTestAutomation.Sdk.Core;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 using SdkTestAutomation.Sdk.Implementations.Go;
+using SdkTestAutomation.Sdk.Implementations.Java.Conductor;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 using RestSharp;
@@ -58,10 +59,15 @@ public abstract class BaseConductorTest : IDisposable
     
     public virtual void Dispose()
     {
-        // Log Go SDK details if using Go SDK
-        if (TestConfig.SdkType == "go")
+        // Log SDK details based on type
+        switch (TestConfig.SdkType)
         {
-            LogGoSdkDetails();
+            case "go":
+                LogGoSdkDetails();
+                break;
+            case "java":
+                LogJavaSdkDetails();
+                break;
         }
         
         EventAdapter?.Dispose();
@@ -100,6 +106,23 @@ public abstract class BaseConductorTest : IDisposable
         catch (Exception ex)
         {
             _logger.Log($"Error retrieving Go SDK logs: {ex.Message}");
+        }
+    }
+    
+    private void LogJavaSdkDetails()
+    {
+        try
+        {
+            _logger.Log("=== JAVA SDK DETAILS ===");
+            _logger.Log($"Event Adapter Type: {EventAdapter.GetType().Name}");
+            _logger.Log($"Workflow Adapter Type: {WorkflowAdapter.GetType().Name}");
+            _logger.Log($"Event Adapter SDK Type: {EventAdapter.SdkType}");
+            _logger.Log($"Workflow Adapter SDK Type: {WorkflowAdapter.SdkType}");
+            _logger.Log("=== END JAVA SDK DETAILS ===");
+        }
+        catch (Exception ex)
+        {
+            _logger.Log($"Error retrieving Java SDK details: {ex.Message}");
         }
     }
 } 

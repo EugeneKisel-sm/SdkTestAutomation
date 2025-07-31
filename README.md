@@ -3,32 +3,71 @@
 [![Build and Test](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build-and-test.yml)
 [![Build](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build.yml/badge.svg)](https://github.com/evgeniykisel/SdkTestAutomation/actions/workflows/build.yml)
 
-A .NET test automation framework for validating multiple Conductor SDKs (C#, Java, Python, Go) through in-process adapters.
+A comprehensive .NET test automation framework for validating Conductor SDKs across multiple programming languages.
 
-## 🎯 Key Features
+## 🎯 What is SdkTestAutomation?
 
-- **Multi-SDK Support**: Test C#, Java, Python, and Go Conductor SDKs with a single test codebase
-- **In-Process Adapters**: Direct SDK integration without CLI overhead
-- **Response Validation**: Deep structural comparison of SDK responses with direct API calls
-- **Extensible Architecture**: Easy to add new SDKs by implementing shared interfaces
-- **Cross-Platform**: Supports Windows, macOS, and Linux with automatic platform detection
+SdkTestAutomation is a unified testing framework that allows you to validate Conductor SDKs written in different programming languages (C#, Java, Python, Go) using a single test codebase. Instead of maintaining separate test suites for each SDK, you write tests once and run them against any supported SDK.
+
+## 🚀 Why Was It Created?
+
+### The Problem
+When working with Conductor (a workflow orchestration platform), you often need to:
+- Test SDKs in multiple programming languages
+- Ensure consistent behavior across different SDK implementations
+- Validate that SDK responses match the official API
+- Maintain separate test suites for each language (time-consuming and error-prone)
+
+### The Solution
+SdkTestAutomation provides:
+- **Single Test Codebase**: Write tests once, run against any SDK
+- **Cross-Language Validation**: Ensure all SDKs behave consistently
+- **API Compliance Testing**: Validate SDK responses against direct API calls
+- **Unified Reporting**: Get consistent test results regardless of the SDK being tested
+
+## 🔧 How It Works
+
+### Architecture Overview
+
+```
+Your Test Code (C#)
+    ↓
+SdkTestAutomation Framework
+    ↓
+Language-Specific Adapters
+    ├── C# SDK (Direct)
+    ├── Java SDK (CLI)
+    ├── Python SDK (Python.NET)
+    └── Go SDK (Shared Library)
+    ↓
+Conductor Server
+```
+
+### Supported SDKs
+
+| Language | Integration Method | Use Case |
+|----------|-------------------|----------|
+| **C#** | Direct NuGet package | Native .NET applications |
+| **Java** | CLI applications | Java-based microservices |
+| **Python** | Python.NET bridge | Python data processing |
+| **Go** | Shared library | High-performance services |
 
 ## 📁 Project Structure
 
 ```
 SdkTestAutomation/
-├── SdkTestAutomation.Sdk/           # Shared interfaces & models
-│   ├── Implementations/
-│   │   ├── CSharp/                  # C# SDK adapter
-│   │   ├── Java/                    # Java SDK adapter (IKVM.NET)
-│   │   ├── Python/                  # Python SDK adapter (Python.NET)
-│   │   └── Go/                      # Go SDK adapter (Shared Library)
-│   └── lib/                         # JAR files for Java SDK
+├── SdkTestAutomation.Sdk/           # Core framework & adapters
+│   ├── Core/                        # Shared interfaces & models
+│   └── Implementations/             # Language-specific adapters
+│       ├── CSharp/                  # C# SDK integration
+│       ├── Java/                    # Java SDK integration
+│       ├── Python/                  # Python SDK integration
+│       └── Go/                      # Go SDK integration
 ├── SdkTestAutomation.Tests/         # Test implementations
 ├── SdkTestAutomation.Api/           # Direct API client
-├── SdkTestAutomation.Core/          # Core HTTP functionality
+├── SdkTestAutomation.Core/          # HTTP client framework
 ├── SdkTestAutomation.Utils/         # Utilities & logging
-└── setup-sdks.sh                    # Comprehensive setup script
+└── setup-sdks.sh                    # Automated setup script
 ```
 
 ## 🚀 Quick Start
@@ -36,163 +75,167 @@ SdkTestAutomation/
 ### Prerequisites
 
 - **.NET 8.0+** (required)
-- **Java 17+** (optional, for Java SDK testing)
-- **Python 3.9+** (optional, for Python SDK testing)
-- **Go 1.19+** (optional, for Go SDK testing) with CGO enabled
+- **Java 17+** (for Java SDK testing)
+- **Maven** (for Java SDK building)
+- **Python 3.9+** (for Python SDK testing)
+- **Go 1.19+** (for Go SDK testing)
 
-### Automated Setup
+### 1. Clone and Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/evgeniykisel/SdkTestAutomation.git
 cd SdkTestAutomation
 
-# Run comprehensive setup script
+# Run automated setup
 chmod +x setup-sdks.sh
 ./setup-sdks.sh
 ```
 
 The setup script automatically:
-- ✅ Checks all prerequisites
-- ✅ Sets up C# SDK (conductor-csharp package)
-- ✅ Sets up Java SDK (downloads JAR files, IKVM.NET bridge)
-- ✅ Sets up Python SDK (installs conductor-python, Python.NET bridge)
-- ✅ Sets up Go SDK (creates go.mod, builds shared library)
-- ✅ Creates environment configuration
-- ✅ Tests overall build
+- ✅ Installs all required dependencies
+- ✅ Builds language-specific SDK integrations
+- ✅ Creates configuration files
+- ✅ Validates the setup
 
-### Manual Setup Options
+### 2. Configure Your Environment
+
+The setup creates `SdkTestAutomation.Tests/.env`:
 
 ```bash
-# Setup only (default)
-./setup-sdks.sh
+# Conductor Server URL
+CONDUCTOR_SERVER_URL=http://localhost:8080/api
 
-# Test existing SDKs only
-./setup-sdks.sh --test-only
-
-# Build Go shared library only
-./setup-sdks.sh --build-only
-
-# Complete setup, test, and build
-./setup-sdks.sh --full
-
-# Show help
-./setup-sdks.sh --help
+# SDK to test (csharp, java, python, go)
+SDK_TYPE=csharp
 ```
 
-### Configuration
+### 3. Start Conductor Server
 
-1. **Environment File**: The script creates `SdkTestAutomation.Tests/.env` with:
-   ```bash
-   # Conductor Server Configuration (configurable)
-   CONDUCTOR_SERVER_URL=http://localhost:8080/api
-   
-   # SDK Selection (csharp, java, python, go)
-   SDK_TYPE=csharp
-   
-   # Go SDK Configuration (optional)
-   GO_API_SERVER_PORT=8081
-   ```
+Ensure your Conductor server is running (the framework will connect to it).
 
-2. **Configurable URLs**: All URLs are configurable via environment variables:
-   - `CONDUCTOR_SERVER_URL`: Main Conductor server URL (default: `http://localhost:8080/api`)
-   - `GO_API_SERVER_PORT`: Go HTTP API server port (default: `8081`)
-
-3. **Start Conductor Server**: Ensure your Conductor server is running
-
-### Running Tests
+### 4. Run Tests
 
 ```bash
 # Build the project
 dotnet build
 
-# Run tests with different SDKs
+# Test with different SDKs
 SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 SDK_TYPE=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
 
-# Run specific test methods
-SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests -method "*AddEventTests*"
-
-# Run tests with different Conductor server URLs
-CONDUCTOR_SERVER_URL=http://my-server:8080/api SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
-CONDUCTOR_SERVER_URL=https://conductor.example.com/api SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+# Run specific test
+SDK_TYPE=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests -filter "*AddEvent*"
 ```
-
-## 🔧 SDK Integration Details
-
-| SDK | Status | Integration Method | Performance |
-|-----|--------|-------------------|-------------|
-| **C#** | ✅ Ready | Direct NuGet package | Native |
-| **Java** | ✅ Ready | IKVM.NET bridge | High |
-| **Python** | ✅ Ready | Python.NET bridge | High |
-| **Go** | ✅ Ready | Shared Library (P/Invoke) | **50x faster** |
-
-### Go SDK Performance Benefits
-
-The Go SDK uses a shared library approach for optimal performance:
-- **50x faster** than HTTP API approach
-- **Direct memory access** via shared library
-- **No process communication** overhead
-- **Cross-platform support** (Windows, macOS, Linux)
 
 ## 📝 Writing Tests
 
-All SDK integration tests inherit from `BaseTest`:
+### Basic Test Structure
+
+All tests inherit from base classes that provide SDK adapters:
 
 ```csharp
-public class SdkIntegrationTests : BaseTest
+public class EventTests : BaseConductorTest
 {
     [Fact]
-    public async Task SdkIntegration_AddEvent_ValidatesAgainstApi()
+    public void AddEvent_ShouldSucceed()
     {
+        // Arrange
         var eventName = $"test_event_{Guid.NewGuid():N}";
         
-        // Test SDK call
-        var sdkResponse = EventAdapter.AddEvent(eventName, "test_event", true);
-
-        Assert.True(sdkResponse.Success, $"SDK call failed: {sdkResponse.ErrorMessage}");
-        Assert.Equal(HttpStatusCode.OK, sdkResponse.StatusCode);
+        // Act
+        var response = EventAdapter.AddEvent(eventName, "test_event", true);
+        
+        // Assert
+        Assert.True(response.Success);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }
 ```
 
-The framework automatically selects the SDK based on the `SDK_TYPE` environment variable.
+### What Happens Behind the Scenes
+
+1. **SDK Selection**: The framework automatically selects the SDK based on `SDK_TYPE`
+2. **Adapter Creation**: Creates the appropriate language adapter
+3. **API Validation**: Compares SDK response with direct API call
+4. **Unified Response**: Returns consistent response format regardless of SDK
+
+## 🔧 Configuration Options
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CONDUCTOR_SERVER_URL` | Conductor server URL | `http://localhost:8080/api` |
+| `SDK_TYPE` | SDK to test | `csharp` |
+
+### Testing Different Environments
+
+```bash
+# Test against local development server
+CONDUCTOR_SERVER_URL=http://localhost:8080/api SDK_TYPE=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+
+# Test against staging environment
+CONDUCTOR_SERVER_URL=https://staging-conductor.example.com/api SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests
+```
+
+## 🎯 Use Cases
+
+### For SDK Developers
+- Validate your SDK implementation against the official API
+- Ensure consistent behavior across different versions
+- Catch regressions before releasing
+
+### For Application Developers
+- Test your application with different SDKs
+- Ensure your code works with multiple language implementations
+- Validate SDK compatibility
+
+### For DevOps Teams
+- Automated testing of SDK deployments
+- Cross-language compatibility validation
+- Performance comparison across SDKs
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
-- **Java SDK**: Verify Java 17+ and JAR files in `SdkTestAutomation.Sdk/lib/`
+- **Java SDK**: Verify Java 17+, Maven, and run `./setup-sdks.sh`
 - **Python SDK**: Check Python 3.9+ and `conductor-python` installation
 - **Go SDK**: Verify Go 1.19+ and shared library build
 - **Environment**: Ensure `.env` file exists in `SdkTestAutomation.Tests/`
 
-### Go SDK Specific
+### Getting Help
 
-- **Shared Library Not Found**: Run `./setup-sdks.sh --build-only`
-- **CGO Issues**: Ensure `CGO_ENABLED=1` and proper build tools
-- **Platform Detection**: Script automatically detects Apple Silicon vs Intel
-
-### Debug Mode
-
-```csharp
-_logger.LogLevel = "Debug";
-```
+1. Check the logs for detailed error messages
+2. Verify all prerequisites are installed
+3. Ensure Conductor server is running and accessible
+4. Run `./setup-sdks.sh` to reinstall dependencies
 
 ## 🔄 Extending the Framework
 
-To add a new SDK:
+### Adding a New SDK
 
 1. Create adapter project: `dotnet new classlib -n SdkTestAutomation.NewSdk`
-2. Implement `IEventResourceAdapter` interface
-3. Update `AdapterFactory.CreateEventResourceAdapterAsync`
+2. Implement `IEventAdapter` and `IWorkflowAdapter` interfaces
+3. Update `SdkFactory` to include the new SDK
 4. Add project reference to `SdkTestAutomation.Tests`
+
+## 📊 Performance Comparison
+
+| SDK | Integration Method | Performance | Use Case |
+|-----|-------------------|-------------|----------|
+| **C#** | Direct | Native | .NET applications |
+| **Java** | CLI | High | Java microservices |
+| **Python** | Python.NET | High | Data processing |
+| **Go** | Shared Library | **50x faster** | High-performance services |
+
+The Go SDK uses a shared library approach for optimal performance, making it ideal for high-throughput scenarios.
 
 ## 📄 License
 
-This project is licensed under the terms provided in the LICENSE file.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
