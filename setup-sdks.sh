@@ -64,15 +64,15 @@ check_go() {
 check_java() {
     if command -v java &> /dev/null; then
         local version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
-        if check_version "$version" "17.0.0"; then
+        if check_version "$version" "21.0.0"; then
             print_success "Java $version is installed"
             return 0
         else
-            print_warning "Java $version is installed but version 17+ is required"
+            print_warning "Java $version is installed but version 21+ is required"
             return 1
         fi
     else
-        print_warning "Java is not installed. Please install Java 17+ for Java SDK support."
+        print_warning "Java is not installed. Please install Java 21+ for Java SDK support."
         return 1
     fi
 }
@@ -267,6 +267,7 @@ setup_java_sdk() {
     
     local java_cli_dir="SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk"
     local jar_dir="SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
+    local original_dir=$(pwd)
     
     # Always build Java CLI applications to ensure they're up to date
     print_status "Building Java CLI applications..."
@@ -292,23 +293,31 @@ setup_java_sdk() {
     if ./build.sh; then
         print_success "Java CLI applications built successfully"
         
-        # Verify JAR files were created
+        # Return to original directory for verification
+        cd "$original_dir"
+        
+        # Wait a moment for file system to sync
+        sleep 1
+        
+        # Verify JAR files were created (after build.sh has copied them)
         if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
             print_success "Java CLI JAR files verified:"
             print_status "  • conductor-client.jar ($(ls -lh "$jar_dir/conductor-client.jar" | awk '{print $5}'))"
             print_status "  • orkes-conductor-client.jar ($(ls -lh "$jar_dir/orkes-conductor-client.jar" | awk '{print $5}'))"
         else
             print_error "JAR files not found in expected location: $jar_dir"
-            cd - > /dev/null
+            print_status "Expected files:"
+            print_status "  • $jar_dir/conductor-client.jar"
+            print_status "  • $jar_dir/orkes-conductor-client.jar"
+            print_status "Available files in $jar_dir:"
+            ls -la "$jar_dir" 2>/dev/null || print_status "  (directory not found)"
             return 1
         fi
     else
         print_error "Failed to build Java CLI applications"
-        cd - > /dev/null
+        cd "$original_dir"
         return 1
     fi
-    
-    cd - > /dev/null
     
     # Test the built JAR files
     print_status "Testing Java CLI applications..."

@@ -4,8 +4,8 @@ set -e
 
 echo "Building Java CLI applications..."
 
-if ! java -version 2>&1 | grep -q "version \"1[7-9]\|version \"2[0-9]"; then
-    echo "Error: Java 17+ is required"
+if ! java -version 2>&1 | grep -q "version \"2[1-9]\|version \"3[0-9]"; then
+    echo "Error: Java 21+ is required"
     exit 1
 fi
 
@@ -24,6 +24,8 @@ if [ -f "target/conductor-java-cli.jar" ]; then
     echo "✓ Copied conductor-java-cli.jar to conductor-client.jar (Debug & Release)"
 else
     echo "Error: conductor-java-cli.jar not found in target directory"
+    echo "Available files in target directory:"
+    ls -la target/*.jar 2>/dev/null || echo "No JAR files found"
     exit 1
 fi
 
@@ -33,6 +35,8 @@ if [ -f "target/orkes-java-cli.jar" ]; then
     echo "✓ Copied orkes-java-cli.jar to orkes-conductor-client.jar (Debug & Release)"
 else
     echo "Error: orkes-java-cli.jar not found in target directory"
+    echo "Available files in target directory:"
+    ls -la target/*.jar 2>/dev/null || echo "No JAR files found"
     exit 1
 fi
 
