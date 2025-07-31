@@ -51,28 +51,10 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Build Dependencies
+    - name: Setup SDKs
       run: |
-        # Build Go shared library
-        cd SdkTestAutomation.Sdk/Implementations/Go/go-src
-        [ ! -f "go.mod" ] && go mod init conductor-go-bridge
-        go get github.com/conductor-sdk/conductor-go@latest
-        go mod tidy
-        CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o "../build-artifacts/conductor-go-bridge.so" conductor-go-bridge.go
-        
-        # Build Java CLI applications
-        cd ../../Java/cli-java-sdk
-        mvn clean package -q
-        
-        # Copy JARs to output directories
-        mkdir -p ../../../bin/{Debug,Release}/net8.0/lib
-        cp target/conductor-java-cli.jar ../../../bin/Debug/net8.0/lib/conductor-client.jar
-        cp target/conductor-java-cli.jar ../../../bin/Release/net8.0/lib/conductor-client.jar
-        cp target/orkes-java-cli.jar ../../../bin/Debug/net8.0/lib/orkes-conductor-client.jar
-        cp target/orkes-java-cli.jar ../../../bin/Release/net8.0/lib/orkes-conductor-client.jar
-
-    - name: Install Python Dependencies
-      run: pip install conductor-python
+        chmod +x setup-sdks.sh
+        ./setup-sdks.sh
 
     - name: Build .NET Solution
       run: |

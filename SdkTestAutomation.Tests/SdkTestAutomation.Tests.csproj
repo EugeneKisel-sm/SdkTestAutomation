@@ -41,4 +41,18 @@
         </None>
     </ItemGroup>
 
+    <Target Name="CopyJarFiles" AfterTargets="Build">
+        <ItemGroup>
+            <JarFiles Include="..\SdkTestAutomation.Sdk\bin\$(Configuration)\net8.0\lib\*.jar" />
+        </ItemGroup>
+        
+        <!-- Only copy JAR files if they exist -->
+        <MakeDir Directories="$(OutputPath)lib" Condition="'@(JarFiles)' != ''" />
+        <Copy SourceFiles="@(JarFiles)" DestinationFolder="$(OutputPath)lib" Condition="'@(JarFiles)' != ''" />
+        
+        <!-- Log warning if JAR files are missing -->
+        <Warning Text="JAR files not found in ..\SdkTestAutomation.Sdk\bin\$(Configuration)\net8.0\lib\. Run setup-sdks.sh to build them." 
+                 Condition="'@(JarFiles)' == ''" />
+    </Target>
+
 </Project>

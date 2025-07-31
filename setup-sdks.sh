@@ -3,6 +3,9 @@
 # SdkTestAutomation SDK Setup Script
 set -e
 
+# Get the directory where this script is located (project root)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "🚀 SdkTestAutomation SDK Setup Script"
 echo "====================================="
 
@@ -115,7 +118,7 @@ check_dotnet() {
 
 # Go shared library check
 check_shared_library() {
-    local go_dir="SdkTestAutomation.Sdk/Implementations/Go"
+    local go_dir="$SCRIPT_DIR/SdkTestAutomation.Sdk/Implementations/Go"
     local build_artifacts_dir="$go_dir/build-artifacts"
     local platform=$(detect_platform)
     local library_name=$(get_library_name "$platform")
@@ -131,7 +134,7 @@ check_shared_library() {
 
 # Clean up Go artifacts
 cleanup_go_artifacts() {
-    local go_dir="SdkTestAutomation.Sdk/Implementations/Go"
+    local go_dir="$SCRIPT_DIR/SdkTestAutomation.Sdk/Implementations/Go"
     local build_artifacts_dir="$go_dir/build-artifacts"
     local go_src_dir="$go_dir/go-src"
     
@@ -159,7 +162,7 @@ cleanup_go_artifacts() {
 
 # Build Go shared library
 build_go_library() {
-    local go_dir="SdkTestAutomation.Sdk/Implementations/Go"
+    local go_dir="$SCRIPT_DIR/SdkTestAutomation.Sdk/Implementations/Go"
     local go_src_dir="$go_dir/go-src"
     local original_dir=$(pwd)
     
@@ -242,7 +245,7 @@ build_go_library() {
 # Setup functions
 setup_csharp_sdk() {
     print_status "Setting up C# SDK..."
-    if dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj; then
+    if dotnet restore "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj"; then
         print_success "C# SDK setup complete"
         return 0
     else
@@ -265,8 +268,8 @@ setup_java_sdk() {
         return 1
     fi
     
-    local java_cli_dir="SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk"
-    local jar_dir="SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
+    local java_cli_dir="$SCRIPT_DIR/SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk"
+    local jar_dir="$SCRIPT_DIR/SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
     local original_dir=$(pwd)
     
     # Always build Java CLI applications to ensure they're up to date
@@ -333,7 +336,7 @@ setup_java_sdk() {
         print_warning "Orkes CLI application test failed"
     fi
     
-    if dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj; then
+    if dotnet restore "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj"; then
         print_success "Java SDK setup complete"
         return 0
     else
@@ -378,7 +381,7 @@ setup_python_sdk() {
         return 1
     fi
     
-    if dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj; then
+    if dotnet restore "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj"; then
         print_success "Python SDK setup complete"
         return 0
     else
@@ -397,8 +400,8 @@ setup_go_sdk() {
     fi
     
     if build_go_library; then
-        if dotnet restore SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj && \
-           dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj --no-restore &> /dev/null; then
+        if dotnet restore "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj" && \
+           dotnet build "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj" --no-restore &> /dev/null; then
             print_success "Go SDK setup complete"
             return 0
         else
@@ -414,7 +417,7 @@ setup_go_sdk() {
 # Test functions
 test_csharp_sdk() {
     print_status "Testing C# SDK..."
-    if dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj --no-restore &> /dev/null; then
+    if dotnet build "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj" --no-restore &> /dev/null; then
         print_success "C# SDK builds successfully"
         return 0
     else
@@ -430,7 +433,7 @@ test_java_sdk() {
         return 1
     fi
     
-    local jar_dir="SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
+    local jar_dir="$SCRIPT_DIR/SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
     if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
         print_success "Java CLI JAR files found"
         
@@ -461,7 +464,7 @@ test_java_sdk() {
         return 1
     fi
     
-    if dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj --no-restore &> /dev/null; then
+    if dotnet build "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj" --no-restore &> /dev/null; then
         print_success "Java SDK builds successfully"
         return 0
     else
@@ -493,7 +496,7 @@ test_python_sdk() {
         return 1
     fi
     
-    if dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj --no-restore &> /dev/null; then
+    if dotnet build "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj" --no-restore &> /dev/null; then
         print_success "Python SDK builds successfully"
         return 0
     else
@@ -509,7 +512,7 @@ test_go_sdk() {
         return 1
     fi
     
-    local go_dir="SdkTestAutomation.Sdk/Implementations/Go"
+    local go_dir="$SCRIPT_DIR/SdkTestAutomation.Sdk/Implementations/Go"
     local original_dir=$(pwd)
     
     if [ ! -f "$go_dir/go-src/go.mod" ]; then
@@ -542,7 +545,7 @@ test_go_sdk() {
         print_warning "Go shared library not found"
     fi
     
-    if dotnet build SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj --no-restore &> /dev/null; then
+    if dotnet build "$SCRIPT_DIR/SdkTestAutomation.Sdk/SdkTestAutomation.Sdk.csproj" --no-restore &> /dev/null; then
         print_success "Go SDK .NET integration builds successfully"
         return 0
     else
@@ -555,7 +558,7 @@ test_go_sdk() {
 create_env_file() {
     print_status "Creating environment configuration..."
     
-    local env_file="SdkTestAutomation.Tests/.env"
+    local env_file="$SCRIPT_DIR/SdkTestAutomation.Tests/.env"
     mkdir -p "$(dirname "$env_file")"
     
     if [ ! -f "$env_file" ]; then
@@ -596,7 +599,7 @@ test_all_sdks() {
 # Build all projects
 build_all_projects() {
     print_status "Building all projects..."
-    if dotnet build SdkTestAutomation.sln; then
+    if dotnet build "$SCRIPT_DIR/SdkTestAutomation.sln"; then
         print_success "All projects build successfully"
         return 0
     else
@@ -641,65 +644,7 @@ print_summary() {
     fi
 }
 
-# Rebuild Java CLI applications
-rebuild_java_cli() {
-    print_status "Rebuilding Java CLI applications..."
-    
-    if ! check_java; then
-        print_error "Java not installed. Cannot rebuild Java CLI applications."
-        return 1
-    fi
-    
-    if ! command -v mvn &> /dev/null; then
-        print_error "Maven not installed. Cannot rebuild Java CLI applications."
-        return 1
-    fi
-    
-    local java_cli_dir="SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk"
-    local jar_dir="SdkTestAutomation.Sdk/bin/Debug/net8.0/lib"
-    local original_dir=$(pwd)
-    
-    if [ ! -d "$java_cli_dir" ]; then
-        print_error "Java CLI directory not found: $java_cli_dir"
-        return 1
-    fi
-    
-    cd "$java_cli_dir"
-    
-    # Make build script executable
-    chmod +x build.sh
-    
-    # Clean and rebuild
-    print_status "Cleaning previous builds..."
-    mvn clean
-    
-    print_status "Building Java CLI applications..."
-    if ./build.sh; then
-        print_success "Java CLI applications rebuilt successfully"
-        
-        # Return to original directory for verification
-        cd "$original_dir"
-        
-        # Verify JAR files
-        if [ -f "$jar_dir/conductor-client.jar" ] && [ -f "$jar_dir/orkes-conductor-client.jar" ]; then
-            print_success "JAR files verified:"
-            print_status "  • conductor-client.jar ($(ls -lh "$jar_dir/conductor-client.jar" | awk '{print $5}'))"
-            print_status "  • orkes-conductor-client.jar ($(ls -lh "$jar_dir/orkes-conductor-client.jar" | awk '{print $5}'))"
-        else
-            print_error "JAR files not found after rebuild"
-            print_status "Expected files:"
-            print_status "  • $jar_dir/conductor-client.jar"
-            print_status "  • $jar_dir/orkes-conductor-client.jar"
-            return 1
-        fi
-    else
-        print_error "Failed to rebuild Java CLI applications"
-        cd "$original_dir"
-        return 1
-    fi
-    
-    return 0
-}
+
 
 # Show usage
 show_usage() {
@@ -709,7 +654,6 @@ show_usage() {
     echo "  --setup-only      Setup SDKs (default)"
     echo "  --test-only       Test existing SDKs"
     echo "  --build-only      Build Go shared library only"
-    echo "  --rebuild-java    Rebuild Java CLI applications only"
     echo "  --full            Setup, test, and build everything"
     echo "  --help            Show this help message"
 }
@@ -721,7 +665,6 @@ while [[ $# -gt 0 ]]; do
         --setup-only) MODE="setup"; shift ;;
         --test-only) MODE="test"; shift ;;
         --build-only) MODE="build"; shift ;;
-        --rebuild-java) MODE="rebuild_java"; shift ;;
         --full) MODE="full"; shift ;;
         --help) show_usage; exit 0 ;;
         *) print_error "Unknown option: $1"; show_usage; exit 1 ;;
@@ -747,15 +690,7 @@ main() {
             fi
             ;;
             
-        "rebuild_java")
-            print_status "Rebuilding Java CLI applications..."
-            if rebuild_java_cli; then
-                print_success "✅ Java CLI applications rebuilt successfully!"
-            else
-                print_error "❌ Failed to rebuild Java CLI applications"
-                exit 1
-            fi
-            ;;
+
             
         "full")
             print_status "Running full setup, test, and build..."
@@ -794,12 +729,12 @@ main() {
     echo ""
     print_status "Next steps:"
     echo "1. Start your Conductor server"
-    echo "2. Update SdkTestAutomation.Tests/.env with your server URL"
+    echo "2. Update $SCRIPT_DIR/SdkTestAutomation.Tests/.env with your server URL"
     echo "3. Run tests with different SDKs:"
-    echo "   • C# SDK: SDK_TYPE=csharp ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
-    echo "   • Java SDK: SDK_TYPE=java ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
-    echo "   • Python SDK: SDK_TYPE=python ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
-    echo "   • Go SDK: SDK_TYPE=go ./SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+    echo "   • C# SDK: SDK_TYPE=csharp $SCRIPT_DIR/SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+    echo "   • Java SDK: SDK_TYPE=java $SCRIPT_DIR/SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+    echo "   • Python SDK: SDK_TYPE=python $SCRIPT_DIR/SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
+    echo "   • Go SDK: SDK_TYPE=go $SCRIPT_DIR/SdkTestAutomation.Tests/bin/Debug/net8.0/SdkTestAutomation.Tests"
     echo ""
     print_success "Operation complete! 🎉"
 }
