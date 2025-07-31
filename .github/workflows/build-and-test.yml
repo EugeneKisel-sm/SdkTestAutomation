@@ -11,7 +11,8 @@ concurrency:
 env:
   DOTNET_VERSION: '8.0.x'
   CONFIGURATION: Release
-  CONDUCTOR_SERVER_URL: ${{ vars.CONDUCTOR_SERVER_URL || 'http://localhost:8080/api' }}
+  SOLUTION_FILE: SdkTestAutomation.sln
+  CONDUCTOR_SERVER_URL: 'http://localhost:8080/api'
   CONDUCTOR_COMPOSE_FILE: conductor/docker/docker-compose.yaml
   CONDUCTOR_TIMEOUT: 200
   CONDUCTOR_CHECK_INTERVAL: 30
@@ -32,10 +33,51 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Build Solution
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.19'
+        cache: true
+        cache-dependency-path: SdkTestAutomation.Sdk/Implementations/Go/go-src/go.sum
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Build Dependencies
       run: |
-        dotnet restore SdkTestAutomation.sln
-        dotnet build SdkTestAutomation.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+        # Build Go shared library
+        cd SdkTestAutomation.Sdk/Implementations/Go/go-src
+        [ ! -f "go.mod" ] && go mod init conductor-go-bridge
+        go get github.com/conductor-sdk/conductor-go@latest
+        go mod tidy
+        CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o "../build-artifacts/conductor-go-bridge.so" conductor-go-bridge.go
+        
+        # Build Java CLI applications
+        cd ../../Java/cli-java-sdk
+        mvn clean package -q
+        
+        # Copy JARs to output directories
+        mkdir -p ../../../bin/{Debug,Release}/net8.0/lib
+        cp target/conductor-java-cli.jar ../../../bin/Debug/net8.0/lib/conductor-client.jar
+        cp target/conductor-java-cli.jar ../../../bin/Release/net8.0/lib/conductor-client.jar
+        cp target/orkes-java-cli.jar ../../../bin/Debug/net8.0/lib/orkes-conductor-client.jar
+        cp target/orkes-java-cli.jar ../../../bin/Release/net8.0/lib/orkes-conductor-client.jar
+
+    - name: Install Python Dependencies
+      run: pip install conductor-python
+
+    - name: Build .NET Solution
+      run: |
+        dotnet restore ${{ env.SOLUTION_FILE }} --verbosity minimal
+        dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.CONFIGURATION }} --no-restore --verbosity minimal
 
     - name: Checkout Conductor Repository
       uses: actions/checkout@v4
@@ -114,7 +156,7 @@ jobs:
 
         // Get only the test results content
         const testResults = document.querySelector('body').innerHTML
-          .replace(/^\s*xUnit\.net Test Results/, '') // Remove header text
+          .replace(/^\s*xUnit\.net Test Results/, '')
           .trim();
 
         // Convert to Markdown
@@ -142,7 +184,6 @@ jobs:
         });
 
         const markdown = turndownService.turndown(testResults);
-
         const summary = [
           '# Test Results',
           '',
@@ -172,18 +213,6 @@ jobs:
     - name: Add Test Report to Job Summary
       if: always()
       run: cat TestResults/summary.md >> $GITHUB_STEP_SUMMARY
-
-    - name: Display Test Report List
-      if: always()
-      run: |
-        {
-          echo ""
-          echo "## Available Test Reports"
-          echo "📊 Test reports available in:"
-          echo "- HTML: Rich interactive report"
-          echo "- TRX: Native .NET test results"
-          echo "- JUnit: Standard XML format"
-        } >> $GITHUB_STEP_SUMMARY
 
     - name: Upload Test Results
       if: always()
