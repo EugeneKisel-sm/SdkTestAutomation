@@ -1,6 +1,4 @@
 ﻿using System.Net;
-using SdkTestAutomation.Api.Conductor.EventResource.Models;
-using SdkTestAutomation.Api.Conductor.EventResource.Request;
 using Xunit;
 
 namespace SdkTestAutomation.Tests.Conductor.EventResource;
