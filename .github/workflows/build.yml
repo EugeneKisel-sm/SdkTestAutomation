@@ -51,6 +51,8 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.19'
+        cache: true
+        cache-dependency-path: SdkTestAutomation.Sdk/Implementations/Go/go-src/go.sum
 
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -91,11 +93,47 @@ jobs:
         echo "Building Java CLI applications..."
         cd SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk
         
-        # Make build script executable
-        chmod +x build.sh
+        # Debug: Show current directory and contents
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
         
-        # Build Java CLI applications
-        ./build.sh
+        # Verify pom.xml exists
+        if [ ! -f "pom.xml" ]; then
+          echo "❌ Error: pom.xml not found in $(pwd)"
+          exit 1
+        fi
+        
+        echo "✅ Found pom.xml"
+        
+        # Build Java CLI applications directly with Maven
+        echo "Running Maven clean package..."
+        mvn clean package
+        
+        # Copy JARs to output directories (both Debug and Release for compatibility)
+        echo "Copying JAR files to output directories..."
+        
+        # Create directories
+        mkdir -p ../../../bin/Debug/net8.0/lib
+        mkdir -p ../../../bin/Release/net8.0/lib
+        
+        if [ -f "target/conductor-java-cli.jar" ]; then
+            cp target/conductor-java-cli.jar ../../../bin/Debug/net8.0/lib/conductor-client.jar
+            cp target/conductor-java-cli.jar ../../../bin/Release/net8.0/lib/conductor-client.jar
+            echo "✓ Copied conductor-java-cli.jar to conductor-client.jar (Debug & Release)"
+        else
+            echo "Error: conductor-java-cli.jar not found in target directory"
+            exit 1
+        fi
+        
+        if [ -f "target/orkes-java-cli.jar" ]; then
+            cp target/orkes-java-cli.jar ../../../bin/Debug/net8.0/lib/orkes-conductor-client.jar
+            cp target/orkes-java-cli.jar ../../../bin/Release/net8.0/lib/orkes-conductor-client.jar
+            echo "✓ Copied orkes-java-cli.jar to orkes-conductor-client.jar (Debug & Release)"
+        else
+            echo "Error: orkes-java-cli.jar not found in target directory"
+            exit 1
+        fi
         
         echo "✅ Java CLI applications built successfully"
         echo "Debug directory contents:"
