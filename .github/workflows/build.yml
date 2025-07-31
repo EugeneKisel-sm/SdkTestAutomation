@@ -31,16 +31,13 @@ env:
   SOLUTION_FILE: SdkTestAutomation.sln
 
 jobs:
-  build-test-framework:
-    name: Build Test Framework
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     
     steps:
-    - name: Checkout Repository
+    - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -60,156 +57,49 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Build Go Shared Library
+    - name: Build Dependencies
       run: |
-        echo "Building Go shared library..."
+        # Build Go shared library
         cd SdkTestAutomation.Sdk/Implementations/Go/go-src
-        
-        # Initialize Go module if needed
-        if [ ! -f "go.mod" ]; then
-          go mod init conductor-go-bridge
-        fi
-        
-        # Add conductor-go SDK dependency
+        [ ! -f "go.mod" ] && go mod init conductor-go-bridge
         go get github.com/conductor-sdk/conductor-go@latest
         go mod tidy
+        CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o "../build-artifacts/conductor-go-bridge.so" conductor-go-bridge.go
         
-        # Set build environment for Linux
-        export CGO_ENABLED=1
-        export GOOS=linux
-        export GOARCH=amd64
+        # Build Java CLI applications
+        cd ../../Java/cli-java-sdk
+        mvn clean package -q
         
-        # Create build-artifacts directory
-        mkdir -p ../build-artifacts
-        
-        # Build shared library
-        go build -buildmode=c-shared -o "../build-artifacts/conductor-go-bridge.so" conductor-go-bridge.go
-        
-        echo "✅ Go shared library built successfully"
-        ls -la ../build-artifacts/
+        # Copy JARs to output directories
+        mkdir -p ../../../bin/{Debug,Release}/net8.0/lib
+        cp target/conductor-java-cli.jar ../../../bin/Debug/net8.0/lib/conductor-client.jar
+        cp target/conductor-java-cli.jar ../../../bin/Release/net8.0/lib/conductor-client.jar
+        cp target/orkes-java-cli.jar ../../../bin/Debug/net8.0/lib/orkes-conductor-client.jar
+        cp target/orkes-java-cli.jar ../../../bin/Release/net8.0/lib/orkes-conductor-client.jar
 
-    - name: Build Java CLI Applications
+    - name: Build .NET Solution
       run: |
-        echo "Building Java CLI applications..."
-        cd SdkTestAutomation.Sdk/Implementations/Java/cli-java-sdk
-        
-        # Debug: Show current directory and contents
-        echo "Current directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
-        
-        # Verify pom.xml exists
-        if [ ! -f "pom.xml" ]; then
-          echo "❌ Error: pom.xml not found in $(pwd)"
-          exit 1
-        fi
-        
-        echo "✅ Found pom.xml"
-        
-        # Build Java CLI applications directly with Maven
-        echo "Running Maven clean package..."
-        mvn clean package
-        
-        # Copy JARs to output directories (both Debug and Release for compatibility)
-        echo "Copying JAR files to output directories..."
-        
-        # Create directories
-        mkdir -p ../../../bin/Debug/net8.0/lib
-        mkdir -p ../../../bin/Release/net8.0/lib
-        
-        if [ -f "target/conductor-java-cli.jar" ]; then
-            cp target/conductor-java-cli.jar ../../../bin/Debug/net8.0/lib/conductor-client.jar
-            cp target/conductor-java-cli.jar ../../../bin/Release/net8.0/lib/conductor-client.jar
-            echo "✓ Copied conductor-java-cli.jar to conductor-client.jar (Debug & Release)"
-        else
-            echo "Error: conductor-java-cli.jar not found in target directory"
-            exit 1
-        fi
-        
-        if [ -f "target/orkes-java-cli.jar" ]; then
-            cp target/orkes-java-cli.jar ../../../bin/Debug/net8.0/lib/orkes-conductor-client.jar
-            cp target/orkes-java-cli.jar ../../../bin/Release/net8.0/lib/orkes-conductor-client.jar
-            echo "✓ Copied orkes-java-cli.jar to orkes-conductor-client.jar (Debug & Release)"
-        else
-            echo "Error: orkes-java-cli.jar not found in target directory"
-            exit 1
-        fi
-        
-        echo "✅ Java CLI applications built successfully"
-        echo "Debug directory contents:"
-        ls -la ../../../bin/Debug/net8.0/lib/
-        echo "Release directory contents:"
-        ls -la ../../../bin/Release/net8.0/lib/
+        dotnet restore ${{ env.SOLUTION_FILE }} --verbosity minimal
+        dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ env.CONFIGURATION }} --no-restore --verbosity minimal
 
-    - name: Restore Dependencies
-      run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity minimal
-
-    - name: Build Solution
+    - name: Verify Build
       run: |
-        echo "Building solution: ${{ env.SOLUTION_FILE }}"
-        dotnet build ${{ env.SOLUTION_FILE }} \
-          --configuration ${{ env.CONFIGURATION }} \
-          --no-restore \
-          --verbosity minimal
-        
-    - name: Verify Core Projects
-      run: |
-        echo "=== Verifying Core Projects ==="
-        projects=("SdkTestAutomation.Core" "SdkTestAutomation.Api" "SdkTestAutomation.Sdk" "SdkTestAutomation.Utils" "SdkTestAutomation.Tests")
-        
-        for project in "${projects[@]}"; do
-          if [ -f "$project/bin/${{ env.CONFIGURATION }}/net8.0/$project.dll" ]; then
-            echo "✅ $project built successfully"
-          else
-            echo "❌ $project build failed"
-            exit 1
-          fi
+        # Verify .NET projects
+        for project in SdkTestAutomation.{Core,Api,Sdk,Utils,Tests}; do
+          [ -f "$project/bin/${{ env.CONFIGURATION }}/net8.0/$project.dll" ] || exit 1
         done
-
-    - name: Verify Dependencies
-      run: |
-        echo "=== Verifying Dependencies ==="
         
-        # Check Go shared library
-        if [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.so" ]; then
-          echo "✅ Go shared library found"
-        else
-          echo "❌ Go shared library missing"
-          exit 1
-        fi
-        
-        # Check Java CLI JARs (Release configuration)
-        if [ -f "SdkTestAutomation.Sdk/bin/Release/net8.0/lib/conductor-client.jar" ] && [ -f "SdkTestAutomation.Sdk/bin/Release/net8.0/lib/orkes-conductor-client.jar" ]; then
-          echo "✅ Java CLI JARs found (Release)"
-        else
-          echo "❌ Java CLI JARs missing (Release)"
-          exit 1
-        fi
+        # Verify dependencies
+        [ -f "SdkTestAutomation.Sdk/Implementations/Go/build-artifacts/conductor-go-bridge.so" ] || exit 1
+        [ -f "SdkTestAutomation.Sdk/bin/${{ env.CONFIGURATION }}/net8.0/lib/conductor-client.jar" ] || exit 1
+        [ -f "SdkTestAutomation.Sdk/bin/${{ env.CONFIGURATION }}/net8.0/lib/orkes-conductor-client.jar" ] || exit 1
 
     - name: Build Summary
       if: always()
       run: |
         echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### ✅ Build Components" >> $GITHUB_STEP_SUMMARY
         echo "- **Solution**: ${{ env.SOLUTION_FILE }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Configuration**: ${{ env.CONFIGURATION }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Framework**: .NET 8.0" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📦 Projects Built" >> $GITHUB_STEP_SUMMARY
-        echo "- SdkTestAutomation.Core" >> $GITHUB_STEP_SUMMARY
-        echo "- SdkTestAutomation.Api" >> $GITHUB_STEP_SUMMARY
-        echo "- SdkTestAutomation.Sdk" >> $GITHUB_STEP_SUMMARY
-        echo "- SdkTestAutomation.Utils" >> $GITHUB_STEP_SUMMARY
-        echo "- SdkTestAutomation.Tests" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🔧 Dependencies Built" >> $GITHUB_STEP_SUMMARY
-        echo "- Go shared library (conductor-go-bridge.so)" >> $GITHUB_STEP_SUMMARY
-        echo "- Java CLI applications (conductor-client.jar, orkes-conductor-client.jar)" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🔧 Build Verification" >> $GITHUB_STEP_SUMMARY
-        echo "- All .NET projects compile successfully" >> $GITHUB_STEP_SUMMARY
-        echo "- All SDK dependencies built successfully" >> $GITHUB_STEP_SUMMARY
-        echo "- Solution builds without errors" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Dependencies**: Go shared library, Java CLI applications" >> $GITHUB_STEP_SUMMARY
         echo "**🎉 Build completed successfully!**" >> $GITHUB_STEP_SUMMARY 

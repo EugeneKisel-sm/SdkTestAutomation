@@ -18,6 +18,7 @@ TestResults/
 *.trx
 *.html
 *.xml
+!pom.xml
 coverage/
 *.coverage
 *.coveragexml
