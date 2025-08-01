@@ -32,15 +32,38 @@ public abstract class BaseJavaAdapter
         try
         {
             var response = Task.Run(() => _client.ExecuteJavaCall(resource, operation, requestData)).Result;
-            var result = JsonSerializer.Deserialize<JavaResponse>(response);
             
-            return result.Success 
-                ? SdkResponse.CreateSuccess(result.Data) 
-                : SdkResponse.CreateError(result.Error);
+            if (string.IsNullOrEmpty(response))
+            {
+                return SdkResponse.CreateError("Java process returned empty response");
+            }
+            
+            try
+            {
+                var result = JsonSerializer.Deserialize<JavaResponse>(response);
+                
+                if (result.Success)
+                {
+                    return SdkResponse.CreateSuccess(result.Content);
+                }
+                else
+                {
+                    return SdkResponse.CreateError(result.Error);
+                }
+            }
+            catch (JsonException jsonEx)
+            {
+                return SdkResponse.CreateError($"Failed to parse Java response as JSON: {jsonEx.Message}. Raw response: {response}");
+            }
         }
         catch (Exception ex)
         {
-            return SdkResponse.CreateError(ex.Message);
+            var errorMessage = $"Java SDK call failed for {resource}.{operation}: {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                errorMessage += $" Inner exception: {ex.InnerException.Message}";
+            }
+            return SdkResponse.CreateError(errorMessage);
         }
     }
     
@@ -48,4 +71,5 @@ public abstract class BaseJavaAdapter
     {
         _client?.Dispose();
     }
+    
 } 

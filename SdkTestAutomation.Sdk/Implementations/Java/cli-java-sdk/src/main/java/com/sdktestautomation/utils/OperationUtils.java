@@ -11,6 +11,8 @@ public class OperationUtils {
         try {
             return operation.execute();
         } catch (Exception e) {
+            System.err.println("Error in executeWithErrorHandling: " + e.getMessage());
+            e.printStackTrace(System.err);
             return SdkResponse.createError(500, e.getMessage());
         }
     }
@@ -20,7 +22,16 @@ public class OperationUtils {
         if (serverUrl == null) {
             serverUrl = DEFAULT_SERVER_URL;
         }
-        return new ConductorClient.Builder().basePath(serverUrl).build();
+        
+        System.err.println("Debug: Creating ConductorClient with server URL: " + serverUrl);
+        
+        try {
+            return new ConductorClient.Builder().basePath(serverUrl).build();
+        } catch (Exception e) {
+            System.err.println("Error creating ConductorClient: " + e.getMessage());
+            e.printStackTrace(System.err);
+            throw e;
+        }
     }
     
     @FunctionalInterface

@@ -7,9 +7,17 @@ namespace SdkTestAutomation.Sdk.Implementations.Java;
 
 public class JavaResponse
 {
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; }
-    public string Data { get; set; } = string.Empty;
+    
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    public object Data { get; set; }
+    
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
     public string Error { get; set; } = string.Empty;
+    
+    [System.Text.Json.Serialization.JsonPropertyName("content")]
+    public string Content { get; set; } = string.Empty;
 }
 
 public abstract class BaseJavaClient : ISdkClient
@@ -44,12 +52,12 @@ public abstract class BaseJavaClient : ISdkClient
             throw new InvalidOperationException("Java client is not initialized.");
         }
         
-        var parameters = requestData != null ? JsonSerializer.Serialize(requestData) : "{}";
+        var command = BuildCommand(resource, operation, requestData);
         
         var startInfo = new ProcessStartInfo
         {
             FileName = "java",
-            Arguments = $"-jar \"{_jarPath}\" --resource {resource} --operation {operation} --parameters \"{parameters}\"",
+            Arguments = $"-jar \"{_jarPath}\" {command}",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -73,6 +81,13 @@ public abstract class BaseJavaClient : ISdkClient
         }
         
         return output.Trim();
+    }
+    
+    private string BuildCommand(string resource, string operation, object requestData)
+    {
+        var parameters = requestData != null ? JsonSerializer.Serialize(requestData) : "{}";
+        var parametersJson = parameters.Replace("\"", "\\\"");
+        return $"--operation {operation} --parameters \"{parametersJson}\" --resource {resource}";
     }
     
     private string FindJarFile()

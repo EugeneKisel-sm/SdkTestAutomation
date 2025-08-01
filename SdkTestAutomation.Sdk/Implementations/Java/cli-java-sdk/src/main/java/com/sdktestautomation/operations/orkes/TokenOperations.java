@@ -2,6 +2,7 @@ package com.sdktestautomation.operations.orkes;
 
 import com.netflix.conductor.client.http.ConductorClient;
 import io.orkes.conductor.client.http.TokenResource;
+import io.orkes.conductor.client.model.GenerateTokenRequest;
 
 import com.sdktestautomation.models.SdkResponse;
 import com.sdktestautomation.utils.OperationUtils;
@@ -26,15 +27,17 @@ public class TokenOperations {
     private static SdkResponse generateToken(Map<String, Object> parameters, TokenResource tokenApi) throws Exception {
         String keyId = (String) parameters.get("keyId");
         String keySecret = (String) parameters.get("keySecret");
-        
-        // Note: The Orkes TokenResource API doesn't have a direct generateToken method
-        // This would need to be implemented using the actual Orkes API
-        // For now, return an error indicating this needs to be implemented
-        throw new UnsupportedOperationException("Token generation not implemented in Orkes client. Use direct API calls instead.");
+
+        GenerateTokenRequest request = new GenerateTokenRequest();
+        request.setKeyId(keyId);
+        request.setKeySecret(keySecret);
+
+        var token = tokenApi.generate(request);
+        return SdkResponse.createSuccess(token);
     }
     
     private static SdkResponse getUserInfo(TokenResource tokenApi) throws Exception {
-        // This method is not implemented in the current Orkes client
-        throw new UnsupportedOperationException("getUserInfo method not implemented in Orkes client");
+        var token = tokenApi.getUserInfo();
+        return SdkResponse.createSuccess(token);
     }
 } 
