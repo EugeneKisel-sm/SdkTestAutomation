@@ -49,7 +49,7 @@ public class CSharpEventAdapter : IEventAdapter
         try
         {
             var events = _client.EventApi.GetEventHandlers();
-            return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(events));
+            return SdkResponse.CreateSuccess(events);
         }
         catch (Exception ex)
         {
@@ -62,7 +62,7 @@ public class CSharpEventAdapter : IEventAdapter
         try
         {
             var events = _client.EventApi.GetEventHandlersForEvent(eventName, false);
-            return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(events));
+            return SdkResponse.CreateSuccess(events);
         }
         catch (Exception ex)
         {

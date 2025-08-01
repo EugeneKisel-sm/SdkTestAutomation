@@ -1,4 +1,3 @@
-using System.Text.Json;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 
@@ -31,7 +30,7 @@ public class CSharpTokenAdapter : ITokenAdapter
             var generateTokenRequest = new Conductor.Client.Models.GenerateTokenRequest(keyId, keySecret);
             
             var token = _client.TokenApi.GenerateToken(generateTokenRequest);
-            return SdkResponse.CreateSuccess(JsonSerializer.Serialize(token));
+            return SdkResponse.CreateSuccess(token);
         }
         catch (Exception ex)
         {

@@ -48,7 +48,7 @@ public class PythonEventAdapter : IEventAdapter
             using (Py.GIL())
             {
                 var events = _client.EventApi.get_event_handlers("", false);
-                return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(events));
+                return SdkResponse.CreateSuccess(events);
             }
         }
         catch (Exception ex)
@@ -64,7 +64,7 @@ public class PythonEventAdapter : IEventAdapter
             using (Py.GIL())
             {
                 var events = _client.EventApi.get_event_handlers(eventName, false);
-                return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(events));
+                return SdkResponse.CreateSuccess(events);
             }
         }
         catch (Exception ex)

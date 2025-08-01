@@ -31,7 +31,7 @@ public class PythonWorkflowAdapter : IWorkflowAdapter
             using (Py.GIL())
             {
                 var workflow = _client.WorkflowApi.get_execution_status(workflowId);
-                return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(workflow));
+                return SdkResponse.CreateSuccess(workflow);
             }
         }
         catch (Exception ex)
@@ -47,7 +47,7 @@ public class PythonWorkflowAdapter : IWorkflowAdapter
             using (Py.GIL())
             {
                 var workflows = _client.WorkflowApi.get_running_workflow("", "", 100, 0);
-                return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(workflows));
+                return SdkResponse.CreateSuccess(workflows);
             }
         }
         catch (Exception ex)

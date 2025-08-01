@@ -1,24 +1,8 @@
 using System.Diagnostics;
 using System.Text.Json;
-using System.Threading.Tasks;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 
 namespace SdkTestAutomation.Sdk.Implementations.Java;
-
-public class JavaResponse
-{
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; }
-    
-    [System.Text.Json.Serialization.JsonPropertyName("data")]
-    public object Data { get; set; }
-    
-    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
-    public string Error { get; set; } = string.Empty;
-    
-    [System.Text.Json.Serialization.JsonPropertyName("content")]
-    public string Content { get; set; } = string.Empty;
-}
 
 public abstract class BaseJavaClient : ISdkClient
 {

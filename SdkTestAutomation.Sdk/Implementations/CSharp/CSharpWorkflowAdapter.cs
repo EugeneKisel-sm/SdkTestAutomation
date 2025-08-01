@@ -29,7 +29,7 @@ public class CSharpWorkflowAdapter : IWorkflowAdapter
         try
         {
             var workflow = _client.WorkflowApi.GetExecutionStatus(workflowId);
-            return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(workflow));
+            return SdkResponse.CreateSuccess(workflow);
         }
         catch (Exception ex)
         {
@@ -42,7 +42,7 @@ public class CSharpWorkflowAdapter : IWorkflowAdapter
         try
         {
             var workflows = _client.WorkflowApi.GetRunningWorkflow("", null, 100, 0);
-            return SdkResponse.CreateSuccess(Newtonsoft.Json.JsonConvert.SerializeObject(workflows));
+            return SdkResponse.CreateSuccess(workflows);
         }
         catch (Exception ex)
         {
