@@ -29,11 +29,23 @@ The Python integration uses Python.NET:
 
 ```
 .NET Test Framework
+    ↓ (BasePythonAdapter)
+Python Adapters (Event/Token/Workflow)
     ↓ (Python.NET calls)
 Python Runtime (CPython)
     ↓ (HTTP calls via conductor-python)
 Conductor Server
 ```
+
+### Base Class Design
+
+The `BasePythonAdapter` provides common functionality for all Python adapters:
+
+- **Client Management**: Automatic Python client initialization and disposal
+- **Error Handling**: Consistent error handling with proper GIL management
+- **Python Object Creation**: Helper methods for creating Python objects
+- **Property Setting**: Safe property assignment on Python objects
+- **Operation Execution**: Wrapper methods for Python operations with proper error handling
 
 ### Communication Flow
 
@@ -47,8 +59,10 @@ Conductor Server
 
 ```
 Python/
+├── BasePythonAdapter.cs             # Base class for all Python adapters
 ├── PythonClient.cs                  # Main client implementation
 ├── PythonEventAdapter.cs            # Event operations adapter
+├── PythonTokenAdapter.cs            # Token operations adapter
 ├── PythonWorkflowAdapter.cs         # Workflow operations adapter
 └── README.md                        # This documentation
 ```
@@ -115,22 +129,41 @@ public class EventTests : BaseConductorTest
 ### What Happens Behind the Scenes
 
 1. **SDK Selection**: Framework detects `SDK_TYPE=python`
-2. **Adapter Creation**: Creates `PythonEventAdapter` instance
-3. **Python.NET Call**: Adapter uses Python.NET to invoke Python code
-4. **Python Execution**: Python runtime executes Conductor operations
-5. **Response Conversion**: Python objects converted to .NET types
+2. **Adapter Creation**: Creates adapter instance (inherits from `BasePythonAdapter`)
+3. **Base Class Initialization**: `BasePythonAdapter` initializes Python client
+4. **Python.NET Call**: Adapter uses base class helper methods to invoke Python code
+5. **Python Execution**: Python runtime executes Conductor operations
+6. **Response Conversion**: Python objects converted to .NET types via base class
 
 ## 📊 Request/Response Format
 
-### Python.NET Integration
+### Base Class Integration
 
-The Python integration uses Python.NET for seamless interop:
+The Python integration uses `BasePythonAdapter` for consistent operations:
 
 ```csharp
-// Python.NET usage in adapters
-dynamic conductor = Py.Import("conductor.client.http.api.event_api");
-dynamic eventApi = conductor.EventApi(conductorClient);
-dynamic result = eventApi.add_event_handler(eventHandler);
+// Base class usage in adapters
+public class PythonEventAdapter : BasePythonAdapter, IEventAdapter
+{
+    public SdkResponse AddEvent(string name, string eventType, bool active = true)
+    {
+        return ExecutePythonOperation(() =>
+        {
+            var eventHandler = CreateEventHandler(name, eventType, active);
+            _client.EventApi.register_event_handler(eventHandler);
+        }, "AddEvent");
+    }
+    
+    private dynamic CreateEventHandler(string name, string eventType, bool active)
+    {
+        // Use base class helpers for Python object creation
+        dynamic eventHandler = CreatePythonObject("conductor.common.metadata.events.event_handler", "EventHandler");
+        SetPythonProperty(eventHandler, "name", name);
+        SetPythonProperty(eventHandler, "event_name", eventType);
+        SetPythonProperty(eventHandler, "active", active);
+        return eventHandler;
+    }
+}
 ```
 
 ### Response Format
@@ -249,9 +282,36 @@ This will show:
 
 ### Adding New Operations
 
-1. **Add Python Method**: Use conductor-python SDK method
-2. **Update Adapter**: Add corresponding method in adapter class
-3. **Add Tests**: Create tests for the new operation
+1. **Create New Adapter**: Inherit from `BasePythonAdapter`
+2. **Add Python Method**: Use conductor-python SDK method with base class helpers
+3. **Update Adapter**: Add corresponding method using `ExecutePythonOperation`
+4. **Add Tests**: Create tests for the new operation
+
+### Example: Adding a New Adapter
+
+```csharp
+public class PythonTaskAdapter : BasePythonAdapter, ITaskAdapter
+{
+    public SdkResponse GetTask(string taskId)
+    {
+        return ExecutePythonOperation(() =>
+        {
+            return _client.TaskApi.get_task(taskId);
+        }, "GetTask");
+    }
+    
+    public SdkResponse UpdateTask(string taskId, object taskData)
+    {
+        return ExecutePythonOperation(() =>
+        {
+            var task = CreatePythonObject("conductor.common.models.task", "Task");
+            SetPythonProperty(task, "task_id", taskId);
+            SetPythonProperty(task, "data", taskData);
+            return _client.TaskApi.update_task(task);
+        }, "UpdateTask");
+    }
+}
+```
 
 ## 📊 Performance Considerations
 
