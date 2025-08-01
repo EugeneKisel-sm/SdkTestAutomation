@@ -15,6 +15,7 @@ public static class SdkFactory
         {
             "csharp" => new CSharpTokenAdapter(),
             "java" => new JavaTokenAdapter(),
+            "python" => new PythonTokenAdapter(),
             _ => throw new ArgumentException($"Unsupported SDK type: {sdkType}")
         };
     }
