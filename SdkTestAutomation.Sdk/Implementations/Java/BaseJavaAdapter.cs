@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using SdkTestAutomation.Sdk.Core.Models;
 
@@ -53,17 +54,12 @@ public abstract class BaseJavaAdapter
             }
             catch (JsonException jsonEx)
             {
-                return SdkResponse.CreateError($"Failed to parse Java response as JSON: {jsonEx.Message}. Raw response: {response}");
+                return SdkResponse.CreateError($"Failed to parse Java response for {resource}.{operation}: {jsonEx.Message}");
             }
         }
         catch (Exception ex)
         {
-            var errorMessage = $"Java SDK call failed for {resource}.{operation}: {ex.Message}";
-            if (ex.InnerException != null)
-            {
-                errorMessage += $" Inner exception: {ex.InnerException.Message}";
-            }
-            return SdkResponse.CreateError(errorMessage);
+            return SdkResponse.CreateError($"Java SDK call failed for {resource}.{operation}: {ex.Message}");
         }
     }
     

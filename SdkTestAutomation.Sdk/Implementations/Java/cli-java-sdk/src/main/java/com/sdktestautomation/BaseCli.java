@@ -5,7 +5,6 @@ import picocli.CommandLine;
 import com.sdktestautomation.models.SdkResponse;
 
 import java.util.Map;
-import java.util.function.Function;
 
 public abstract class BaseCli implements Runnable {
     
@@ -23,19 +22,12 @@ public abstract class BaseCli implements Runnable {
     @Override
     public void run() {
         try {
-            System.err.println("Debug: Received parameters: " + parameters);
-            
             @SuppressWarnings("unchecked")
             Map<String, Object> params = OBJECT_MAPPER.readValue(parameters, Map.class);
-            
-            System.err.println("Debug: Parsed parameters: " + params);
-            System.err.println("Debug: Resource: " + resource + ", Operation: " + operation);
             
             SdkResponse result = executeOperation(resource, operation, params);
             System.out.println(OBJECT_MAPPER.writeValueAsString(result));
         } catch (Exception e) {
-            System.err.println("Debug: Exception occurred: " + e.getMessage());
-            e.printStackTrace(System.err);
             handleError(e);
         }
     }

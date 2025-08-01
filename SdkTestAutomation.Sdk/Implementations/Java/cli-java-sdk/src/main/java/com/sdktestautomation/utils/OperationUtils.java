@@ -11,8 +11,6 @@ public class OperationUtils {
         try {
             return operation.execute();
         } catch (Exception e) {
-            System.err.println("Error in executeWithErrorHandling: " + e.getMessage());
-            e.printStackTrace(System.err);
             return SdkResponse.createError(500, e.getMessage());
         }
     }
