@@ -1,7 +1,7 @@
 using SdkTestAutomation.Sdk.Core.Interfaces;
 using SdkTestAutomation.Sdk.Core.Models;
 
-namespace SdkTestAutomation.Sdk.Implementations.Python;
+namespace SdkTestAutomation.Sdk.Implementations.Python.Adapters;
 
 public class PythonTokenAdapter : BasePythonAdapter, ITokenAdapter
 {

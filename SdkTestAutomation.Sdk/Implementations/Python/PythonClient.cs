@@ -77,16 +77,14 @@ public class PythonClient : ISdkClient
         return Path.Combine(conductorPythonEnvPath, "lib", "python3.11", "site-packages");
     }
     
-        private void InitializeConductorClient(string serverUrl)
+    private void InitializeConductorClient(string serverUrl)
     {
-        // Import required modules using correct paths from conductor-python SDK
         dynamic apiClient = Py.Import("conductor.client.http.api_client");
         dynamic configuration = Py.Import("conductor.client.configuration.configuration");
         dynamic tokenResourceApi = Py.Import("conductor.client.http.api.token_resource_api");
         dynamic eventResourceApi = Py.Import("conductor.client.http.api.event_resource_api");
         dynamic workflowResourceApi = Py.Import("conductor.client.http.api.workflow_resource_api");
         
-        // Create configuration with base URL (remove /api suffix if present)
         var baseUrl = serverUrl;
         if (baseUrl.EndsWith("/api"))
         {
@@ -94,10 +92,8 @@ public class PythonClient : ISdkClient
         }
         dynamic config = configuration.Configuration(baseUrl);
         
-        // Create API client with configuration
         _conductorClient = apiClient.ApiClient(config);
         
-        // Create resource API instances
         TokenApi = tokenResourceApi.TokenResourceApi(_conductorClient);
         EventApi = eventResourceApi.EventResourceApi(_conductorClient);
         WorkflowApi = workflowResourceApi.WorkflowResourceApi(_conductorClient);
@@ -119,7 +115,6 @@ public class PythonClient : ISdkClient
         }
         catch (Exception ex)
         {
-            // Log disposal error but don't throw
             System.Diagnostics.Debug.WriteLine($"Error during Python client disposal: {ex.Message}");
         }
         finally

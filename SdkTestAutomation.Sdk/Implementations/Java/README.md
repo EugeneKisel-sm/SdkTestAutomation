@@ -21,6 +21,8 @@ The Java integration uses a CLI-based approach:
 - **JSON Protocol**: Standardized data exchange between languages
 - **Maven Build System**: Clean dependency management for Java components
 - **Separated Applications**: Dedicated CLI apps for Conductor and Orkes operations
+- **Base Class Architecture**: Shared functionality through `BaseJavaAdapter` and `BaseJavaClient`
+- **Organized Structure**: Clear separation between Conductor and Orkes adapters
 
 ## 🔧 How It Works
 
@@ -65,9 +67,15 @@ Java/
 │   ├── pom.xml                      # Maven configuration
 │   └── build.sh                     # Build script
 ├── Conductor/                       # Conductor adapters
+│   ├── JavaClient.cs                # Conductor client wrapper
+│   ├── JavaEventAdapter.cs          # Event operations adapter
+│   └── JavaWorkflowAdapter.cs       # Workflow operations adapter
 ├── Orkes/                           # Orkes adapters
+│   ├── JavaClient.cs                # Orkes client wrapper
+│   └── JavaTokenAdapter.cs          # Token operations adapter
 ├── BaseJavaClient.cs                # Shared client functionality
 ├── BaseJavaAdapter.cs               # Shared adapter functionality
+├── JavaResponse.cs                  # Response model
 └── README.md                        # This documentation
 ```
 
@@ -129,10 +137,11 @@ public class EventTests : BaseConductorTest
 ### What Happens Behind the Scenes
 
 1. **SDK Selection**: Framework detects `SDK_TYPE=java`
-2. **Adapter Creation**: Creates `JavaEventAdapter` instance
-3. **CLI Invocation**: Adapter calls `java -jar conductor-java-cli.jar`
-4. **JSON Communication**: Request/response exchanged via JSON
-5. **Response Processing**: JSON converted to `SdkResponse` object
+2. **Adapter Creation**: Creates adapter instance (inherits from `BaseJavaAdapter`)
+3. **Base Class Initialization**: `BaseJavaAdapter` initializes Java client
+4. **CLI Invocation**: Adapter calls `java -jar conductor-java-cli.jar`
+5. **JSON Communication**: Request/response exchanged via JSON
+6. **Response Processing**: JSON converted to `SdkResponse` object via base class
 
 ## 📊 Request/Response Format
 
@@ -246,10 +255,28 @@ This will show:
 
 ### Adding New Operations
 
-1. **Add Java Operation**: Create new method in appropriate `Operations.java`
-2. **Update CLI**: Add operation handling in `ConductorCli.java` or `OrkesCli.java`
-3. **Update C# Adapter**: Add corresponding method in adapter class
-4. **Add Tests**: Create tests for the new operation
+1. **Create New Adapter**: Inherit from `BaseJavaAdapter`
+2. **Add Java Operation**: Create new method in appropriate `Operations.java`
+3. **Update CLI**: Add operation handling in `ConductorCli.java` or `OrkesCli.java`
+4. **Update C# Adapter**: Add corresponding method using `ExecuteCall`
+5. **Add Tests**: Create tests for the new operation
+
+### Example: Adding a New Adapter
+
+```csharp
+public class JavaTaskAdapter : BaseJavaAdapter, ITaskAdapter
+{
+    public SdkResponse GetTask(string taskId)
+    {
+        return ExecuteCall("task", "get-task", new { TaskId = taskId });
+    }
+    
+    public SdkResponse UpdateTask(string taskId, object taskData)
+    {
+        return ExecuteCall("task", "update-task", new { TaskId = taskId, Data = taskData });
+    }
+}
+```
 
 ## 📊 Performance Considerations
 
@@ -273,4 +300,18 @@ This will show:
 
 - [Main Framework README](../../../README.md) - Overview of the entire framework
 - [Conductor Documentation](https://conductor.netflix.com/) - Official Conductor docs
-- [Orkes Documentation](https://orkes.io/) - Orkes platform documentation 
+- [Orkes Documentation](https://orkes.io/) - Orkes platform documentation
+
+## 🆕 Recent Improvements
+
+### Code Organization
+- **Base Class Architecture**: All adapters now inherit from `BaseJavaAdapter` for consistent functionality
+- **Organized Structure**: Clear separation between Conductor and Orkes adapters in dedicated folders
+- **Shared Components**: Common client and response handling through base classes
+- **Reduced Duplication**: Eliminated repetitive code across all Java adapters
+
+### Benefits
+- **Maintainability**: Changes to Java integration only need to be made in base classes
+- **Consistency**: All adapters use the same error handling and client management patterns
+- **Extensibility**: Easy to add new adapters by inheriting from base classes
+- **Readability**: Cleaner, more focused adapter implementations 

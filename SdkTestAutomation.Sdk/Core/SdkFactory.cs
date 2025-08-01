@@ -1,8 +1,8 @@
 using SdkTestAutomation.Sdk.Core.Interfaces;
-using SdkTestAutomation.Sdk.Implementations.CSharp;
+using SdkTestAutomation.Sdk.Implementations.CSharp.Adapters;
 using SdkTestAutomation.Sdk.Implementations.Java.Conductor;
-using SdkTestAutomation.Sdk.Implementations.Python;
-using SdkTestAutomation.Sdk.Implementations.Go;
+using SdkTestAutomation.Sdk.Implementations.Python.Adapters;
+using SdkTestAutomation.Sdk.Implementations.Go.Adapters;
 using SdkTestAutomation.Sdk.Implementations.Java.Orkes;
 
 namespace SdkTestAutomation.Sdk.Core;

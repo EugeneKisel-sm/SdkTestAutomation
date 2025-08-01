@@ -9,6 +9,7 @@ using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
 using RestSharp;
 using Xunit;
+using SdkTestAutomation.Sdk.Implementations.Go.Adapters;
 
 namespace SdkTestAutomation.Tests.Conductor;
 

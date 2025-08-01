@@ -22,6 +22,8 @@ The Python integration uses Python.NET:
 - **Direct SDK Usage**: Uses conductor-python package directly
 - **Type Safety**: Leverages Python.NET's type conversion capabilities
 - **Performance**: Efficient runtime communication between languages
+- **Base Class Architecture**: Shared functionality through `BasePythonAdapter`
+- **Organized Structure**: Adapters organized in dedicated `Adapters/` folder
 
 ## 🔧 How It Works
 
@@ -59,11 +61,12 @@ The `BasePythonAdapter` provides common functionality for all Python adapters:
 
 ```
 Python/
+├── Adapters/                        # Python adapters
+│   ├── PythonEventAdapter.cs        # Event operations adapter
+│   ├── PythonTokenAdapter.cs        # Token operations adapter
+│   └── PythonWorkflowAdapter.cs     # Workflow operations adapter
 ├── BasePythonAdapter.cs             # Base class for all Python adapters
 ├── PythonClient.cs                  # Main client implementation
-├── PythonEventAdapter.cs            # Event operations adapter
-├── PythonTokenAdapter.cs            # Token operations adapter
-├── PythonWorkflowAdapter.cs         # Workflow operations adapter
 └── README.md                        # This documentation
 ```
 
@@ -129,7 +132,7 @@ public class EventTests : BaseConductorTest
 ### What Happens Behind the Scenes
 
 1. **SDK Selection**: Framework detects `SDK_TYPE=python`
-2. **Adapter Creation**: Creates adapter instance (inherits from `BasePythonAdapter`)
+2. **Adapter Creation**: Creates adapter instance from `Adapters/` folder (inherits from `BasePythonAdapter`)
 3. **Base Class Initialization**: `BasePythonAdapter` initializes Python client
 4. **Python.NET Call**: Adapter uses base class helper methods to invoke Python code
 5. **Python Execution**: Python runtime executes Conductor operations
@@ -350,4 +353,19 @@ public class PythonTaskAdapter : BasePythonAdapter, ITaskAdapter
 - [Conductor Python SDK](https://github.com/Netflix/conductor/tree/main/client/python) - Official Python SDK
 - [conductor-python PyPI](https://pypi.org/project/conductor-python/) - Python package information
 - [Python.NET Documentation](https://pythonnet.github.io/) - Python.NET interop library
-- [Python Virtual Environments](https://docs.python.org/3/tutorial/venv.html) - Python environment management 
+- [Python Virtual Environments](https://docs.python.org/3/tutorial/venv.html) - Python environment management
+
+## 🆕 Recent Improvements
+
+### Code Organization
+- **Base Class Architecture**: All adapters now inherit from `BasePythonAdapter` for consistent functionality
+- **Organized Structure**: Adapters organized in dedicated `Adapters/` folder for better organization
+- **Shared Components**: Common Python client management and error handling through base classes
+- **Reduced Duplication**: Eliminated repetitive code across all Python adapters
+
+### Benefits
+- **Maintainability**: Changes to Python integration only need to be made in base classes
+- **Consistency**: All adapters use the same GIL management and error handling patterns
+- **Extensibility**: Easy to add new adapters by inheriting from base classes
+- **Readability**: Cleaner, more focused adapter implementations
+- **Type Safety**: Improved Python object creation and property setting through helper methods 
