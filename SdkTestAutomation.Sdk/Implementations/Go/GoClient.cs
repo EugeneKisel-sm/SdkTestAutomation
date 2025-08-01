@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using SdkTestAutomation.Sdk.Core.Interfaces;
+using SdkTestAutomation.Sdk.Implementations.Go.Models;
 
 namespace SdkTestAutomation.Sdk.Implementations.Go;
 
@@ -321,47 +322,5 @@ public class GoClient : ISdkClient
         {
             Console.WriteLine($"[C#] Error clearing logs: {ex.Message}");
         }
-    }
-    
-    private class AddEventRequest
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Event { get; set; } = string.Empty;
-        public bool Active { get; set; } = true;
-    }
-    
-    private class GetEventByNameRequest
-    {
-        public string EventName { get; set; } = string.Empty;
-    }
-    
-    private class UpdateEventRequest
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Event { get; set; } = string.Empty;
-        public bool Active { get; set; } = true;
-    }
-    
-    private class DeleteEventRequest
-    {
-        public string Name { get; set; } = string.Empty;
-    }
-    
-    private class StartWorkflowRequest
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Version { get; set; }
-        public string CorrelationId { get; set; } = string.Empty;
-    }
-    
-    private class GetWorkflowRequest
-    {
-        public string WorkflowId { get; set; } = string.Empty;
-    }
-    
-    private class TerminateWorkflowRequest
-    {
-        public string WorkflowId { get; set; } = string.Empty;
-        public string Reason { get; set; } = string.Empty;
     }
 } 
