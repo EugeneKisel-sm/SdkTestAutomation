@@ -81,26 +81,36 @@ check_java() {
 }
 
 check_python() {
-    if command -v python3 &> /dev/null; then
+    # First check for python3.11 specifically
+    if command -v python3.11 &> /dev/null; then
+        local version=$(python3.11 --version | cut -d' ' -f2)
+        if check_version "$version" "3.11.0"; then
+            print_success "Python $version is installed (python3.11)"
+            return 0
+        else
+            print_warning "Python $version is installed but version 3.11+ is required"
+            return 1
+        fi
+    elif command -v python3 &> /dev/null; then
         local version=$(python3 --version | cut -d' ' -f2)
-        if check_version "$version" "3.9.0"; then
+        if check_version "$version" "3.11.0"; then
             print_success "Python $version is installed"
             return 0
         else
-            print_warning "Python $version is installed but version 3.9+ is required"
+            print_warning "Python $version is installed but version 3.11+ is required"
             return 1
         fi
     elif command -v python &> /dev/null; then
         local version=$(python --version | cut -d' ' -f2)
-        if check_version "$version" "3.9.0"; then
+        if check_version "$version" "3.11.0"; then
             print_success "Python $version is installed"
             return 0
         else
-            print_warning "Python $version is installed but version 3.9+ is required"
+            print_warning "Python $version is installed but version 3.11+ is required"
             return 1
         fi
     else
-        print_warning "Python is not installed. Please install Python 3.9+ for Python SDK support."
+        print_warning "Python is not installed. Please install Python 3.11+ for Python SDK support."
         return 1
     fi
 }
@@ -354,7 +364,7 @@ setup_python_sdk() {
     
     # Try to install conductor-python
     local installed=false
-    for cmd in "pip3 install conductor-python" "pip install conductor-python" "python3 -m pip install conductor-python"; do
+    for cmd in "python3.11 -m pip install conductor-python" "pip3.11 install conductor-python" "pip3 install conductor-python" "pip install conductor-python" "python3 -m pip install conductor-python"; do
         if eval "$cmd" &> /dev/null; then
             print_success "conductor-python package installed"
             installed=true
@@ -364,15 +374,25 @@ setup_python_sdk() {
     
     if [ "$installed" = false ]; then
         print_warning "Failed to install conductor-python via pip"
-        if command -v python3 -m venv &> /dev/null; then
-            print_status "Creating virtual environment..."
-            python3 -m venv conductor-python-env
-            source conductor-python-env/bin/activate
-            if pip install conductor-python &> /dev/null; then
-                print_success "conductor-python installed in virtual environment"
-                print_status "Activate with: source conductor-python-env/bin/activate"
-                installed=true
+        # Try to create virtual environment with python3.11 first, then fallback to python3
+        local venv_created=false
+        for python_cmd in "python3.11" "python3"; do
+            if command -v "$python_cmd" -m venv &> /dev/null; then
+                print_status "Creating virtual environment with $python_cmd..."
+                "$python_cmd" -m venv conductor-python-env
+                source conductor-python-env/bin/activate
+                if pip install conductor-python &> /dev/null; then
+                    print_success "conductor-python installed in virtual environment"
+                    print_status "Activate with: source conductor-python-env/bin/activate"
+                    installed=true
+                    venv_created=true
+                    break
+                fi
             fi
+        done
+        
+        if [ "$venv_created" = false ]; then
+            print_warning "Could not create virtual environment"
         fi
     fi
     
@@ -481,7 +501,7 @@ test_python_sdk() {
     fi
     
     local conductor_found=false
-    if python3 -c "import conductor" &> /dev/null 2>&1 || python -c "import conductor" &> /dev/null 2>&1; then
+    if python3.11 -c "import conductor" &> /dev/null 2>&1 || python3 -c "import conductor" &> /dev/null 2>&1 || python -c "import conductor" &> /dev/null 2>&1; then
         print_success "conductor-python package found"
         conductor_found=true
     elif [ -d "conductor-python-env" ]; then
@@ -570,8 +590,8 @@ CONDUCTOR_SERVER_URL=\${CONDUCTOR_SERVER_URL:-http://localhost:8080/api}
 SDK_TYPE=csharp
 
 # Python Configuration
-PYTHON_HOME=$(which python3 2>/dev/null || which python 2>/dev/null || echo "/usr/local/bin/python3")
-PYTHONPATH=$(python3 -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || echo "/usr/local/lib/python3.9/site-packages")
+PYTHON_HOME=$(which python3.11 2>/dev/null || which python3 2>/dev/null || which python 2>/dev/null || echo "/usr/local/bin/python3.11")
+PYTHONPATH=$(python3.11 -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || python3 -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || echo "/usr/local/lib/python3.11/site-packages")
 
 # Java Configuration
 JAVA_HOME=\${JAVA_HOME:-$(echo $JAVA_HOME)}

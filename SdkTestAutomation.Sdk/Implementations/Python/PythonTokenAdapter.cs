@@ -18,7 +18,7 @@ public class PythonTokenAdapter : ITokenAdapter
             _client.Initialize(serverUrl);
             return true;
         }
-        catch (Exception ex)
+        catch
         {
             return false;
         }
