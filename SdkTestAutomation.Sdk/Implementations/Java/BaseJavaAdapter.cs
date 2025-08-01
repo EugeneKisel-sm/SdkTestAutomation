@@ -67,5 +67,21 @@ public abstract class BaseJavaAdapter
     {
         _client?.Dispose();
     }
+
+    public string GetLastJavaLogs() => _client.LastJavaLogs;
     
+    public string GetLastJavaErrors() => _client.LastJavaErrors;
+    
+    public string GetAllJavaLogs()
+    {
+        var logs = new List<string>();
+        
+        if (!string.IsNullOrEmpty(_client.LastJavaLogs))
+            logs.Add($"STDOUT: {_client.LastJavaLogs}");
+            
+        if (!string.IsNullOrEmpty(_client.LastJavaErrors))
+            logs.Add($"STDERR: {_client.LastJavaErrors}");
+            
+        return string.Join("\n", logs);
+    }
 } 

@@ -74,8 +74,18 @@ public abstract class BaseOrkesTest : IDisposable
         try
         {
             _logger.Log("=== JAVA SDK DETAILS ===");
-            _logger.Log($"Token Adapter Type: {TokenAdapter.GetType().Name}");
-            _logger.Log($"Token Adapter SDK Type: {TokenAdapter.SdkType}");
+            
+            if (TokenAdapter is JavaTokenAdapter javaAdapter)
+            {
+                var javaLogs = javaAdapter.GetAllJavaLogs();
+                if (!string.IsNullOrEmpty(javaLogs))
+                {
+                    _logger.Log("=== JAVA CLI LOGS ===");
+                    _logger.Log(javaLogs);
+                    _logger.Log("=== END JAVA CLI LOGS ===");
+                }
+            }
+            
             _logger.Log("=== END JAVA SDK DETAILS ===");
         }
         catch (Exception ex)

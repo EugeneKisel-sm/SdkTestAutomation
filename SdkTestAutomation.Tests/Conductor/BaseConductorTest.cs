@@ -114,10 +114,29 @@ public abstract class BaseConductorTest : IDisposable
         try
         {
             _logger.Log("=== JAVA SDK DETAILS ===");
-            _logger.Log($"Event Adapter Type: {EventAdapter.GetType().Name}");
-            _logger.Log($"Workflow Adapter Type: {WorkflowAdapter.GetType().Name}");
-            _logger.Log($"Event Adapter SDK Type: {EventAdapter.SdkType}");
-            _logger.Log($"Workflow Adapter SDK Type: {WorkflowAdapter.SdkType}");
+
+            if (EventAdapter is JavaEventAdapter javaEventAdapter)
+            {
+                var eventLogs = javaEventAdapter.GetAllJavaLogs();
+                if (!string.IsNullOrEmpty(eventLogs))
+                {
+                    _logger.Log("=== JAVA CLI EVENT LOGS ===");
+                    _logger.Log(eventLogs);
+                    _logger.Log("=== END JAVA CLI EVENT LOGS ===");
+                }
+            }
+            
+            if (WorkflowAdapter is JavaWorkflowAdapter javaWorkflowAdapter)
+            {
+                var workflowLogs = javaWorkflowAdapter.GetAllJavaLogs();
+                if (!string.IsNullOrEmpty(workflowLogs))
+                {
+                    _logger.Log("=== JAVA CLI WORKFLOW LOGS ===");
+                    _logger.Log(workflowLogs);
+                    _logger.Log("=== END JAVA CLI WORKFLOW LOGS ===");
+                }
+            }
+            
             _logger.Log("=== END JAVA SDK DETAILS ===");
         }
         catch (Exception ex)

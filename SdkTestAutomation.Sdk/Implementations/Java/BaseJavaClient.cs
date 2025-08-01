@@ -10,6 +10,10 @@ public abstract class BaseJavaClient : ISdkClient
     private bool _initialized;
     
     public bool IsInitialized => _initialized && !string.IsNullOrEmpty(_jarPath);
+
+    public string LastJavaLogs { get; private set; } = string.Empty;
+    
+    public string LastJavaErrors { get; private set; } = string.Empty;
     
     public void Initialize(string serverUrl)
     {
@@ -58,6 +62,14 @@ public abstract class BaseJavaClient : ISdkClient
         var error = process.StandardError.ReadToEnd();
         
         await process.WaitForExitAsync();
+        
+        LastJavaLogs = output;
+        LastJavaErrors = error;
+        
+        if (!string.IsNullOrEmpty(error))
+        {
+            Console.WriteLine($"[Java CLI] stderr: {error}");
+        }
         
         if (process.ExitCode != 0)
         {
