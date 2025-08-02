@@ -2,12 +2,9 @@ using SdkTestAutomation.Api.Conductor.EventResource;
 using SdkTestAutomation.Api.Conductor.WorkflowResource;
 using SdkTestAutomation.Sdk.Core;
 using SdkTestAutomation.Sdk.Core.Interfaces;
-using SdkTestAutomation.Sdk.Core.Models;
-using SdkTestAutomation.Sdk.Implementations.Go;
 using SdkTestAutomation.Sdk.Implementations.Java.Conductor;
 using SdkTestAutomation.Utils;
 using SdkTestAutomation.Utils.Logging;
-using RestSharp;
 using Xunit;
 using SdkTestAutomation.Sdk.Implementations.Go.Adapters;
 
@@ -52,15 +49,8 @@ public abstract class BaseConductorTest : IDisposable
         _logger.Log($"Test '{testContext.TestCase?.TestCaseDisplayName}' execution started.");
     }
     
-    protected bool ValidateSdkResponse(SdkResponse sdkResponse, RestResponse apiResponse)
-    {
-        // Simple validation - check if SDK call was successful
-        return sdkResponse.Success && apiResponse.IsSuccessful;
-    }
-    
     public virtual void Dispose()
     {
-        // Log SDK details based on type
         switch (TestConfig.SdkType)
         {
             case "go":

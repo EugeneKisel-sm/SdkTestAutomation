@@ -18,7 +18,7 @@ public class PythonEventAdapter : BasePythonAdapter, IEventAdapter
     {
         return ExecutePythonOperation(() =>
         {
-            return _client.EventApi.get_event_handlers("", false);
+            return _client.EventApi.get_event_handlers();
         }, "GetEvents");
     }
     
@@ -26,7 +26,7 @@ public class PythonEventAdapter : BasePythonAdapter, IEventAdapter
     {
         return ExecutePythonOperation(() =>
         {
-            return _client.EventApi.get_event_handlers(eventName, false);
+            return _client.EventApi.get_event_handlers(eventName);
         }, "GetEventByName");
     }
     

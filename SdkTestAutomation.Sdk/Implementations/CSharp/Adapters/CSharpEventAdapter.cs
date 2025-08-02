@@ -23,18 +23,25 @@ public class CSharpEventAdapter : BaseCSharpAdapter, IEventAdapter
     
     public SdkResponse GetEvents()
     {
-        return ExecuteCSharpOperation(() =>
+        try
         {
-            return _client.EventApi.GetEventHandlers();
-        }, "GetEvents");
+            if (_client == null || !_client.IsInitialized)
+            {
+                return SdkResponse.CreateError("C# client is not initialized");
+            }
+            
+            var result = _client.EventApi.GetEventHandlers();
+            return SdkResponse.CreateSuccess(result);
+        }
+        catch (Exception ex)
+        {
+            return SdkResponse.CreateError($"GetEvents failed: {ex.Message}");
+        }
     }
     
     public SdkResponse GetEventByName(string eventName)
     {
-        return ExecuteCSharpOperation(() =>
-        {
-            return _client.EventApi.GetEventHandlersForEvent(eventName, false);
-        }, "GetEventByName");
+        return ExecuteCSharpOperation(() => _client.EventApi.GetEventHandlersForEvent(eventName, false), "GetEventByName");
     }
     
     public SdkResponse UpdateEvent(string name, string eventType, bool active = true)

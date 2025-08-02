@@ -17,6 +17,12 @@ public abstract class BaseCSharpAdapter
     {
         try
         {
+            // If already initialized with the same URL, don't re-initialize
+            if (_client.IsInitialized)
+            {
+                return true;
+            }
+            
             _client.Initialize(serverUrl);
             return _client.IsInitialized;
         }

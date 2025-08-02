@@ -1,5 +1,4 @@
 using Conductor.Api;
-using Conductor.Client;
 using SdkTestAutomation.Sdk.Core.Interfaces;
 
 namespace SdkTestAutomation.Sdk.Implementations.CSharp;
@@ -16,10 +15,9 @@ public class CSharpClient : ISdkClient
     
     public void Initialize(string serverUrl)
     {
-        var configuration = new Configuration { BasePath = serverUrl };
-        WorkflowApi = new WorkflowResourceApi(configuration);
-        EventApi = new EventResourceApi(configuration);
-        TokenApi = new TokenResourceApi(configuration);
+        WorkflowApi = new WorkflowResourceApi(serverUrl);
+        EventApi = new EventResourceApi(serverUrl);
+        TokenApi = new TokenResourceApi(serverUrl);
         _initialized = true;
     }
 
